@@ -8,7 +8,7 @@ resPath		 <- file.path( workDir, "Res")
 
 dir.create( resPath, showWarnings = FALSE)
 
-initialTablesPath 	<- file.path( resPath, "initialTables")
+initialTablesPath 	<- file.path( resPath, "InitialTables")
 dir.create( initialTablesPath, showWarnings = FALSE)
 
 #Read and process files
