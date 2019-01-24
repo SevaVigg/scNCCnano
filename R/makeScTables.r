@@ -20,7 +20,7 @@ dir.create( allCellsDir , showWarnings = FALSE)
 randSeedAll 	<- as.integer(Sys.time())
 logExpsImp	<- imputeDropouts(logExps, randSeedAll)
 
-cat( file = file.path( allCellsDir, "seedAll.txt"), randSeedAll)
+cat( file = file.path( allCellsDir, "ImputeSeedAll.txt"), randSeedAll)
 write.table( logExps, file = file.path( allCellsDir, "logExpTableDedupQC.csv"), sep = "\t")
 write.table( logExpsImp, file = file.path( allCellsDir, "logExpTableDedupQCimp.csv"), sep = "\t")
 write.table( cellsQC, file = file.path( allCellsDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
@@ -33,7 +33,7 @@ logExpsWT	<- logExps[, setdiff( seq_along(colnames(logExps)), grep("(sox10|mitfa
 logExpsWTImp	<- imputeDropouts(logExpsWT, randSeedWT)
 cellsDescWT	<- cellsQC[, setdiff( seq_along(colnames(cellsQC)), grep("(sox10|mitfa)", colnames(cellsQC)))]
 
-cat( file = file.path( WTDir, "seedWT.txt"), randSeedWT)
+cat( file = file.path( WTDir, "ImputeSeedWT.txt"), randSeedWT)
 write.table( logExpsWT, file = file.path( WTDir, "logExpTableDedupQC.csv"), sep = "\t")
 write.table( logExpsWTImp, file = file.path( WTDir, "logExpTableDedupQCimp.csv"), sep = "\t")
 write.table( cellsQC, file = file.path( WTDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
@@ -46,7 +46,7 @@ logExpsWTsox10		<- logExps[, setdiff( seq_along(colnames(logExps)), grep("(mitfa
 logExpsWTsox10Imp	<- imputeDropouts(logExpsWTsox10, randSeedWTsox10)
 cellsDescWTsox10	<- cellsQC[, setdiff( seq_along(colnames(cellsQC)), grep("(mitfa)", colnames(cellsQC)))]
 
-cat( file = file.path( WT_Sox10Dir, "seedWTsox10.txt"), randSeedWTsox10)
+cat( file = file.path( WT_Sox10Dir, "ImputeSeedWTsox10.txt"), randSeedWTsox10)
 write.table( logExpsWTsox10,   file = file.path( WT_Sox10Dir, "logExpTableDedupQC.csv"), sep = "\t")
 write.table( logExpsWTsox10Imp,   file = file.path( WT_Sox10Dir, "logExpTableDedupQCimp.csv"), sep = "\t")
 write.table( cellsDescWTsox10, file = file.path( WT_Sox10Dir, "cellDescriptionsDedupQC.csv"), sep = "\t")
