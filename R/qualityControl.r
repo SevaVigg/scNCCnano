@@ -74,7 +74,7 @@ qualMatrix	<- qualMatrix[, order(as.numeric(qualMatrix["batchMedNormVals",]))]
 png(paste0(plotDir, .Platform$file.sep,"batchMedians.png"))
 	plot(as.numeric(qualMatrix["batchMedNormVals", ]), main = "Medians of batches", xlab = "Batches", ylab = "CountMedian")
 	abline(h = 40, col = "red")
-	abline(h = min(as.numeric(qualMatrix["batchMedNormVals", qualMatrix["batchTypes",]=="MC"])), col = "blue")
+	abline(h = min(as.numeric(qualMatrix["batchMedNormVals", qualMatrix["batchTypes",]=="M"])), col = "blue")
 dev.off()
 
 batchVecs <- lapply(batchVals, function(x) log(as.vector(x)))
@@ -88,7 +88,7 @@ png(paste0(plotDir, .Platform$file.sep, "LogNotNormedBatchBoxPlot.png"), width =
 		at = seq(1, 2*length(batches), 2))
 dev.off()
 
-batchProbl 	<- qualMatrix[, which(as.numeric(qualMatrix["batchMedNormVals",])<40)]	#threshold to keep MC (MedNormVal ~ 60)
+batchProbl 	<- qualMatrix[, which(as.numeric(qualMatrix["batchMedNormVals",])<40)]	#threshold to keep M (MedNormVal ~ 60)
 cellsProbl_Ind	<- which(Cells["FileName",] %in% colnames(batchProbl))
 
 
@@ -128,10 +128,10 @@ png( file.path( plotDir, "Kanamycin_Distr_plot.png"))
 	plot(sort( KanamycinPos_Distr))
 	abline( h = quantile( KanamycinPos_Distr, KanamycinPosTopQuant), col = "red")
 	abline( h = quantile( KanamycinPos_Distr, KanamycinPosBotQuant), col = "red")
-	abline( h = min( KanamycinPos_Distr[ grep("MC", names( KanamycinPos_Distr))]), col = "black")
-	abline( h = max( KanamycinPos_Distr[ grep("MC", names( KanamycinPos_Distr))]), col = "black")
-	abline( h = max( KanamycinPos_Distr[ grep("IP", names( KanamycinPos_Distr))]), col = "cyan")
-	abline( h = min( KanamycinPos_Distr[ grep("IP", names( KanamycinPos_Distr))]), col = "cyan")
+	abline( h = min( KanamycinPos_Distr[ grep("M", names( KanamycinPos_Distr))]), col = "black")
+	abline( h = max( KanamycinPos_Distr[ grep("M", names( KanamycinPos_Distr))]), col = "black")
+	abline( h = max( KanamycinPos_Distr[ grep("I", names( KanamycinPos_Distr))]), col = "cyan")
+	abline( h = min( KanamycinPos_Distr[ grep("I", names( KanamycinPos_Distr))]), col = "cyan")
 dev.off()
 
 
@@ -157,10 +157,10 @@ png( file.path( plotDir, "rpl13_Distr_plot.png"))
 	plot(sort(rpl13_Distr))
 	abline( h = quantile( rpl13_Distr, rpl13TopQuant), col = "red")
 	abline( h = quantile( rpl13_Distr, rpl13BotQuant), col = "red")
-	abline( h = min( rpl13_Distr[ grep("MC", names(rpl13_Distr))]), col = "black")
-	abline( h = max( rpl13_Distr[ grep("MC", names(rpl13_Distr))]), col = "black")
-	abline( h = max( rpl13_Distr[ grep("IP", names(rpl13_Distr))]), col = "cyan")
-	abline( h = min( rpl13_Distr[ grep("IP", names(rpl13_Distr))]), col = "cyan")
+	abline( h = min( rpl13_Distr[ grep("M", names(rpl13_Distr))]), col = "black")
+	abline( h = max( rpl13_Distr[ grep("M", names(rpl13_Distr))]), col = "black")
+	abline( h = max( rpl13_Distr[ grep("I", names(rpl13_Distr))]), col = "cyan")
+	abline( h = min( rpl13_Distr[ grep("I", names(rpl13_Distr))]), col = "cyan")
 dev.off()
 
 Genes_ffff	<- Genes_fff[,rpl13_keep]

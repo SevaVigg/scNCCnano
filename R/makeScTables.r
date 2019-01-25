@@ -36,7 +36,7 @@ cellsDescWT	<- cellsQC[, setdiff( seq_along(colnames(cellsQC)), grep("(sox10|mit
 cat( file = file.path( WTDir, "ImputeSeedWT.txt"), randSeedWT)
 write.table( logExpsWT, file = file.path( WTDir, "logExpTableDedupQC.csv"), sep = "\t")
 write.table( logExpsWTImp, file = file.path( WTDir, "logExpTableDedupQCimp.csv"), sep = "\t")
-write.table( cellsQC, file = file.path( WTDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
+write.table( cellsDescWT, file = file.path( WTDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
 
 WT_Sox10Dir	<- file.path( scTablesDir, "WT_Sox10")
 dir.create( WT_Sox10Dir, showWarnings = FALSE)

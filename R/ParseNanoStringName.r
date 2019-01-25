@@ -1,8 +1,6 @@
-
 ParseNanoStringName <- function(SourceNameStr){
 
 source("R/getRegExpSubStr.r")
-
 
 
 numStr 	<- getRegExpSubStr( SourceNameStr, regexpr( "[0-9][0-9]*.RCC", SourceNameStr) ) 	#strings contain .RCC suffix like 9_[09.RCC]
@@ -12,11 +10,11 @@ batchStr	<- getRegExpSubStr( SourceNameStr, regexpr( "201[0-9]*", SourceNameStr 
 
 #:wtypes <- c("IP", "MC", "m618_sox10", "mitfa w2", "tails", "general")
 
-if( regexpr( "/(IP|ip)\\.", SourceNameStr) != -1){CellType <- "IP"}else{
- if( regexpr( "/(MC|mc)\\.", SourceNameStr) != -1){CellType <- "MC"}else{
+if( regexpr( "/(IP|ip)\\.", SourceNameStr) != -1){CellType <- "I"}else{
+ if( regexpr( "/(MC|mc)\\.", SourceNameStr) != -1){CellType <- "M"}else{
   if( regexpr( "m618", SourceNameStr) != -1){CellType <- "sox10-"}else{
    if( regexpr( "w2", SourceNameStr) != -1){CellType <- "mitfa-"}else{
-    if( regexpr( "tails", SourceNameStr) != -1){CellType = "tails"}else{ CellType <- "general"}    
+    if( regexpr( "tails", SourceNameStr) != -1){CellType <- "Tl"}else{ CellType <- "general"}    
      }}}}
 
 if( batchStr == "20170531"){CellType = "sox10-"}
@@ -24,7 +22,7 @@ if( batchStr == "20170531"){CellType = "sox10-"}
 
 hpfStr	<- getRegExpSubStr( SourceNameStr, regexpr( "[0-9][0-9] *[hH][pP][fF]", SourceNameStr ) )  #strings contain hpf suffix
 hpf	<- as.numeric( substr( hpfStr, 1, nchar( hpfStr)-3) )
-if( CellType == "IP" | CellType == "MC") {hpf <- 48}						   # correction for IP and MC 	
+if( CellType == "I" | CellType == "M") {hpf <- 120}						   # correction for I and M 	
 
 
 if( regexpr( "[0-3][0-9][-_][0-1][0-9][-_]1[67]", SourceNameStr) != -1) {
