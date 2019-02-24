@@ -1,7 +1,14 @@
 #This is a minimal version of seurat preparing
+#it requires scTables prepared by makeScTables.r
+#this script also sets up one of the cell sets from "allCells", "WT", "WT_Sox10" )
 
-require(Seurat)
-require(methods)
+if (!require("Seurat")){
+BiocManager::install("Seurat")
+library(Seurat)}
+
+if (!require("methods")){
+BiocManager::install("methods")
+library(methods)}
 
 experimentType	<- "allCells"	# may be ("allCells", "WT", and "WT_Sox10")	 
 

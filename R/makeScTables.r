@@ -1,4 +1,6 @@
 #Preparing clean  data for WT, WTandSox10, WTandAllmutants
+#This script is the next in the pipeline after the qualityControl.r
+#this script also imputes for dropouts
 
 source("R/imputeDropouts.r")
 
