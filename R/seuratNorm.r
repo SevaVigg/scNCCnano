@@ -10,7 +10,12 @@ if (!require("methods")){
 BiocManager::install("methods")
 library(methods)}
 
-experimentType	<- "allCells"	# may be ("allCells", "WT", and "WT_Sox10")	 
+if(!require("e1071")){
+  install.packages("e1071")
+}
+
+
+experimentType	<- "WT_Sox10"	# may be ("allCells", "WT", and "WT_Sox10")	 
 
 resDir		<- file.path(getwd(), "Res")
 scTablesDir	<- file.path( resDir, "scTables")
