@@ -1,5 +1,5 @@
 #this snippet useis to make TSNE and PCA plots for initial cell types
-#ipmc must contain the precomputed PCAs
+#
 #it requires to run first seuratNorm.r, which among others sets the appropriate experimentType ( allCells, WT, WT_sox10)
 #in ipmc@project.name
 
@@ -21,41 +21,26 @@ pcaPlotDir 	<- file.path( experimentTypeDir, "PCAdimReduction")
 dir.create( pcaPlotDir, showWarnings = FALSE)
 
 comps		<- 6
-
-compsDir 	<- file.path( pcaPlotDir, paste0("comps", 6))
+compsCorr	<- if (comps == 45) comps-1 else comps
+compsDir 	<- file.path( pcaPlotDir, paste0("comps", comps))
 dir.create(compsDir, showWarnings = FALSE)
 
-ipmc	 	<- RunPCA(ipmc, pc.genes = rownames( ipmc@data), pcs.compute = comps, do.print = FALSE)
+ipmc	 	<- RunPCA(ipmc, pc.genes = rownames( ipmc@data), pcs.compute = compsCorr, do.print = FALSE, fastpath = FALSE)
 
-ipmc <- BuildClusterTree( ipmc, pcs.use = 1:comps, do.plot = FALSE, do.reorder = FALSE)
+#Tree of initial cell types with PCA dimension reduction but without clustering
+ipmc 		<- BuildClusterTree( ipmc, pcs.use = 1:compsCorr, do.plot = FALSE, do.reorder = FALSE)
 png( file.path( compsDir, "InitCellTypePCATree.png"))
 	PlotClusterTree( ipmc)
 dev.off()
 
+#Now calculate TSNE for initial cell types with dimension reduction
 TSNESeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( compsDir, "TSNESeed.txt"), TSNESeed, "\n")
-
-ipmc <- calcTSNE_PCASpace( ipmc, comps, TSNESeed)
+ipmc <- calcTSNE_PCASpace( ipmc, compsCorr, TSNESeed)
 png( file.path( compsDir, "tSNE_PCA_initialCellTypes.png"))
 	TSNEPlot( ipmc, colors.use = setCellTypeColors( ipmc))
 dev.off()
 
-#clusters in initial gene space
-ipmc 	<- FindClusters( ipmc, dims.use = 1:comps, resolution = 0.8, prune.SNN = 0.15)
-clTypes <- getClusterTypes(ipmc)
-levels(ipmc@ident) <- names(clTypes)
-ipmc 	<- BuildClusterTree( ipmc, pcs.use = 1:comps, do.plot = FALSE, do.reorder = TRUE) #This functions renames clusters, so we need to assign cluster types again
-
-png( file.path( compsDir, "ClusterTreePCASpace.png"))
-	PlotClusterTree( ipmc)
-dev.off()
-
-clTypes <- getClusterTypes(ipmc)
-levels(ipmc@ident) <- names(clTypes)
-
-png( file.path( compsDir, "TSNEClusters_PCASpace.png"))
-	TSNEPlot( ipmc, colors.use = setClusterColors( clTypes))
-dev.off()
 
 
 

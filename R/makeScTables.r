@@ -16,6 +16,10 @@ cellsQC	<- read.table( file = file.path( dirQCres, "cellDescripitonsDedupQC.csv"
 allGenes	<- rownames(genesQC)
 logExps 	<- log2(1+genesQC)
 
+genesToSubset	<- c("csf1r", "sox5")
+logExps		<- logExps[ !(rownames(logExps) %in% genesToSubset), ]
+
+
 allCellsDir 	<- file.path( scTablesDir, "allCells")
 dir.create( allCellsDir , showWarnings = FALSE)
 

@@ -34,23 +34,5 @@ dev.off()
 ipmc <- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE)
 plotInitCellTypePCAs(ipmc, 6, geneSpacePlotDir)	#Plot PCA diagrams with cell colors, uses its own directorial structure
 
-#clusters in initial gene space
-ipmc 	<- FindClusters( ipmc, genes.use = rownames(ipmc@data), k.param = 10, resolution = 0.8, prune.SNN = 0.15)
-clTypes <- getClusterTypes(ipmc)
-levels(ipmc@ident) <- names(clTypes)
-ipmc 	<- BuildClusterTree( ipmc, genes.use = rownames(ipmc@data), do.plot = FALSE, do.reorder = TRUE) #This functions renames clusters, so we need to assign cluster types again
-
-png( file.path( geneSpacePlotDir, "ClusterTreeGeneSpace.png"))
-	PlotClusterTree( ipmc)
-dev.off()
-
-clTypes <- getClusterTypes(ipmc)
-levels(ipmc@ident) <- names(clTypes)
-
-png( file.path( geneSpacePlotDir, "tSNEClustersGeneSpace.png"))
-	TSNEPlot( ipmc, colors.use = setClusterColors( clTypes))
-dev.off()
-
-
 
 
