@@ -1,6 +1,6 @@
 #Clustering in the initial gene space reduction
 
-clResolution	<- 1 
+clResolution	<- 0.8 
 
 resDir		<- file.path(getwd(), "Res")
 
@@ -17,7 +17,7 @@ resolDir	<- file.path( geneSpacePlotDir, paste0( "resol_", clResolution))
 dir.create( resolDir, showWarnings = FALSE)
 
 clustSeed <- as.numeric(as.POSIXct(Sys.time()))
-	cat( file = file.path( resolDir, "clustSeed.txt"), TSNESeed, "\n")
+	cat( file = file.path( resolDir, "clustSeed.txt"), clustSeed, "\n")
 
 ipmc	<- BuildSNN( ipmc, genes.use = rownames(ipmc@data), k.param = 10, prune.SNN = 0.15)
 ipmc 	<- FindClusters( ipmc, reuse.SNN = TRUE, resolution = clResolution, random.seed = clustSeed)
@@ -39,4 +39,13 @@ png( file.path( resolDir, "TSNEClusters_GeneSpace.png"))
 	TSNEPlot( ipmc, colors.use = setClusterColors( clTypes))
 dev.off()
 
+#make DotPlot
+
+#remove values close to zero (to calculate radii)
+noiseTol	<- log2(19)
+ipmc@data	<- apply( ipmc@data, c(1,2), function(x) if(x>noiseTol) x else 0)
+
+png( file.path( resolDir, "DotPlot_GeneSpace.png"))
+	DotPlot(ipmc, genes.plot = rownames(ipmc@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
+dev.off()
 

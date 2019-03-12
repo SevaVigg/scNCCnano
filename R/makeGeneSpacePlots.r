@@ -35,4 +35,16 @@ ipmc <- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE)
 plotInitCellTypePCAs(ipmc, 6, geneSpacePlotDir)	#Plot PCA diagrams with cell colors, uses its own directorial structure
 
 
+#remove values, that are too close to zero
+noiseTol	<- log2(19)
+ipmc_dn		<- ipmc
+ipmc_dn@data	<- apply( ipmc_dn@data, c(1,2), function(x) if(x>noiseTol) x else 0)
+
+png( file.path( geneSpacePlotDir, "DotPlotGeneSpace.png"), width = 800, height = 600)
+	DotPlot(ipmc_dn, genes.plot = rownames(ipmc_dn@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
+dev.off()
+
+
+
+
 

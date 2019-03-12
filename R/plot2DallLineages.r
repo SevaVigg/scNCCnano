@@ -6,7 +6,7 @@ source("R/setClusterColors.r")
 source("R/getClusterTypes.r")
 source("R/getLineageCoords.r")
 
-clTypes		<- getClusterTypes( ipmc)
+clTypes		<- getClusterTypes( seuratObj)
 plotVals	<- seuratObj@dr$tsne@cell.embeddings
 
 source("R/getLineageCoords.r")

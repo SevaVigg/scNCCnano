@@ -16,9 +16,9 @@ cellsQC	<- read.table( file = file.path( dirQCres, "cellDescripitonsDedupQC.csv"
 allGenes	<- rownames(genesQC)
 logExps 	<- log2(1+genesQC)
 
-genesToSubset	<- c("csf1r", "sox5")
+#remove genes with too low values
+genesToSubset	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a")
 logExps		<- logExps[ !(rownames(logExps) %in% genesToSubset), ]
-
 
 allCellsDir 	<- file.path( scTablesDir, "allCells")
 dir.create( allCellsDir , showWarnings = FALSE)
@@ -26,10 +26,18 @@ dir.create( allCellsDir , showWarnings = FALSE)
 randSeedAll 	<- as.integer(Sys.time())
 logExpsImp	<- imputeDropouts(logExps, randSeedAll)
 
+#noiseTol	<- log2(19)
+noiseTol	<- 0
+
+#remove values, that are too close to zero
+logExpsImp	<- apply( logExpsImp, c(1,2), function(x) if(x>noiseTol) x else 0)
+logExpsImp	<- logExpsImp[, which( apply( logExpsImp, 2, sum) >0)]
+cellsQCImp	<- cellsQC[, colnames(logExpsImp)]
+
 cat( file = file.path( allCellsDir, "ImputeSeedAll.txt"), randSeedAll)
 write.table( logExps, file = file.path( allCellsDir, "logExpTableDedupQC.csv"), sep = "\t")
 write.table( logExpsImp, file = file.path( allCellsDir, "logExpTableDedupQCimp.csv"), sep = "\t")
-write.table( cellsQC, file = file.path( allCellsDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
+write.table( cellsQCImp, file = file.path( allCellsDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
 
 WTDir		<- file.path( scTablesDir, "WT")
 dir.create(WTDir, showWarnings = FALSE)	
@@ -37,12 +45,15 @@ dir.create(WTDir, showWarnings = FALSE)
 randSeedWT 	<- as.integer(Sys.time())
 logExpsWT	<- logExps[, setdiff( seq_along(colnames(logExps)), grep("(sox10|mitfa)", colnames(logExps)))]
 logExpsWTImp	<- imputeDropouts(logExpsWT, randSeedWT)
-cellsDescWT	<- cellsQC[, setdiff( seq_along(colnames(cellsQC)), grep("(sox10|mitfa)", colnames(cellsQC)))]
+
+logExpsWTImp	<- apply( logExpsWTImp, c(1,2), function(x) if(x>noiseTol) x else 0)
+logExpsWTImp	<- logExpsWTImp[, which( apply( logExpsWTImp, 2, sum) >0)]
+cellsQCWTImp	<- cellsQC[, colnames(logExpsWTImp)]
 
 cat( file = file.path( WTDir, "ImputeSeedWT.txt"), randSeedWT)
 write.table( logExpsWT, file = file.path( WTDir, "logExpTableDedupQC.csv"), sep = "\t")
 write.table( logExpsWTImp, file = file.path( WTDir, "logExpTableDedupQCimp.csv"), sep = "\t")
-write.table( cellsDescWT, file = file.path( WTDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
+write.table( cellsQCWTImp, file = file.path( WTDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
 
 WT_Sox10Dir	<- file.path( scTablesDir, "WT_Sox10")
 dir.create( WT_Sox10Dir, showWarnings = FALSE)
@@ -50,10 +61,13 @@ dir.create( WT_Sox10Dir, showWarnings = FALSE)
 randSeedWTsox10 	<- as.integer(Sys.time())
 logExpsWTsox10		<- logExps[, setdiff( seq_along(colnames(logExps)), grep("(mitfa)", colnames(logExps)))]
 logExpsWTsox10Imp	<- imputeDropouts(logExpsWTsox10, randSeedWTsox10)
-cellsDescWTsox10	<- cellsQC[, setdiff( seq_along(colnames(cellsQC)), grep("(mitfa)", colnames(cellsQC)))]
+
+logExpsWTsox10Imp	<- apply( logExpsWTsox10Imp, c(1,2), function(x) if(x>noiseTol) x else 0)
+logExpsWTsox10Imp	<- logExpsWTsox10Imp[, which( apply( logExpsWTsox10Imp, 2, sum) >0)]
+cellsWTsox10Imp	<- cellsQC[ , colnames(logExpsWTsox10Imp)]
 
 cat( file = file.path( WT_Sox10Dir, "ImputeSeedWTsox10.txt"), randSeedWTsox10)
 write.table( logExpsWTsox10,   file = file.path( WT_Sox10Dir, "logExpTableDedupQC.csv"), sep = "\t")
 write.table( logExpsWTsox10Imp,   file = file.path( WT_Sox10Dir, "logExpTableDedupQCimp.csv"), sep = "\t")
-write.table( cellsDescWTsox10, file = file.path( WT_Sox10Dir, "cellDescriptionsDedupQC.csv"), sep = "\t")
+write.table( cellsWTsox10Imp, file = file.path( WT_Sox10Dir, "cellDescriptionsDedupQC.csv"), sep = "\t")
 

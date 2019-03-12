@@ -21,7 +21,8 @@ resolDir	<- file.path( geneSpacePlotDir, paste0( "resol_", ipmc@calc.params[tail
 dir.create( resolDir, showWarnings = FALSE)
 
 coordsMD	<- as.matrix( t(ipmc@data))
-#these are initial coordinates
+coordsMD	<- coordsMD + jitter(coordsMD)
+#these are initial coordinates, jitterred to avoid singular values
 
 source("R/createSlingShotObject.r")
 ipmcSling 	<- createSlingShotObject( coordsMD, ipmc)
