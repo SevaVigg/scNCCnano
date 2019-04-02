@@ -1,4 +1,4 @@
-setClusterColors <- function( clustType){
+setClusterColors <- function( seuratObj){
 
 if(!require("colorspace")){
 install.packages("colorspace")
@@ -6,16 +6,18 @@ library(colorspace)}
 
 #This snippet sets a color code for clusters used in TSNEPlot
 
-nClust		<- length( clustType)
+nClust		<- length( levels(seuratObj@ident))
 
 clColors	<- integer(nClust)
-names(clColors) <- names( clustType)
-clColors[grep("[0-9][0-9]*", names(clustType))] <- qualitative_hcl( nClust-3, "Dynamic", alpha = 1)
+names(clColors) <- levels( seuratObj@ident)
+unassignedColors	<- grep("[0-9][0-9]*", names(clColors))
+
+clColors[unassignedColors] <- sequential_hcl(n = length(unassignedColors), h1 = 250, h2 = 90, c1 = 40, c2 = 55, l1 = 33, l2 = 98, p1 = .5, p2 = 1.0)
 
 
 clColors[ "I" ] 	<- "cyan"
 clColors[ "M" ]   	<- "black"
-clColors[ "Tl" ]  	<- "red"
+clColors[ "E" ]  	<- "red"
 
 names( clColors) <- NULL
 return(clColors)

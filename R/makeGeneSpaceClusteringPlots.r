@@ -1,6 +1,7 @@
-#Clustering in the initial gene space reduction
+#Clustering in the initial gene space reduction. 
+#Needs makeGeneSpacePlots.r to be run first
 
-clResolution	<- 0.8 
+clResolution	<- 2.2
 
 resDir		<- file.path(getwd(), "Res")
 
@@ -19,9 +20,9 @@ dir.create( resolDir, showWarnings = FALSE)
 clustSeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( resolDir, "clustSeed.txt"), clustSeed, "\n")
 
-ipmc	<- BuildSNN( ipmc, genes.use = rownames(ipmc@data), k.param = 10, prune.SNN = 0.15)
+ipmc	<- BuildSNN( ipmc, genes.use = rownames(ipmc@data), k.param = 20, prune.SNN = 0)
 ipmc 	<- FindClusters( ipmc, reuse.SNN = TRUE, resolution = clResolution, random.seed = clustSeed)
-#ipmc	<- ValidateClusters( ipmc, top.genes = 7, pc.use = NULL, acc.cutoff = 0.005, min.connectivity = 0.05, verbose = TRUE)
+ipmc	<- ValidateClusters( ipmc, top.genes = 7, pc.use = NULL, acc.cutoff = 0.005, min.connectivity = 0.05, verbose = TRUE)
 
 clTypes <- getClusterTypes(ipmc)
 levels(ipmc@ident) <- names(clTypes)
@@ -35,17 +36,24 @@ clTypes <- getClusterTypes(ipmc)
 levels(ipmc@ident) <- names(clTypes)
 
 #End construct TSNEPlot for clustered data
-png( file.path( resolDir, "TSNEClusters_GeneSpace.png"))
-	TSNEPlot( ipmc, colors.use = setClusterColors( clTypes))
+png( file.path( geneSpacePlotDir, "TSNEClustersGeneSpace.png"))
+	TSNEPlot( ipmc, colors.use = setClusterColors( ipmc))
 dev.off()
+
+png( file.path( geneSpacePlotDir, "UMAPClustersGeneSpace.png"))
+	DimPlot(object = ipmc, reduction.use = 'umap', pt.size = 1, cols.use = setClusterColors( ipmc))
+dev.off()
+
 
 #make DotPlot
 
 #remove values close to zero (to calculate radii)
 noiseTol	<- log2(19)
-ipmc@data	<- apply( ipmc@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
-png( file.path( resolDir, "DotPlot_GeneSpace.png"))
-	DotPlot(ipmc, genes.plot = rownames(ipmc@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
+ipmcDenoised	<- ipmc
+ipmcDenoised@data <- apply( ipmcDenoised@data, c(1,2), function(x) if(x>noiseTol) x else 0)
+
+png( file.path( geneSpacePlotDir, "DotPlotClustersGeneSpace.png"), width = 800, height = 600)
+	DotPlot(ipmcDenoised, genes.plot = rownames(ipmcDenoised@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
 dev.off()
 

@@ -34,7 +34,17 @@ ipmcSling 	<- createSlingShotObject( coordsMD, ipmc)
 
 source("R/plot2DallLineages.r")
 
-png( file.path( resolDir, paste0("clustersLineages_c", comps, "_res", clResolution, ".png")))
-plot2DallLineages( ipmcSling, ipmc)
+png( file.path( resolDir, paste0("TSNE_ClusterLineages", comps, "_res", clResolution, ".png")))
+plot2DallLineages( ipmcSling, ipmc, "tsne")
 dev.off() 
+
+png( file.path( resolDir, paste0("UMAP_ClusterLineages", comps, "_res", clResolution, ".png")))
+plot2DallLineages( ipmcSling, ipmc, "umap")
+dev.off() 
+
+
+png( file.path( resolDir, "clustersLineagesUMAP.png"))
+plot2DallLineages( ipmcSling, ipmc, "umap")
+dev.off() 
+
 }

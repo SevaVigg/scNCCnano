@@ -21,7 +21,7 @@ if (length(unique(c(cl_IP, cl_MC, cl_tail))) < 3) {cat( "Some reference clusters
 names( clusterTypes)		<- levels( clFactor)
 names( clusterTypes)[ which( names(cl_IP) == levels(clFactor))]		<- "I"
 names( clusterTypes)[ which( names(cl_MC) == levels(clFactor))]		<- "M"
-names( clusterTypes)[ which( names(cl_tail) == levels(clFactor))]	<- "Tl"
+names( clusterTypes)[ which( names(cl_tail) == levels(clFactor))]	<- "E"
 
 attr(clusterTypes, which = "success") <- TRUE
 

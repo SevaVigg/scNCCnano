@@ -1,3 +1,4 @@
+#This script removes "non-interesting" genes from the dataset
 #Preparing clean  data for WT, WTandSox10, WTandAllmutants
 #This script is the next in the pipeline after the qualityControl.r
 #this script also imputes for dropouts
@@ -17,7 +18,7 @@ allGenes	<- rownames(genesQC)
 logExps 	<- log2(1+genesQC)
 
 #remove genes with too low values
-genesToSubset	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a")
+genesToSubset	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
 logExps		<- logExps[ !(rownames(logExps) %in% genesToSubset), ]
 
 allCellsDir 	<- file.path( scTablesDir, "allCells")
