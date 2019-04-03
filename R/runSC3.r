@@ -1,24 +1,19 @@
-#This is a minimal version of seurat preparing
+#This is a minimal version of SingleCellExperiment preparing
 #it requires scTables prepared by makeScTables.r
 #this script also sets up one of the cell sets from "allCells", "WT", "WT_Sox10" )
 
-if (!require("Seurat")){
-BiocManager::install("Seurat")
-library(Seurat)}
+if (!require("SC3")){
+BiocManager::install("SC3")
+library(SC3)}
 
-if (!require("methods")){
-BiocManager::install("methods")
-library(methods)}
-
-if(!require("e1071")){
-  install.packages("e1071")
-}
-
-
-experimentType	<- "WT"	# may be ("allCells", "WT", and "WT_Sox10")	 
+if (!require("SingleCellExperiment"))
+BiocManager::install("SingleCellExperiment")
+library(SingleCellExperiment)
 
 resDir		<- file.path(getwd(), "Res")
 scTablesDir	<- file.path( resDir, "scTables")
+
+experimentType	<- "WT"	# may be ("allCells", "WT", and "WT_Sox10")	
 
 dataDir		<- file.path( scTablesDir, experimentType)	#this is the data dir showing which source file is to use
 logExps		<- read.table( file = file.path( dataDir, "logExpTableDedupQCimp.csv"  ), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
@@ -36,21 +31,12 @@ celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "general") return( x[
 
 #seurat scales the data by mean and sd. Let us scale the data with 
 
-ipmc    	<- CreateSeuratObject( raw.data = as.matrix(logExps))
-ipmc@project.name <- experimentType
-ipmc    	<- AddMetaData( object = ipmc, t(Cells), col.name = rownames(Cells) )
+ipmc_sce    	<- SingleCellExperiment(
+    			assays = list(
+        			counts = as.matrix(geneExpsImp),
+        			logcounts = as.matrix(logExps)
+    				)) 
+rowData(ipmc_sce)$feature_symbol <- rownames(ipmc_sce)
 
-newTypeDF	<- data.frame( newType = character(ncol(Cells)), row.names = colnames(Cells) )
-cellNamesDF	<- data.frame( cellNames = colnames(Cells), row.names = colnames(Cells))
-
-ipmc		<- AddMetaData( object = ipmc, newTypeDF, col.name = "newType")
-ipmc		<- AddMetaData( object = ipmc, cellNamesDF, col.name = "cellNames")
-
-ipmc@ident		<- as.factor( celltype)
-
-ipmc			<- ScaleData(ipmc, do.scale = TRUE, do.center = TRUE)
-ipmc			<- StashIdent(object = ipmc, save.name = "originalCellTypes")
-
-
-
+ipmc_sce 	<- sc3(ipmc_sce, ks = 5:15, gene_filter = FALSE, biology = TRUE)
 

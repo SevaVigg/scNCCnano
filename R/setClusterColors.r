@@ -12,7 +12,7 @@ clColors	<- integer(nClust)
 names(clColors) <- levels( seuratObj@ident)
 unassignedColors	<- grep("[0-9][0-9]*", names(clColors))
 
-clColors[unassignedColors] <- sequential_hcl(n = length(unassignedColors), h1 = 250, h2 = 90, c1 = 40, c2 = 55, l1 = 33, l2 = 98, p1 = .5, p2 = 1.0)
+clColors[unassignedColors] <- sequential_hcl(n = length(unassignedColors), h1 = 250, h2 = 90, c1 = 40, c2 = 55, l1 = 50, l2 = 90, p1 = .5, p2 = 1.3)
 
 
 clColors[ "I" ] 	<- "cyan"
