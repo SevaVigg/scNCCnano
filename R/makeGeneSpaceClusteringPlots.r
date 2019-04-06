@@ -57,3 +57,5 @@ png( file.path( geneSpacePlotDir, "DotPlotClustersGeneSpace.png"), width = 800, 
 	DotPlot(ipmcDenoised, genes.plot = rownames(ipmcDenoised@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
 dev.off()
 
+
+

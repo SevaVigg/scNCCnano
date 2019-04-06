@@ -17,7 +17,8 @@ dir.create( experimentTypeDir, showWarnings = FALSE)
 geneSpacePlotDir <- file.path( experimentTypeDir, "geneSpace")
 dir.create( geneSpacePlotDir, showWarnings = FALSE)
 
-resolDir	<- file.path( geneSpacePlotDir, paste0( "resol_", ipmc@calc.params[tail(grep("FindClusters", names(ipmc@calc.params), value = TRUE),1)][[1]]$resolution))
+#resolDir	<- file.path( geneSpacePlotDir, paste0( "resol_", ipmc@calc.params[tail(grep("FindClusters", names(ipmc@calc.params), value = TRUE),1)][[1]]$resolution))
+resolDir	<- geneSpacePlotDir
 dir.create( resolDir, showWarnings = FALSE)
 
 coordsMD	<- as.matrix( t(ipmc@data))

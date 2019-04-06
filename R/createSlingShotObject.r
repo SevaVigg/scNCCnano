@@ -8,7 +8,7 @@ if(!require(slingshot)){
 }
 
 clTypes		<- getClusterTypes( seuratObj)
-slingShotObj 	<- slingshot(coordMatrixMD, seuratObj@ident, start.clus = clTypes["Tl"],end.clus=c(clTypes["I"], clTypes["M"]))
+slingShotObj 	<- slingshot(coordMatrixMD, seuratObj@ident, start.clus = clTypes["E"],end.clus=c(clTypes["I"], clTypes["M"]))
 
 }
 

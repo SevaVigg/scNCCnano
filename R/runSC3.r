@@ -13,7 +13,7 @@ library(SingleCellExperiment)
 resDir		<- file.path(getwd(), "Res")
 scTablesDir	<- file.path( resDir, "scTables")
 
-experimentType	<- "WT"	# may be ("allCells", "WT", and "WT_Sox10")	
+experimentType	<- "allCells"	# may be ("allCells", "WT", and "WT_Sox10")	
 
 dataDir		<- file.path( scTablesDir, experimentType)	#this is the data dir showing which source file is to use
 logExps		<- read.table( file = file.path( dataDir, "logExpTableDedupQCimp.csv"  ), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
@@ -38,5 +38,4 @@ ipmc_sce    	<- SingleCellExperiment(
     				)) 
 rowData(ipmc_sce)$feature_symbol <- rownames(ipmc_sce)
 
-ipmc_sce 	<- sc3(ipmc_sce, ks = 5:15, gene_filter = FALSE, biology = TRUE)
-
+ipmc_sce 	<- sc3(ipmc_sce, ks = 5:20, gene_filter = FALSE, biology = TRUE)
