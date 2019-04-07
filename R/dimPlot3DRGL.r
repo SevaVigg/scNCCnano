@@ -1,4 +1,4 @@
-# This script requires seurat object prepared by Seurat with three tSNE axes
+# This script requires seurat object prepared by Seurat with three axes obtained by dimernsion reduction
 
 dimPlot3DRGL	<- function( seuratObj, dimRed){
 

@@ -39,3 +39,4 @@ ipmc_sce    	<- SingleCellExperiment(
 rowData(ipmc_sce)$feature_symbol <- rownames(ipmc_sce)
 
 ipmc_sce 	<- sc3(ipmc_sce, ks = 5:20, gene_filter = FALSE, biology = TRUE)
+

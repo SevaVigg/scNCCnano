@@ -9,7 +9,7 @@ source("R/getLineageCoords.r")
 
 LineageTree	<- getLineageCoords( seuratObj, slingShotObj, dimRed)  
  
-dimPlot3DRGL( ipmc_pca, "umap")
+dimPlot3DRGL( seuratObj, "umap")
 sapply(LineageTree, function(x) {rgl.linestrips(t(x)); rgl.points(t(x), size = 4)})
 }
 
