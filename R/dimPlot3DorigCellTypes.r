@@ -1,10 +1,11 @@
 # This script requires seurat object prepared by Seurat with three axes obtained by dimernsion reduction
 
-dimPlot3DRGL	<- function( seuratObj, dimRed){
+dimPlot3DorigCellTypes	<- function( seuratObj, dimRed){
 
 require("Seurat")
 require("rgl")
 source("R/setClusterColors.r")
+source("R/setCellTypeColors.r")
 
 open3d()
 bg3d("darkblue")
@@ -14,14 +15,7 @@ y <- seuratObj@dr[[dimRed]]@cell.embeddings[,2]
 z <- seuratObj@dr[[dimRed]]@cell.embeddings[,3]
 
 
-cellColors <- setClusterColors( seuratObj)[ seuratObj@ident]
-names(cellColors) <- levels( seuratObj@ident)
-
-cellColors[ "I" ] 	<- "cyan"
-cellColors[ "M" ]   	<- "black"
-cellColors[ "E" ]  	<- "red"
-
-names(cellColors) <- NULL
+cellColors <- setCellTypeColors( seuratObj)[ seuratObj@ident]
 
 rgl.points(x,y,z, color = cellColors)
 }

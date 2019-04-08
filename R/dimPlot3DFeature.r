@@ -1,18 +1,13 @@
 # This script requires seurat object prepared by Seurat with three axes obtained by dimernsion reduction
 
-featurePlot3DRGL	<- function( seuratObj, gene, dimRed){
-
-if(!require("colorspace")){
-install.packages("colorspace")
-library(colorspace)}
+dimPlot3DFeature	<- function( seuratObj, gene, dimRed){
 
 require("Seurat")
 require("rgl")
-require("colorspace")
 source("R/setClusterColors.r")
 
-#rgl.open()
 open3d()
+
 bg3d("darkblue")
 title3d( main = gene, color = "white")
 rgl.bringtotop()
@@ -31,7 +26,6 @@ levels(cellColors) <- c(levels(cellColors), "cyan", "black", "red")
 
 rgl.points(x,y,z, color = cellColors)
 }
-
 
 
 

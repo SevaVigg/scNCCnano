@@ -5,10 +5,11 @@ require(SingleCellExperiment)
 
 source("R/getClusterTypes.r")
 source("R/setClusterColors.r")
-source("R/calcTSNEGeneSpace.r")
-source("R/calcUMAPGeneSpace.r")
+source("R/calcTSNE_PCASpace.r")
+source("R/calcUMAP_PCASpace.r")
 source("R/setCellTypeColors.r")
 source("R/plot3DallLineages.r")
+source("R/plot2DallLineages.r")
 
 
 SC3Clusters <- colData(ipmc_sce)[, grep("clusters", colnames(colData(ipmc_sce)))]
@@ -41,12 +42,17 @@ dir.create(plotDir, showWarnings = FALSE)
 experimentTypeDir <- file.path(plotDir, ipmc@project.name)
 dir.create( experimentTypeDir, showWarnings = FALSE)
 
-SC3ClustNumDir <- file.path( experimentTypeDir, "geneSpace")
-dir.create( SC3ClustNumDir, showWarnings = FALSE)
+pcaPlotDir 	<- file.path( experimentTypeDir, "PCAdimReduction")
+dir.create( pcaPlotDir, showWarnings = FALSE)
 
-SC3ClustNum	<- 14
+comps		<- 6
 
-SC3ClustDir 	<- file.path( SC3ClustNumDir, "SC3clsuts")
+compsDir 	<- file.path( pcaPlotDir, paste0("comps", comps))
+dir.create(compsDir, showWarnings = FALSE)
+
+SC3ClustNum	<- 11
+
+SC3ClustDir 	<- file.path( compsDir, "SC3clsuts")
 dir.create( SC3ClustDir, showWarnings = FALSE)
 
 SC3ClustNumDir	<- file.path( SC3ClustDir, paste0( "Clust_", SC3ClustNum))
@@ -58,24 +64,26 @@ names(ipmc@ident) 	<- rownames(SC3Clusters)
 clTypes 		<- getClusterTypes(ipmc)
 levels(ipmc@ident) 	<- names(clTypes)
 
-ipmc <- StashIdent( ipmc, save.name = paste0("SC3_", SC3ClustNum, "_clusters"))
+ipmc 			<- StashIdent( ipmc, save.name = paste0("SC3_", SC3ClustNum, "_clusters"))
 
 ipmc 	<- BuildClusterTree( ipmc, genes.use = rownames(ipmc@data), do.plot = FALSE, do.reorder = TRUE) #This functions renames clusters, so we need to assign cluster types again
 
-png( file.path( SC3ClustNumDir, "ClusterTreeGeneSpace.png"))
+png( file.path( SC3ClustNumDir, "ClusterTreePCASpace.png"))
 	PlotClusterTree( ipmc)
 dev.off()
 
 clTypes <- getClusterTypes(ipmc)
 levels(ipmc@ident) <- names(clTypes)
 
+ipmc	 	<- RunPCA(ipmc, pc.genes = rownames( ipmc@data), pcs.compute = comps, do.print = FALSE, fastpath = FALSE)
+
 TSNESeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( SC3ClustNumDir, "TSNESeed.txt"), TSNESeed, "\n")
-ipmc <- calcTSNEGeneSpace( ipmc, TSNESeed)
+ipmc 	<- calcTSNE_PCASpace( ipmc, comps, TSNESeed)
 
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( SC3ClustNumDir, "UMAPSeed2d.txt"), TSNESeed, "\n")
-ipmc <- calcUMAPGeneSpace( ipmc, UMAPSeed, 2)
+ipmc <- calcUMAP_PCASpace( ipmc, comps, UMAPSeed, 2)
 
 png( file.path( SC3ClustNumDir, "UMAPSC3ClusterTypes.png"))
 	DimPlot(object = ipmc, reduction.use = 'umap', pt.size = 1, cols.use = setClusterColors( ipmc))
@@ -106,14 +114,14 @@ noiseTol		<- log2(19)
 ipmcDenoise		<- ipmc
 ipmcDenoise@data	<- apply( ipmcDenoise@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
-png( file.path( SC3ClustNumDir, "DotPlotGeneSpace.png"), width = 800, height = 600)
+png( file.path( SC3ClustNumDir, "DotPlotPCASpace.png"), width = 800, height = 600)
 	DotPlot(ipmcDenoise, genes.plot = rownames(ipmcDenoise@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
 dev.off()
 
 #make Lineages
 
-coordsMD	<- as.matrix( t(ipmc@data))
-coordsMD	<- coordsMD + jitter(coordsMD)
+coordsMD	<- as.matrix( ipmc@dr$umap@cell.embeddings)
+#coordsMD	<- coordsMD + jitter(coordsMD)
 #these are initial coordinates, jitterred to avoid singular values
 
 source("R/createSlingShotObject.r")
@@ -134,8 +142,9 @@ dev.off()
 
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( SC3ClustNumDir, "UMAPSeed3d.txt"), TSNESeed, "\n")
-ipmc3D <- calcUMAPGeneSpace( ipmc, UMAPSeed, 3)
+ipmc3D <- calcUMAP_PCASpace( ipmc, comps, UMAPSeed, 3)
 
+coordsMD	<- as.matrix( ipmc3D@dr$umap@cell.embeddings)
 ipmcSling3D 	<- createSlingShotObject( coordsMD, ipmc3D)
 plot3DallLineages( ipmcSling3D, ipmc3D, "umap") 
 
@@ -148,11 +157,9 @@ noiseTol		<- log2(19)
 ipmcDenoise		<- ipmc
 ipmcDenoise@data	<- apply( ipmcDenoise@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
-png( file.path( SC3ClustNumDir, "DotPlotSC3ClustGeneSpace.png"), width = 800, height = 600)
+png( file.path( SC3ClustNumDir, "DotPlotSC3ClustPCASpace.png"), width = 800, height = 600)
 	DotPlot(ipmcDenoise, genes.plot = rownames(ipmcDenoise@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
 dev.off()
-
-
 
 ipmc <- SetAllIdent( ipmc, id = 'originalCellTypes')
 png( file.path( SC3ClustNumDir, "TSNEInitCellTypes.png"))
@@ -172,7 +179,7 @@ noiseTol		<- log2(19)
 ipmcDenoise		<- ipmc
 ipmcDenoise@data	<- apply( ipmcDenoise@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
-png( file.path( SC3ClustNumDir, "DotPlotGeneSpace.png"), width = 800, height = 600)
+png( file.path( SC3ClustNumDir, "DotPlotPCASpace.png"), width = 800, height = 600)
 	DotPlot(ipmcDenoise, genes.plot = rownames(ipmcDenoise@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
 dev.off()
 
