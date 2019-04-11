@@ -25,7 +25,7 @@ dir.create( experimentTypeDir, showWarnings = FALSE)
 pcaPlotDir 	<- file.path( experimentTypeDir, "PCAdimReduction")
 dir.create( pcaPlotDir, showWarnings = FALSE)
 
-comps		<- 20
+comps		<- 16
 compsCorr	<- if (comps == 45) comps-1 else comps
 compsDir 	<- file.path( pcaPlotDir, paste0("comps", comps))
 dir.create(compsDir, showWarnings = FALSE)

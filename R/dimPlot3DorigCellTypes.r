@@ -14,6 +14,7 @@ x <- seuratObj@dr[[dimRed]]@cell.embeddings[,1]
 y <- seuratObj@dr[[dimRed]]@cell.embeddings[,2]
 z <- seuratObj@dr[[dimRed]]@cell.embeddings[,3]
 
+seuratObj <- SetAllIdent( seuratObj, id = "originalCellTypes")
 
 cellColors <- setCellTypeColors( seuratObj)[ seuratObj@ident]
 

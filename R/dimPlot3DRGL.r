@@ -15,13 +15,6 @@ z <- seuratObj@dr[[dimRed]]@cell.embeddings[,3]
 
 
 cellColors <- setClusterColors( seuratObj)[ seuratObj@ident]
-names(cellColors) <- levels( seuratObj@ident)
-
-cellColors[ "I" ] 	<- "cyan"
-cellColors[ "M" ]   	<- "black"
-cellColors[ "E" ]  	<- "red"
-
-names(cellColors) <- NULL
 
 rgl.points(x,y,z, color = cellColors)
 }
