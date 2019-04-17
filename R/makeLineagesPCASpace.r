@@ -24,13 +24,13 @@ dir.create(compsDir, showWarnings = FALSE)
 resolDir	<- file.path( compsDir, paste0( "resol_", clResolution))
 dir.create( resolDir, showWarnings = FALSE)
 
-coordsMD	<- as.matrix(ipmc@dr$pca@cell.embeddings)
+#coordsMD	<- as.matrix(ipmc@dr$pca@cell.embeddings)
 #these are initial coordinates
 
-coordsMD	<- coordsMD + jitter(coordsMD)
+#coordsMD	<- coordsMD + jitter(coordsMD)
 
 source("R/createSlingShotObject.r")
-ipmcSling 	<- createSlingShotObject( coordsMD, ipmc)
+ipmcSling 	<- createSlingShotObject( ipmc, "pca")
 
 source("R/plot2DallLineages.r")
 

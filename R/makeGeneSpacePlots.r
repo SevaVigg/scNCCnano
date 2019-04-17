@@ -31,7 +31,7 @@ ipmc <- calcTSNEGeneSpace( ipmc, TSNESeed)
 
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( geneSpacePlotDir, "UMAPSeed.txt"), TSNESeed, "\n")
-ipmc <- calcUMAPGeneSpace( ipmc, UMAPSeed)
+ipmc <- calcUMAPGeneSpace( ipmc, UMAPSeed, 3)
 
 ipmc <- SetAllIdent( ipmc, id = 'originalCellTypes')
 png( file.path( geneSpacePlotDir, "TSNEInitCellTypes.png"))

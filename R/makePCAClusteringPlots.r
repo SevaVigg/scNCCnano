@@ -28,8 +28,8 @@ dir.create( resolDir, showWarnings = FALSE)
 clustSeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( resolDir, "clustSeed.txt"), clustSeed, "\n")
 
-seuratObj	<- BuildSNN( seuratObj, dims.use = 1:comps, prune.SNN = 0.15)
-seuratObj 	<- FindClusters( seuratObj, reuse.SNN = TRUE, resolution = clResolution, random.seed = clustSeed, algorithm = 2)
+seuratObj	<- BuildSNN( seuratObj, dims.use = 1:comps, prune.SNN = 1/15)
+seuratObj 	<- FindClusters( seuratObj, reuse.SNN = TRUE, resolution = clResolution, random.seed = clustSeed)
 seuratObj	<- ValidateClusters( seuratObj, top.genes = 7, pc.use = 1:comps, acc.cutoff = 0.9, min.connectivity = 0.05, verbose = TRUE)
 
 clTypes <- getClusterTypes(seuratObj)
@@ -55,13 +55,15 @@ dev.off()
 makeLineagesPCASpace( seuratObj, comps, clResolution)
 
 #remove values, that are too close to zero
+
 noiseTol	<- log2(19)
-seuratObj@data	<- apply( seuratObj@data, c(1,2), function(x) if(x>noiseTol) x else 0)
+denoiseObj	<- seuratObj
+denoiseObj@data	<- apply( denoiseObj@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
 png( file.path( resolDir, paste0("DotPlotPCASpace_c", comps, "_res", clResolution,".png")), width = 800, height = 600)
-	DotPlot(seuratObj, genes.plot = rownames(seuratObj@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
+	DotPlot(denoiseObj, genes.plot = rownames( denoiseObj@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
 dev.off()
 
-
+return( seuratObj)
 }
 

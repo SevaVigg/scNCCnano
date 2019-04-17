@@ -25,7 +25,7 @@ dir.create( experimentTypeDir, showWarnings = FALSE)
 pcaPlotDir 	<- file.path( experimentTypeDir, "PCAdimReduction")
 dir.create( pcaPlotDir, showWarnings = FALSE)
 
-comps		<- 16
+comps		<- 17
 compsCorr	<- if (comps == 45) comps-1 else comps
 compsDir 	<- file.path( pcaPlotDir, paste0("comps", comps))
 dir.create(compsDir, showWarnings = FALSE)
@@ -49,7 +49,7 @@ dev.off()
 
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( compsDir, "UMAPSeed.txt"), UMAPSeed, "\n")
-ipmc <- calcUMAP_PCASpace( ipmc, compsCorr, TSNESeed)
+ipmc <- calcUMAP_PCASpace( ipmc, compsCorr, TSNESeed, 2)
 png( file.path( compsDir, "UMAP_PCA_initialCellTypes.png"))
 	DimPlot( ipmc, reduction.use = "umap", cols.use = setCellTypeColors( ipmc))
 dev.off()
