@@ -1,4 +1,4 @@
-makeUMAPClusteringPlots 	<- function( seuratObj, umapDim, clResolution){
+#makeUMAPClusteringPlots 	<- function( seuratObj, umapDim, clResolution){
 
 source("R/setClusterColors.r")
 source("R/setCellTypeColors.r")
@@ -24,12 +24,14 @@ dir.create(compsDir, showWarnings = FALSE)
 umapDir 	<- file.path( compsDir, "UMAPdimRed")
 dir.create( umapDir, showWarnings = FALSE)
 
-#umapDim		<- 17
+umapDim		<- 17
 
 umapDimDir	<- file.path( umapDir, paste0("UMAP_", umapDim))
 dir.create( umapDimDir, showWarnings = FALSE)
+
 #Clustering with dimenstion reduction
-#clResolution	<- 1.2
+
+clResolution	<- 0.2
 
 resolDir	<- file.path( umapDimDir, paste0( "resol_", clResolution))
 dir.create( resolDir, showWarnings = FALSE)
@@ -63,7 +65,7 @@ levels(seuratObj@ident) <- names(clTypes)
 #	TSNEPlot( seuratObj, colors.use = setClusterColors( seuratObj))
 #dev.off()
 seuratSling	<- createSlingShotObject( seuratObj, "umap")
-
+ 
 seuratObj2D	<- calcUMAP_PCASpace( seuratObj, PCAcomps, umapDimSeed, 2) 
 
 png( file.path( resolDir, "UMAPClustersPCASpace.png"))
@@ -93,5 +95,5 @@ png( file.path( resolDir, paste0("DotPlotPCASpace_c", comps, "_res", clResolutio
 dev.off()
 
 return( seuratObj)
-}
+#}
 
