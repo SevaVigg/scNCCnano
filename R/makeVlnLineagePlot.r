@@ -1,4 +1,4 @@
-makeVlnPlot <- function( seuratObj, gene){
+makeVlnLineagePlot <- function( seuratObj, gene){
 
 source("R/setClusterColors.r")
 vln <- VlnPlot(seuratObj, gene, do.return = TRUE)

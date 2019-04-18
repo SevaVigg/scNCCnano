@@ -1,4 +1,7 @@
 #makeUMAPClusteringPlots 	<- function( seuratObj, umapDim, clResolution){
+seuratObj <- ipmc
+umapDim		<- 17
+clResolution	<- 0.2
 
 source("R/setClusterColors.r")
 source("R/setCellTypeColors.r")
@@ -24,14 +27,13 @@ dir.create(compsDir, showWarnings = FALSE)
 umapDir 	<- file.path( compsDir, "UMAPdimRed")
 dir.create( umapDir, showWarnings = FALSE)
 
-umapDim		<- 17
+
 
 umapDimDir	<- file.path( umapDir, paste0("UMAP_", umapDim))
 dir.create( umapDimDir, showWarnings = FALSE)
 
 #Clustering with dimenstion reduction
 
-clResolution	<- 0.2
 
 resolDir	<- file.path( umapDimDir, paste0( "resol_", clResolution))
 dir.create( resolDir, showWarnings = FALSE)
@@ -53,12 +55,18 @@ clTypes <- getClusterTypes(seuratObj)
 levels(seuratObj@ident) <- names(clTypes)
 seuratObj 	<- BuildClusterTree( seuratObj, pcs.use = 1 : PCAcomps, do.plot = FALSE, do.reorder = TRUE) #This functions renames clusters, so we need to assign cluster types again
 
+
+
 png( file.path( resolDir, "ClusterTreePCASpace.png"))
 	PlotClusterTree( seuratObj)
 dev.off()
 
+
+
 clTypes <- getClusterTypes(seuratObj)
 levels(seuratObj@ident) <- names(clTypes)
+
+seuratObj <- StashIdent( seuratObj, save.name = "cellClusters")
 
 #TSNEPlot for clustered data
 #png( file.path( resolDir, paste0("TSNEClustersPCASpace_c", comps, "_res", clResolution, ".png")))
@@ -82,6 +90,7 @@ png( file.path( resolDir, "UmapInitCellTypesPCASpace.png"))
 	pl <- DimPlot(object = seuratObj2D, reduction.use = "umap", pt.size = 2, cols.use = setCellTypeColors( seuratObj2D), do.return = TRUE, vector.friendly = TRUE)
 	plot(pl) + labs( title = "InitialCellTypes")
 dev.off()
+
 
 
 #remove values, that are too close to zero
