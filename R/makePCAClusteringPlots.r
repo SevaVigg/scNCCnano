@@ -1,4 +1,4 @@
-makePCAClusteringPlots 	<- function( seuratObj, clResolution){
+#makePCAClusteringPlots 	<- function( seuratObj, clResolution){
 
 source("R/setClusterColors.r")
 source("R/makeLineagesPCASpace.r")
@@ -65,5 +65,5 @@ png( file.path( resolDir, paste0("DotPlotPCASpace_c", comps, "_res", clResolutio
 dev.off()
 
 return( seuratObj)
-}
+#}
 

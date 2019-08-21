@@ -15,7 +15,7 @@ if(!require("e1071")){
 }
 
 
-experimentType	<- "allCells"	# may be ("allCells", "WT", and "WT_Sox10")	 
+experimentType	<- "WT"	# may be ("allCells", "WT", and "WT_Sox10")	 
 
 resDir		<- file.path(getwd(), "Res")
 scTablesDir	<- file.path( resDir, "scTables")

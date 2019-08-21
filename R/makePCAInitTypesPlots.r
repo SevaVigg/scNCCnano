@@ -3,7 +3,7 @@
 #it requires to run first seuratNorm.r, which among others sets the appropriate experimentType ( allCells, WT, WT_sox10)
 #in ipmc@project.name
 
-#makePCAInitTypesPlots <- function(ipmc, comps){
+makePCAInitTypesPlots <- function(ipmc, comps){
 
 source("R/getClusterTypes.r")
 source("R/calcTSNE_PCASpace.r")
@@ -25,7 +25,7 @@ dir.create( experimentTypeDir, showWarnings = FALSE)
 pcaPlotDir 	<- file.path( experimentTypeDir, "PCAdimReduction")
 dir.create( pcaPlotDir, showWarnings = FALSE)
 
-comps		<- 17
+#comps		<- 17
 compsCorr	<- if (comps == 45) comps-1 else comps
 compsDir 	<- file.path( pcaPlotDir, paste0("comps", comps))
 dir.create(compsDir, showWarnings = FALSE)
@@ -69,7 +69,8 @@ dev.off()
 #source("R/makePCAClusteringPlots.r")
 #for (clResolution in seq(0.8)) {makePCAClusteringPlots( ipmc, clResolution)} 
 
-#}
+return(ipmc)
+}
 
 
 

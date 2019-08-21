@@ -1,7 +1,7 @@
 #makeUMAPClusteringPlots 	<- function( seuratObj, umapDim, clResolution){
 seuratObj <- ipmc
 umapDim		<- 17
-clResolution	<- 0.2
+clResolution	<- 0.6
 
 source("R/setClusterColors.r")
 source("R/setCellTypeColors.r")
@@ -61,8 +61,6 @@ png( file.path( resolDir, "ClusterTreePCASpace.png"))
 	PlotClusterTree( seuratObj)
 dev.off()
 
-
-
 clTypes <- getClusterTypes(seuratObj)
 levels(seuratObj@ident) <- names(clTypes)
 
@@ -72,7 +70,21 @@ seuratObj <- StashIdent( seuratObj, save.name = "cellClusters")
 #png( file.path( resolDir, paste0("TSNEClustersPCASpace_c", comps, "_res", clResolution, ".png")))
 #	TSNEPlot( seuratObj, colors.use = setClusterColors( seuratObj))
 #dev.off()
+
+
 seuratSling	<- createSlingShotObject( seuratObj, "umap")
+
+LinDir	<- file.path( resolDir, "LineagePlots")
+dir.create( LinDir, showWarnings = FALSE)
+
+for ( lineageID in seq_along( seuratSling@lineages)){
+	vlnLinDir <- file.path( LinDir, names( seuratSling@lineages[ lineageID]))
+	dir.create( vlnLinDir, showWarnings = FALSE)
+	for ( gene in rownames( seuratObj@data)){ 
+		png( file.path( vlnLinDir, paste0(gene, ".png")))
+			plotLineageVlns( seuratObj, seuratSling, gene, lineageID)
+		dev.off()
+	}}
  
 seuratObj2D	<- calcUMAP_PCASpace( seuratObj, PCAcomps, umapDimSeed, 2) 
 

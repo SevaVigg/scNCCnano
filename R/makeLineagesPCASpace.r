@@ -1,6 +1,7 @@
 #This snippet requires precomputed tSNE for ipmc object created with seuratNorm.r
 #It requires precomputed tSNE in PCA space with makePCADimRedPlots.r
-makeLineagesPCASpace <- function( ipmc, comps, clResolution){
+
+#makeLineagesPCASpace <- function( ipmc, comps, clResolution){
 
 if(!require(slingshot)){
   install.packages("slingshot")
@@ -47,4 +48,5 @@ png( file.path( resolDir, "clustersLineagesUMAP.png"))
 plot2DallLineages( ipmcSling, ipmc, "umap")
 dev.off() 
 
-}
+
+#}

@@ -12,12 +12,13 @@ tanyaGenes <- c("foxd3", "impdh1b",  "kita",     "ltk",      "mbpa", "mitfa", "m
                  "sox10", "sox9b", "tfec","tyrp1b",  "pax7b", "tfap2e", "tfap2a")
 
 source("R/getLineageCoords.r")
-LineageTree	<- getLineageCoords( seuratObj, slingShotObj, dimRed) 
-slingShotObj	<- getCurves(slingShotObj)
+
+#slingShotObj	<- getCurves(slingShotObj)
 prinCurveDF	<- slingPseudotime( slingShotObj)
-targetCurve	<- sort(prinCurveDF[ !is.na( prinCurveDF[ , LineageId]), LineageId])
-cellColors	<- setClusterColors( seuratObj)[ seuratObj@ident]
-names(cellColors) <- names(seuratObj@ident)
+curveWeightDF	<- slingCurveWeights( slingShotObj)
+prinCurve_F	<- prinCurveDF[ which(curveWeightDF[ ,LineageId] > 0.995) , LineageId]
+targetCurve	<- logExps[ tanyaGenes, names( sort( prinCurve_F))]
+clusterColors	<- setClusterColors( seuratObj)
 LineageType	<- tail(slingShotObj@lineages[LineageId][[1]],1)
 
 heatmapPlotDir 	<- file.path(resolDir, "HeatMaps")
@@ -26,10 +27,13 @@ dir.create(heatmapPlotDir, showWarnings = FALSE)
 curveClust 	<- seuratObj@ident[names( targetCurve)]
 curveDF 	<- data.frame( clust = curveClust)
 
+annotColors <- as.character(unique(clusterColors[curveDF$clust]))
+names(annotColors) <- as.character(unique(curveDF$clust))
+
 plot(0,0, main = paste0("Expression of ", LineageType, " lineage"))
 
-topbar		<- columnAnnotation( curveDF, 
-				    col = list( clust = cellColors(rownames(curveDF))), 
+topbar		<- columnAnnotation( curveDF,
+				    col = list(clust = annotColors), 
 				    height = unit(30, "points"),
 				    annotation_legend_param = list( nrow = 1)
 					)
@@ -41,7 +45,7 @@ hplot <- Heatmap( 	targetCurve,
 			row_names_gp = gpar(fontsize = 24), 
 			column_names_gp = gpar(fontsize = 10), 
 			bottom_annotation = topbar,
-			column_title = "Lineage_expression", 
+			column_title = paste0("Expression of ", LineageType, " lineage"), 
 			clustering_distance_rows = "euclidean", 
 			use_raster = TRUE, raster_device = "png", 
 			)
