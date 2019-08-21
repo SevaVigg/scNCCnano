@@ -21,16 +21,12 @@ targetCurve	<- logExps[ tanyaGenes, names( sort( prinCurve_F))]
 clusterColors	<- setClusterColors( seuratObj)
 LineageType	<- tail(slingShotObj@lineages[LineageId][[1]],1)
 
-heatmapPlotDir 	<- file.path(resolDir, "HeatMaps")
-dir.create(heatmapPlotDir, showWarnings = FALSE)
-
 curveClust 	<- seuratObj@ident[names( targetCurve)]
 curveDF 	<- data.frame( clust = curveClust)
 
 annotColors <- as.character(unique(clusterColors[curveDF$clust]))
 names(annotColors) <- as.character(unique(curveDF$clust))
 
-plot(0,0, main = paste0("Expression of ", LineageType, " lineage"))
 
 topbar		<- columnAnnotation( curveDF,
 				    col = list(clust = annotColors), 
