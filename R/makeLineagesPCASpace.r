@@ -48,12 +48,12 @@ dir.create(heatmapPlotDir, showWarnings = FALSE)
 
 source("R/getCurveHeatMap.r")
 
-png( file.path(heatmapPlotDir, "IPnew.png"), width = 800, height = 600)
+png( file.path(heatmapPlotDir, "IPnew_nc.png"), width = 800, height = 600)
 IP_id <- which(lapply( seuratObjSling@lineages, tail, 1) == "I")
 getCurveHeatMap( seuratObj, seuratObjSling, IP_id, 2)
 dev.off()
 
-png( file.path(heatmapPlotDir, "MCnew.png"), width = 800, height = 600)
+png( file.path(heatmapPlotDir, "MCnew_nc.png"), width = 800, height = 600)
 MC_id <- which(lapply( seuratObjSling@lineages, tail, 1) == "M")
 getCurveHeatMap( seuratObj, seuratObjSling, MC_id, 2)
 dev.off()

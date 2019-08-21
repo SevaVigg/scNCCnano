@@ -8,8 +8,12 @@ if(!require(ComplexHeatmap)){
 }
 
 
-tanyaGenes <- c("foxd3", "impdh1b",  "kita",     "ltk",      "mbpa", "mitfa", "mlphb", "oca2", "phox2b", "pnp4a", "silva", "slc24a5", "snail2",
-                 "sox10", "sox9b", "tfec","tyrp1b",  "pax7b", "tfap2e", "tfap2a")
+tanyaGenes <- c("sox10","sox9b","snail2","foxd3","phox2b",
+		"tfap2a", "tfap2e",
+		"impdh1b","kita","mbpa",
+		"mitfa","ltk","tfec",
+		"pax7b","pnp4a",
+		"tyrp1b","mlphb","oca2","silva","slc24a5")
 
 source("R/getLineageCoords.r")
 
@@ -36,7 +40,8 @@ topbar		<- columnAnnotation( curveDF,
 
 hplot <- Heatmap( 	targetCurve, 
 			name = "log2Exp", 
-			cluster_columns = FALSE, 
+			cluster_columns = FALSE,
+			cluster_rows = FALSE, 
 			show_column_names = FALSE, 
 			row_names_gp = gpar(fontsize = 24), 
 			column_names_gp = gpar(fontsize = 10), 
