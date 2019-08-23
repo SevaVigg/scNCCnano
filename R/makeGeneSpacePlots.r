@@ -43,8 +43,15 @@ png( file.path( geneSpacePlotDir, "UMAPInitCellTypes.png"))
 dev.off()
 
 
-#ipmc <- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE)
-#plotInitCellTypePCAs(ipmc, 6, geneSpacePlotDir)	#Plot PCA diagrams with cell colors, uses its own directorial structure
+ipmc <- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE)
+
+PCAPlotDirName <- file.path( plotDir, "PCAPlots")
+dir.create( PCAPlotDirName, showWarnings = FALSE)
+
+#png( file.path( PCAPlotDirName)
+#	plotInitCellTypePCAs( ipmc, 6)
+#dev.off() 
+#plotInitCellTypePCAs(ipmc, 6)	#Plot PCA diagrams with cell colors, uses its own directorial structure
 
 #remove values, that are too close to zero
 noiseTol		<- log2(19)

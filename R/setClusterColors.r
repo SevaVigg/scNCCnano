@@ -10,14 +10,15 @@ nClust		<- length( levels(seuratObj@ident))
 
 clColors	<- integer(nClust)
 names(clColors) <- levels( seuratObj@ident)
-unassignedColors	<- grep("[0-9][0-9]*", names(clColors))
 
-clColors[unassignedColors] <- sequential_hcl(n = length(unassignedColors), h1 = 250, h2 = 90, c1 = 40, c2 = 55, l1 = 50, l2 = 90, p1 = .5, p2 = 1.3)
+clColors[ grep( "I", names(clColors))]	<- "cyan"
+clColors[ grep( "E", names(clColors))]	<- "red"
+clColors[ grep( "M", names(clColors))]	<- "black"
+clColors[ grep( "Tl", names(clColors))]	<- "red"
 
+numericColors	<- grep("[0-9][0-9]*", names(clColors))
 
-clColors[ "I" ] 	<- "cyan"
-clColors[ "M" ]   	<- "black"
-clColors[ "E" ]  	<- "red"
+clColors[numericColors] <- sequential_hcl(n = length(numericColors), h1 = 250, h2 = 90, c1 = 40, c2 = 55, l1 = 50, l2 = 90, p1 = .5, p2 = 1.3)
 
 names( clColors) <- NULL
 return(clColors)
