@@ -49,6 +49,9 @@ ipmc		<- AddMetaData( object = ipmc, cellNamesDF, col.name = "cellNames")
 ipmc@ident		<- as.factor( celltype)
 
 ipmc			<- ScaleData(ipmc, do.scale = TRUE, do.center = TRUE)
+
+ipmc 			<- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE)
+
 ipmc			<- StashIdent(object = ipmc, save.name = "originalCellTypes")
 
 

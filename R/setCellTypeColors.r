@@ -9,19 +9,18 @@ library(colorspace)}
 
 #basic colors are shades of green, according to the clustering ident
 
-numColors		<- length( levels( seuratObj@ident))
-cellColors		<- integer( numColors)
+
+cellColors		<- integer( length(seuratObj@ident))
 names(cellColors)	<- levels( seuratObj@ident) 
 standColors		<- grep( "[0-9][0-9]", names(cellColors), value = TRUE)
-cellColors[standColors] <- sequential_hcl( length( standColors) , "BluGrn", alpha = 0.5, rev = TRUE)
-
-names(cellColors) <- levels( unique(seuratObj@ident))
+if (!length(standColors)) cellColors[standColors] <- sequential_hcl( length( standColors) , "BluGrn", alpha = 0.5, rev = TRUE)
 
 cellColors[ "I" ] 	= "cyan"
 cellColors[ "M" ]   	= "black"
 cellColors[ "sox10-" ]  = "gold"
 cellColors[ "mitfa-" ]  = "dodgerblue"
 cellColors[ "Tl" ]  	= "red"
+cellColors[ "G"  ]	= "green"
 
 #make tails red according to their "snail2" expression
 

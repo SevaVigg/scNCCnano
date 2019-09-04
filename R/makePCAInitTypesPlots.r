@@ -62,7 +62,7 @@ noiseTol	<- log2(19)
 ipmcDenoised		<- ipmc #for not spoiling initial clustering data
 ipmcDenoised@data	<- apply( ipmcDenoised@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
-png( file.path( compsDir, paste0("DotPlotInitTypesPCASpace_c", comps, ".png")), width = 800, height = 600)
+png( file.path( compsDir, paste0("DotPlotInitTypesPCASpace_c", comps, "_HR.png")), width = 1536, height = 2048)
 	DotPlot(ipmcDenoised, genes.plot = rownames(ipmcDenoised@data), x.lab.rot = TRUE, dot.scale = 5, plot.legend = TRUE, dot.min = 0, scale.by = "radius")
 dev.off()
 
