@@ -6,13 +6,11 @@
 #
 # Directory structure :     Res <- Plots <- geneSpace
 
-makeGeneSpacePlots <- function( seuratObj){
+makeGeneSpacePlotsSubset <- function( seuratObj){
 
 source("R/getClusterTypes.r")
-source("R/calcTSNEGeneSpace.r")
 source("R/setCellTypeColors.r")
 source("R/setClusterColors.r")
-source("R/calcUMAPGeneSpace.r")
 
 library(ape)
 
@@ -31,8 +29,8 @@ dir.create( experimentTypePlotDir, showWarnings = FALSE)
 geneSpacePlotDir <- file.path( experimentTypePlotDir, "geneSpacePlots")
 dir.create( geneSpacePlotDir, showWarnings = FALSE)
 
-geneSetPlotDir	 <- file.path( geneSpacePlotDir, seuratObj@misc)
-dir.create( geneSetPlotDir, showWarnings = FALSE) 
+geneSetPlotDir	 <- file.path( geneSpacePlotDir, "subsetGenes")
+dir.create( geneSetPlotDir, showWarnings = FALSE)
 
 seuratObj		<- StashIdent( seuratObj, save.name = 'hpfIdent')
 
@@ -45,16 +43,18 @@ seuratObj		<- StashIdent( seuratObj, save.name = 'genTypeIdent')
 TSNESeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( geneSetPlotDir, "TSNESeed.txt"), TSNESeed, "\n")
 
-seuratObj <- calcTSNEGeneSpace( seuratObj, TSNESeed)
+seuratObj <- RunTSNE( seuratObj, genes.use = rownames(seuratObj@data), seed.use = TSNESeed, 
+	theta = 0, eta = 100, max_iter = 150000, perplexity = 10, verbose = FALSE)
 
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 UMAPSeed <- 20
 	cat( file = file.path( geneSetPlotDir, "UMAPSeed.txt"), TSNESeed, "\n")
-seuratObj <- calcUMAPGeneSpace( seuratObj, UMAPSeed, 2)						#the last parameters is UMAP dimension
+seuratObj <- RunUMAP( seuratObj, genes.use = rownames(seuratObj@data), max.dim = 2, seed.use = UMAPSeed, 
+	n_neighbors = 10, min_dist = 0.2, metric = "cosine")
+
 
 
 plotList <- list()
-
 
 	tsnePlot 	<- DimPlot( object = seuratObj, reduction.use = 'tsne', cols.use = setCellTypeColors( seuratObj), pt.size = 2, do.return = TRUE)
 	tsnePlot 	<- tsnePlot +
@@ -85,19 +85,22 @@ plotList <- list()
 
 
 	noiseTol		<- log2(19)
-	seuratObjDenoise		<- seuratObj
+	seuratObjDenoise	<- seuratObj
 	seuratObjDenoise@data	<- apply( seuratObjDenoise@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
 	hpfClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'hpfIdent') 
 					   	seuratObj <- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = FALSE)
+						par( mar = c(5,5,5,5))
 					   	PlotClusterTree( seuratObj, type = "phylogram", cex = 2); nodelabels( text = "  ")}
-	genClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'genTypedent')
+	genClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'genTypeIdent')
 					   	seuratObj <- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = FALSE)
+						par( mar = c(5,5,5,5))
 						PlotClusterTree( seuratObj, type = "phylogram", cex = 2); nodelabels( text = "  ")}
-
-	dotPlot 	<- DotPlot(seuratObjDenoise, genes.plot = rownames(seuratObjDenoise@data), x.lab.rot = TRUE, dot.scale = 10, 
+	
+	seuratObjDenoise <- SetAllIdent( seuratObj, id = 'hpfIdent')
+	dotPlotHpf 	 <- DotPlot(seuratObjDenoise, genes.plot = rownames(seuratObjDenoise@data), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE)
-	dotPlot		<- dotPlot +
+	dotPlotHpf	<- dotPlotHpf +
 		theme(
 			legend.position="none", 
 			axis.text.y = element_text( size = 30),
@@ -105,7 +108,17 @@ plotList <- list()
 			axis.title  = element_text( size = 25, face = "bold"),
 #panel.background = element_rect(fill = "gray90")
 			)	 
-
+	seuratObjDenoise <- SetAllIdent( seuratObj, id = 'genTypeIdent')
+	dotPlotGen 	<- DotPlot(seuratObjDenoise, genes.plot = rownames(seuratObjDenoise@data), x.lab.rot = TRUE, dot.scale = 10, 
+					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE)
+	dotPlotGen	<- dotPlotGen +
+		theme(
+			legend.position="none", 
+			axis.text.y = element_text( size = 30),
+			axis.text.x = element_text( size = 20, angle = 90),
+			axis.title  = element_text( size = 25, face = "bold"),
+#panel.background = element_rect(fill = "gray90")
+			)	
 	
 	firstLine	<- plot_grid( 
 				tsnePlot + theme( plot.margin = unit( c( 0, 0.5, 0, 0.5), "inches")), 
@@ -121,15 +134,21 @@ plotList <- list()
 				label_size = 25,
 				rel_widths = c( 1, 1))
 	thirdLine	<- plot_grid( 
-				dotPlot + theme( plot.margin = unit( c( 0, 0.5, 0, 0.5), "inches")), 
+				dotPlotHpf + theme( plot.margin = unit( c( 0, 0.5, 0, 0.5), "inches")), 
+				nrow = 1,
+				labels = c("E", "F"),
+				label_size = 25)
+	forthLine	<- plot_grid( 
+				dotPlotGen + theme( plot.margin = unit( c( 0, 0.5, 0, 0.5), "inches")), 
 				nrow = 1,
 				labels = c("E", "F"),
 				label_size = 25)
 	 
 	gridPlot 	<- plot_grid( 
-				firstLine  + theme( plot.margin = unit( c( 0, 0, 1, 0), "inches")),  
-				secondLine + theme( plot.margin = unit( c( 1, 0, 3, 0), "inches")),  
-				thirdLine  + theme( plot.margin = unit( c( 1, 0, 3, 0), "inches")),  
+				firstLine  + theme( plot.margin = unit( c( 0, 0, 1, 1), "inches")),  
+				secondLine + theme( plot.margin = unit( c( 0, 0, 1, 1), "inches")),  
+				thirdLine  + theme( plot.margin = unit( c( 0, 0, 1, 0), "inches")),  
+				forthLine  + theme( plot.margin = unit( c( 0, 0, 1, 0), "inches")),  
 					labels = '',
 					rel_heights = c(1, 1),
 					ncol = 1) +
@@ -150,10 +169,10 @@ dev.off()
 #	plotInitCellTypePCAs( seuratObj, 5)
 #dev.off() 
 
-seuratObj <- SetAllIdent(seuratObj, id = "originalCellTypes")
-
 #plotInitCellTypePCAs(seuratObj, 6)	#Plot PCA diagrams with cell colors, uses its own directorial structure
 
 #remove values, that are too close to zero
+
+return( seuratObj)
 
 }

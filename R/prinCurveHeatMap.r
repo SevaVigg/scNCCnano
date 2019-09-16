@@ -8,7 +8,7 @@ if(!require(ComplexHeatmap)){
 }
 
 
-tanyaGenes <- c("foxd3", "impdh1b",  "kita",     "ltk",      "mbpa", "mitfa", "mlphb", "oca2", "phox2b", "pnp4a", "silva", "slc24a5", "snail2",
+tanyaGenes <- c("foxd3", "impdh1b",  "kita", "ltk", "mbpa", "mitfa", "mlphb", "oca2", "phox2b", "pnp4a", "silva", "slc24a5", "snail2",
                  "sox10", "sox9b", "tfec","tyrp1b",  "pax7b", "tfap2e", "tfap2a")
 
 source("R/getLineageCoords.r")

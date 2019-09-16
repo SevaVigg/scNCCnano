@@ -5,6 +5,10 @@ if (!require("vsn")){
 BiocManager::install("vsn", version = "3.8")
 library(vsn)}
 
+require(gtools)
+
+
+
 if(!require("NanoStringNorm")){
   install.packages("NanoStringNorm", dependencies = TRUE)
 }
@@ -46,20 +50,30 @@ Genes[,1]	<- NULL
 
 colnames(Genes) <- colnames(Cells) <- paste0(Cells["hpf",],"_", Cells["CellType",])
 
-geneMatrix	<- as.matrix(Genes)
 
+#now we remove cells with a very low expression for all genes.
+testGenes 	<- setdiff( geneNames, c("Kanamycin Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
+log2Exps	<- log2( Genes[ testGenes, ])	
+dens		<- density( t( log2Exps ))
+expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,15))$minimum 
+
+poorCells 	<- which(sapply(log2Exps, function(x) all(x < expThreshold))) #cells with poor values for all genes but houskeeping
+Genes_p 	<- Genes[, -poorCells]
+Cells_p		<- Cells[, -poorCells]
+
+geneMatrix	<- as.matrix(Genes_p)
 normGeneMatrix	<- normalize.quantiles(geneMatrix)
 
 rownames(normGeneMatrix) <- Probes[, "Gene.Name"]
-colnames(normGeneMatrix) <- Cells["FileName", ]
+colnames(normGeneMatrix) <- Cells_p["FileName", ]
 
-batches		<- unique(unlist(Cells["FileName",]))
-batchDates	<- unlist(lapply(batches, function(x) Cells["dateEx", grep(x, Cells["FileName",], fixed = TRUE)][1]))
-batchTypes	<- unlist(lapply(batches, function(x) Cells["CellType", grep(x, Cells["FileName",], fixed = TRUE)][1]))
-batchHpf	<- unlist(lapply(batches, function(x) Cells["hpf", grep(x, Cells["FileName",], fixed = TRUE)][1]))
+batches		<- unique(unlist(Cells_p["FileName",]))
+batchDates	<- unlist(lapply(batches, function(x) Cells_p["dateEx", grep(x, Cells_p["FileName",], fixed = TRUE)][1]))
+batchTypes	<- unlist(lapply(batches, function(x) Cells_p["CellType", grep(x, Cells_p["FileName",], fixed = TRUE)][1]))
+batchHpf	<- unlist(lapply(batches, function(x) Cells_p["hpf", grep(x, Cells_p["FileName",], fixed = TRUE)][1]))
 
-batchVals	<- lapply(batches, function(x) geneMatrix[, which(Cells["FileName", ]==x)])
-batchNormVals 	<- lapply(batches, function(x) normGeneMatrix[, which(Cells["FileName", ]==x)])
+batchVals	<- lapply(batches, function(x) geneMatrix[, which(Cells_p["FileName", ]==x)])
+batchNormVals 	<- lapply(batches, function(x) normGeneMatrix[, which(Cells_p["FileName", ]==x)])
 
 names(batchNormVals) <- as.character(batches)
 names(batchVals)     <- as.character(batches)
@@ -89,11 +103,11 @@ png(paste0(plotDir, .Platform$file.sep, "LogNotNormedBatchBoxPlot.png"), width =
 dev.off()
 
 batchProbl 	<- qualMatrix[, which(as.numeric(qualMatrix["batchMedNormVals",])<40)]	#threshold to keep M (MedNormVal ~ 60)
-cellsProbl_Ind	<- which(Cells["FileName",] %in% colnames(batchProbl))
+cellsProbl_Ind	<- which(Cells_p["FileName",] %in% colnames(batchProbl))
 
 
-Genes_f		<- Genes[,-cellsProbl_Ind]
-Cells_f		<- Cells[,-cellsProbl_Ind]
+Genes_f		<- Genes_p[,-cellsProbl_Ind]
+Cells_f		<- Cells_p[,-cellsProbl_Ind]
 
 cat(file = qualContLogFile, ncol(Genes_f), " cells remaining after removing batches with low medians\n")
 

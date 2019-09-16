@@ -12,7 +12,7 @@ tanyaGenes <- c("sox10","sox9b","snail2","foxd3","phox2b",
 		"tfap2a", "tfap2e",
 		"impdh1b","kita","mbpa",
 		"mitfa","ltk","tfec",
-		"pax7b","pnp4a",
+		"pax7a", "pax7b","pnp4a",
 		"tyrp1b","mlphb","oca2","silva","slc24a5")
 
 source("R/getLineageCoords.r")
