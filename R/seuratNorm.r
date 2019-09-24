@@ -15,7 +15,7 @@ if(!require("e1071")){
 }
 
 
-experimentType	<- "WT"	# may be ("allCells", "WT", and "WT_Sox10")	 
+experimentType	<- "WT_Sox10"	# may be ("allCells", "WT", and "WT_Sox10")	 
 
 resDir		<- file.path(getwd(), "Res")
 scTablesDir	<- file.path( resDir, "scTables")
@@ -30,6 +30,14 @@ cells_ind 	<- order(as.numeric(Cells["hpf",]))			# order with hpf increasing
 logExps		<- logExps[, cells_ind]
 geneExpsImp	<- geneExpsImp[, cells_ind]
 Cells		<- Cells[, cells_ind]
+
+# 
+require(gtools)
+dens		<- density( t(as.matrix(logExps)))
+expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,14))$minimum 
+
+logExps		<- apply( logExps, c(1, 2), function(x) if (x < 2/3*expThreshold) 0 else x) 
+logExps		<- apply( logExps, c(1, 2), function(x) if (x > 15) 15 else x) 
 
 #rename cell types, prepare the annotated cell table
 celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "general") return( x[3]) else return( x[6] ))) 

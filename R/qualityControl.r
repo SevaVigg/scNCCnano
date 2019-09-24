@@ -56,8 +56,7 @@ testGenes 	<- setdiff( geneNames, c("Kanamycin Pos", "rpl13", grep("(NEG_|POS_)"
 log2Exps	<- log2( Genes[ testGenes, ])	
 dens		<- density( t( log2Exps ))
 expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,15))$minimum 
-
-poorCells 	<- which(sapply(log2Exps, function(x) all(x < expThreshold))) #cells with poor values for all genes but houskeeping
+poorCells 	<- which(sapply(log2Exps, function(x) sum(x > expThreshold) < 2))  #cells with poor values for all genes but houskeeping
 Genes_p 	<- Genes[, -poorCells]
 Cells_p		<- Cells[, -poorCells]
 

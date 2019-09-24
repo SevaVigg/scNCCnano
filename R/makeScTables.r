@@ -71,7 +71,7 @@ logExpsWTsox10Imp	<- imputeDropouts(logExpsWTsox10, randSeedWTsox10)
 logExpsWTsox10Imp	<- apply( logExpsWTsox10Imp, c(1,2), function(x) if(x>noiseTol) x else 0)
 logExpsWTsox10Imp	<- logExpsWTsox10Imp[, which( apply( logExpsWTsox10Imp, 2, sum) >0)]
 cellsWTsox10Imp		<- cellsQC[ , colnames(logExpsWTsox10Imp)]
-genesQCWTsox10Imp	<- genesQC[, colnames(logExpsWTImp)]
+genesQCWTsox10Imp	<- genesQC[ , colnames(logExpsWTsox10Imp)]
 
 cat( file = file.path( WT_Sox10Dir, "ImputeSeedWTsox10.txt"), randSeedWTsox10)
 write.table( logExpsWTsox10,   file = file.path( WT_Sox10Dir, "logExpTableDedupQC.csv"), sep = "\t")

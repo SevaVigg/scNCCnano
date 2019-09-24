@@ -40,7 +40,7 @@ levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
 seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
 seuratObj@ident 	<- droplevels(seuratObj@ident)
 
-seuratObj		<- StashIdent( seuratObj, save.name = 'genTypeIdent')
+seuratObj		<- StashIdent( seuratObj, save.name = 'genCellTypeIdent')
 
 TSNESeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( geneSetPlotDir, "TSNESeed.txt"), TSNESeed, "\n")
