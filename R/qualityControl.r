@@ -50,20 +50,28 @@ Genes[,1]	<- NULL
 
 colnames(Genes) <- colnames(Cells) <- paste0(Cells["hpf",],"_", Cells["CellType",])
 
-
+#remove genes with too low values
 #now we remove cells with a very low expression for all genes.
-testGenes 	<- setdiff( geneNames, c("Kanamycin Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
+testGenes 	<- setdiff( geneNames, c( "Kanamycin Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
 log2Exps	<- log2( Genes[ testGenes, ])	
 dens		<- density( t( log2Exps ))
-expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,15))$minimum 
-poorCells 	<- which(sapply(log2Exps, function(x) sum(x > expThreshold) < 2))  #cells with poor values for all genes but houskeeping
+expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,15))$minimum
+poorCells 	<- which(sapply(log2Exps, function(x) sum(x > 2/3*expThreshold) < 3))  #cells with poor values for all genes but houskeeping
 Genes_p 	<- Genes[, -poorCells]
 Cells_p		<- Cells[, -poorCells]
+
+genes2exclude	<- c("her9", "hbp1", "gapdh")
+poorGenes 	<- rownames(log2Exps)[which( apply(log2Exps, 1, function(x) sum(x > 2/3*expThreshold) < 3))]  #cells with poor values for all genes but houskeeping
+#genesToSubset	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
+poorGenes	<- c(poorGenes, genes2exclude)
+geneNames	<- setdiff( geneNames, poorGenes)
+Genes_p		<- Genes_p[ geneNames, ]
+Probes		<- Probes[ Probes[ ,"Gene.Name"] %in% geneNames, ]
 
 geneMatrix	<- as.matrix(Genes_p)
 normGeneMatrix	<- normalize.quantiles(geneMatrix)
 
-rownames(normGeneMatrix) <- Probes[, "Gene.Name"]
+rownames(normGeneMatrix) <- rownames(Genes_p)
 colnames(normGeneMatrix) <- Cells_p["FileName", ]
 
 batches		<- unique(unlist(Cells_p["FileName",]))
@@ -101,7 +109,7 @@ png(paste0(plotDir, .Platform$file.sep, "LogNotNormedBatchBoxPlot.png"), width =
 		at = seq(1, 2*length(batches), 2))
 dev.off()
 
-batchProbl 	<- qualMatrix[, which(as.numeric(qualMatrix["batchMedNormVals",])<40)]	#threshold to keep M (MedNormVal ~ 60)
+batchProbl 	<- qualMatrix[, which(as.numeric(qualMatrix["batchMedNormVals",])<40), drop = FALSE]	#threshold to keep M (MedNormVal ~ 60)
 cellsProbl_Ind	<- which(Cells_p["FileName",] %in% colnames(batchProbl))
 
 
@@ -184,7 +192,7 @@ cat(file = qualContLogFile, ncol(Genes_ffff), " cells remaining after removing c
 normIteration <- 0
 repeat{									       #iterations over the background level								      
 normIteration <- normIteration + 1
-cat("Starting itration ", normIteration, "\n")
+cat("Starting iteration ", normIteration, "\n")
 
 NanoTable	<- cbind(Probes[,"Class.Name"], Probes[,"Gene.Name"], Probes[,"Accession.."], Genes_ffff, stringsAsFactors = FALSE)
 colnames(NanoTable)[1:3] <- c("Code.Class", "Name", "Accession")

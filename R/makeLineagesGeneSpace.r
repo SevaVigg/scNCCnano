@@ -23,8 +23,8 @@ dir.create( geneSpacePlotsDir, showWarnings = FALSE)
 #resolDir	<- geneSpacePlotDir
 #dir.create( resolDir, showWarnings = FALSE)
 
-geneSubsetPlotDir <- file.path( geneSpacePlotsDir, seuratObj@misc)
-dir.create( geneSubsetPlotDir, showWarnings = FALSE)
+#geneSubsetPlotDir <- file.path( geneSpacePlotsDir, seuratObj@misc)
+#dir.create( geneSubsetPlotDir, showWarnings = FALSE)
 
 source("R/createSlingShotObject.r")
 slingShotObject	<- createSlingShotObject( seuratObj, DimRed)

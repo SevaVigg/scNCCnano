@@ -33,6 +33,8 @@ dir.create( experimentTypePlotDir, showWarnings = FALSE)
 geneSpacePlotDir <- file.path( experimentTypePlotDir, "geneSpacePlots")
 dir.create( geneSpacePlotDir, showWarnings = FALSE)
 
+seuratObj	<- SetAllIdent( seuratObj, id = "originalCellTypes")
+
 levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
 seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
 seuratObj@ident <- droplevels(seuratObj@ident)
@@ -41,7 +43,7 @@ seuratObj 	<- StashIdent( seuratObj, save.name = 'generalCellTypes')
 
 #gene Space based clusters
 
-seuratObj	<- FindClusters( seuratObj, genes.use = rownames(seuratObj@data), k.param = 12, print.output = FALSE, force.recalc = TRUE, resolution = .7)
+seuratObj	<- FindClusters( seuratObj, genes.use = rownames(seuratObj@data), k.param = 12, print.output = FALSE, force.recalc = TRUE, resolution = 1.4)
 seuratObj 	<- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = TRUE) 
 #This functions sorts clusters accourding to their size, so we need to assign cluster types
 
@@ -51,7 +53,7 @@ seuratObj		<- StashIdent( seuratObj, save.name = 'geneClusters')
 
 #pca based clusters
 
-seuratObj 	<- FindClusters( seuratObj, reduction.type = 'pca', dims.use = 1:8, k.param = 10, print.output = FALSE, force.recalc = TRUE, resolution = 0.4)
+seuratObj 	<- FindClusters( seuratObj, reduction.type = 'pca', dims.use = 1:8, k.param = 10, print.output = FALSE, force.recalc = TRUE, resolution = 0.6)
 seuratObj 	<- BuildClusterTree( seuratObj, pcs.use = 1:8, do.plot = FALSE, do.reorder = TRUE) 
 #This functions sorts clusters accourding to their size, so we need to assign cluster types
 
@@ -61,24 +63,29 @@ seuratObj		<- StashIdent( seuratObj, save.name = 'pcaClusters')
 
 #now we are going to cluster in HiD UMAP spaceall plots are related to clustering
 
-seuratObj		<- RunUMAP( seuratObj, genes.use = rownames(ipmc@data), max.dim = 8, reduction.name = 'umap', n_neighbors = 20L, 
-				min_dist = 0.2, metric = "cosine", seed.use = 2 )
-seuratObj 		<- FindClusters( seuratObj, reduction.type = 'umap', dims.use = 1:8, k.param = 10, print.output = FALSE, force.recalc = TRUE, resolution = 0.3)
+umapDim			<- 5 
+
+seuratObj		<- RunUMAP( seuratObj, genes.use = rownames( seuratObj@data), max.dim =  umapDim, reduction.name = 'umap', n_neighbors = 20L, 
+				min_dist = 0.3, metric = "cosine", seed.use = 2, spread = 1)
+seuratObj 		<- FindClusters( seuratObj, reduction.type = 'umap', dims.use = 1:umapDim, k.param = 15, print.output = FALSE, force.recalc = TRUE, resolution = .7) 
 seuratObj 		<- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = TRUE) 
 clTypes 		<- getClusterTypes(seuratObj)
 levels(seuratObj@ident) <- names(clTypes)
-seuratObj		<- StashIdent( seuratObj, save.name = 'umap14Clusters')
-
-#we have spoiled umap needed for visualization, so we recalculate umap
-
-seuratObj		<- RunUMAP( seuratObj, genes.use = rownames( seuratObj@data), max.dim = 2, reduction.name = 'umap', n_neighbors = 15L, 
-				min_dist = 0.15, metric = "cosine", seed.use = 2 )
+seuratObj		<- StashIdent( seuratObj, save.name = 'umapHiDClusters')
 
 #may be some strange tSNE was calculated by other scripts, thus we recalculate tSNE as well
 
 seuratObj		<- RunTSNE( seuratObj, genes.use = rownames( seuratObj@data), perplexity = 20, theta = 0.0, eta = 100, reduction.name = 'tsne', 
-			max_iter = 500, seed.use = 2 )
+				max_iter = 500, seed.use = 142 )
 
+
+#we have spoiled 2D umap needed for visualization, so we recalculate umap in 2D. Before that we keep the hi-dimensional umap to use it to make lineages
+
+visSeed			<- 142 
+
+seuratObjHiDUmap	<- seuratObj
+seuratObj		<- RunUMAP( seuratObj, genes.use = rownames( seuratObj@data), max.dim = 2, reduction.name = 'umap', n_neighbors = 15L, 
+				min_dist = 0.4, metric = "cosine", seed.use = visSeed, spread = 1 )
 
 #now prepare plots
 
@@ -193,7 +200,7 @@ seuratObj	<- SetAllIdent( seuratObj, id = 'pcaClusters')
 
 #	7. Visualize UMAP Clusters with tSNE
 
-seuratObj		<- SetAllIdent( seuratObj, id = 'umap14Clusters')
+seuratObj		<- SetAllIdent( seuratObj, id = 'umapHiDClusters')
 
 	tsnePlotUMAPClusters <- DimPlot( object = seuratObj, reduction.use = 'tsne', cols.use = setClusterColors( seuratObj), pt.size = 2, do.return = TRUE)
 	tsnePlotUMAPClusters <- tsnePlotUMAPClusters +
@@ -207,12 +214,12 @@ seuratObj		<- SetAllIdent( seuratObj, id = 'umap14Clusters')
 			axis.title.y = element_text( margin = margin(t = 0,  r = 20, b = 0, l = 0, unit = "pt")),
 			panel.background = element_rect(fill = "gray60")
 		) +
-	xlab( label = "tSNE1")+ylab( label = "tSNE2") + ggtitle("Clustering by UMAP_14")
+	xlab( label = "tSNE1")+ylab( label = "tSNE2") + ggtitle( paste0("Clustering by UMAP_", umapDim))
 
 
 #	8. Visualize UMAP Clusters with UMAP
 
-seuratObj	<- SetAllIdent( seuratObj, id = 'umap14Clusters')
+seuratObj	<- SetAllIdent( seuratObj, id = 'umapHiDClusters')
 
 	umapPlotUMAPClusters <- DimPlot(object = seuratObj, reduction.use = 'umap',  cols.use = setClusterColors( seuratObj), pt.size = 2, do.return = TRUE)
 	umapPlotUMAPClusters <- umapPlotUMAPClusters +
@@ -225,7 +232,7 @@ seuratObj	<- SetAllIdent( seuratObj, id = 'umap14Clusters')
 			axis.title.x = element_text( margin = margin(t = 20, r = 0, b = 0, l = 0, unit = "pt")),
 			axis.title.y = element_text( margin = margin(t = 0,  r = 20, b = 0, l = 0, unit = "pt")),
 			panel.background = element_rect(fill = "gray60")
-		) + ggtitle("Clusteryg by UMAP_14")
+		) + ggtitle( paste0("Clusteryg by UMAP_", umapDim))
 
 
 #	9. Genes Cluster tree
@@ -243,10 +250,10 @@ seuratObj	<- SetAllIdent( seuratObj, id = 'umap14Clusters')
 
 #	10. UMAP Cluster tree
 
-	umapClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'umap14Clusters') 
+	umapClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'umapHiDClusters') 
 					   	seuratObj <- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = FALSE)
 					   	PlotClusterTree( seuratObj, type = "phylogram", cex = 2)
-						par( mar = c(5,5,5,5)); nodelabels( text = "  "); title( "UMAP_14")}
+						par( mar = c(5,5,5,5)); nodelabels( text = "  "); title( paste0("UMAP_", umapDim))}
 #	11. DotPlot for clusters
 
 	noiseTol		<- log2(19)
@@ -254,7 +261,7 @@ seuratObj	<- SetAllIdent( seuratObj, id = 'umap14Clusters')
 	seuratObjDenoise@data	<- apply( seuratObjDenoise@data, c(1,2), function(x) if(x>noiseTol) x else 0)
 
 
-	seuratObjDenoise <- SetAllIdent( seuratObj, id = 'umap14Clusters')
+	seuratObjDenoise <- SetAllIdent( seuratObj, id = 'umapHiDClusters')
 	dotPlotRes 	 <- DotPlot(seuratObjDenoise, genes.plot = rownames(seuratObjDenoise@data), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE)
 	dotPlotRes	<- dotPlotRes +
@@ -336,7 +343,7 @@ seuratObj	<- SetAllIdent( seuratObj, id = 'umap14Clusters')
 			   theme( plot.margin = unit( c( 1, 1, 1, 1), "inches"))
 			
 
-png( file.path( geneSpacePlotDir, "geneSpaceClusteringPlots.png"), width = 1536, height = 2048)
+png( file.path( geneSpacePlotDir, paste0("geneSpaceClusteringPlots_umap", umapDim, ".png")), width = 1536, height = 2048)
 	plot( gridPlot)
 dev.off()
 
@@ -353,6 +360,8 @@ dev.off()
 #plotInitCellTypePCAs(seuratObj, 6)	#Plot PCA diagrams with cell colors, uses its own directorial structure
 
 #remove values, that are too close to zero
+
+seuratObj@misc <- append( seuratObj@misc, visSeed)
 
 return( seuratObj)
 

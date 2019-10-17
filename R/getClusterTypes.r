@@ -10,9 +10,9 @@ cellClusters <- sapply( unique(levels(clFactor)), function(x) unlist( transpose(
 nClust	     <- length(levels( clFactor))
 
 
-cl_IP	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("I", x)])==0) 0 else ( 1 + length( grep("I", x)))/(1+length(x))^(2/3)))
-cl_MC	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("M", x)])==0) 0 else ( 1 + length( grep("M", x)))/sqrt(1+length(x))^(2/3)))
-cl_tail	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("Tl", x)])==0) 0 else ( 1 + length( grep("Tl", x)))/sqrt(1+length(x))^(2/3)))
+cl_IP	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("I", x)])==0) 0 else ( 1 + length( grep("I", x)))/sqrt(1+length(x))))
+cl_MC	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("M", x)])==0) 0 else ( 1 + length( grep("M", x)))/sqrt(1+length(x))))
+cl_tail	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("Tl", x)])==0) 0 else ( 1 + length( grep("Tl", x)))/sqrt(1+length(x))))
 
 clusterTypes 			<- levels( clFactor) 
 if (length(unique(c(cl_IP, cl_MC, cl_tail))) < 3) {cat( "Some reference clusters conincide \n")

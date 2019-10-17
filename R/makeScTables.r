@@ -17,10 +17,6 @@ cellsQC	<- read.table( file = file.path( dirQCres, "cellDescripitonsDedupQC.csv"
 allGenes	<- rownames(genesQC)
 logExps 	<- log2(1+genesQC)
 
-#remove genes with too low values
-genesToSubset	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
-logExps		<- logExps[ !(rownames(logExps) %in% genesToSubset), ]
-genesQC		<- genesQC[ !(rownames(genesQC) %in% genesToSubset), ]
 
 allCellsDir 	<- file.path( scTablesDir, "allCells")
 dir.create( allCellsDir , showWarnings = FALSE)

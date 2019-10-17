@@ -1,4 +1,4 @@
-getCurveHeatMap <- function( seuratObj, slingShotObj, LineageId, dimRed){
+getCurveHeatMap <- function( seuratObj, slingShotObj, LineageType, dimRed, do.print = FALSE){
 
 source("R/setCellTypeColors.r")
 
@@ -17,6 +17,8 @@ tanyaGenes <- c("sox10","sox9b","snail2","foxd3","phox2b",
 
 source("R/getLineageCoords.r")
 
+LineageId <- which(unlist(lapply( slingShotObj@lineages, function(x) tail(x, 1) == LineageType)))  
+
 #slingShotObj	<- getCurves(slingShotObj)
 prinCurveDF	<- slingPseudotime( slingShotObj)
 curveWeightDF	<- slingCurveWeights( slingShotObj)
@@ -25,7 +27,7 @@ targetCurve	<- logExps[ tanyaGenes, names( sort( prinCurve_F))]
 clusterColors	<- setClusterColors( seuratObj)
 LineageType	<- tail(slingShotObj@lineages[LineageId][[1]],1)
 
-curveClust 	<- seuratObj@ident[names( targetCurve)]
+curveClust 	<- seuratObj@ident[ colnames( targetCurve)]
 curveDF 	<- data.frame( clust = curveClust)
 
 annotColors <- as.character(unique(clusterColors[curveDF$clust]))
@@ -50,5 +52,26 @@ hplot <- Heatmap( 	targetCurve,
 			clustering_distance_rows = "euclidean", 
 			use_raster = TRUE, raster_device = "png", 
 			)
-draw(hplot, annotation_legend_side = "bottom")
+
+if (do.print){
+
+resDir		<- file.path(getwd(), "Res")
+
+plotDir		<- file.path(resDir, "Plots")
+dir.create(plotDir, showWarnings = FALSE)
+
+experimentTypePlotDir <- file.path(plotDir, seuratObj@project.name)
+dir.create( experimentTypePlotDir, showWarnings = FALSE)
+
+geneSpacePlotDir <- file.path( experimentTypePlotDir, "geneSpacePlots")
+dir.create( geneSpacePlotDir, showWarnings = FALSE)
+
+heatMapDir <- file.path( geneSpacePlotDir, "heatMap")
+dir.create( heatMapDir, showWarnings = FALSE)
+
+png( file.path( heatMapDir, paste0( "HeatMap_", LineageType, "_Lineage.png" )))
+	draw(hplot, annotation_legend_side = "bottom")
+dev.off()
+
+}else{ draw(hplot, annotation_legend_side = "bottom")}
 } 
