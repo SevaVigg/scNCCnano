@@ -91,7 +91,7 @@ plotList <- list()
 	hpfClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'hpfIdent') 
 					   	seuratObj <- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = FALSE)
 					   	PlotClusterTree( seuratObj, type = "phylogram", cex = 2); nodelabels( text = "  ")}
-	genClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'genTypedent')
+	genClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'genTypeIdent')
 					   	seuratObj <- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = FALSE)
 						PlotClusterTree( seuratObj, type = "phylogram", cex = 2); nodelabels( text = "  ")}
 

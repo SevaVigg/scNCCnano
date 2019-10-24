@@ -38,13 +38,13 @@ levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
 seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
 seuratObj@ident 	<- droplevels(seuratObj@ident)
 
-seuratObj		<- StashIdent( seuratObj, save.name = 'genTypeIdent')
+seuratObj		<- StashIdent( seuratObj, save.name = 'genCellTypeIdent')
 
 TSNESeed <- as.numeric(as.POSIXct(Sys.time()))
 	cat( file = file.path( geneSetPlotDir, "TSNESeed.txt"), TSNESeed, "\n")
 
 seuratObj <- RunTSNE( seuratObj, genes.use = rownames(seuratObj@data), seed.use = TSNESeed, 
-	theta = 0, eta = 100, max_iter = 3000, perplexity = 20, verbose = FALSE)
+	theta = 0, eta = 100, max_iter = 300, perplexity = 20, verbose = FALSE)
 
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 UMAPSeed <- 20
@@ -92,7 +92,7 @@ plotList <- list()
 					   	seuratObj <- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = FALSE)
 						par( mar = c(5,5,5,5))
 					   	PlotClusterTree( seuratObj, type = "phylogram", cex = 2); nodelabels( text = "  ")}
-	genClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'genTypeIdent')
+	genClusterTreePlot <- function() {	seuratObj <- SetAllIdent( seuratObj, id = 'genCellTypeIdent')
 					   	seuratObj <- BuildClusterTree( seuratObj, genes.use = rownames(seuratObj@data), do.plot = FALSE, do.reorder = FALSE)
 						par( mar = c(5,5,5,5))
 						PlotClusterTree( seuratObj, type = "phylogram", cex = 2); nodelabels( text = "  ")}
@@ -108,7 +108,7 @@ plotList <- list()
 			axis.title  = element_text( size = 25, face = "bold"),
 #panel.background = element_rect(fill = "gray90")
 			)	 
-	seuratObjDenoise <- SetAllIdent( seuratObj, id = 'genTypeIdent')
+	seuratObjDenoise <- SetAllIdent( seuratObj, id = 'genCellTypeIdent')
 	dotPlotGen 	<- DotPlot(seuratObjDenoise, genes.plot = rownames(seuratObjDenoise@data), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE)
 	dotPlotGen	<- dotPlotGen +
@@ -159,19 +159,18 @@ png( file.path( geneSetPlotDir, "InitCellTypesPlots.png"), width = 1536, height 
 	plot( gridPlot)
 dev.off()
 
+seuratObj	<- SetAllIdent( seuratObj, id = "genCellTypeIdent")
 
+source("R/makeInitCellTypePCAPlots.r")
+pcaPlot <- makeInitCellTypePCAPlots(seuratObj, 5)	#get ggplot2 PCA diagrams with cell colors, uses its own directorial structure
 
-#levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
-#seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
-#seuratObj@ident <- droplevels(seuratObj@ident)
-#source("R/plotInitCellTypePCAs.r")
-#png( file.path( PCAPlotDirName, "geneSpacePlotsDir.png"), width = 480, height = 640)
-#	plotInitCellTypePCAs( seuratObj, 5)
-#dev.off() 
+png( file.path( geneSpacePlotDir, "PCAPlots.png"), width = 1536, height = 2048)
+	plot( pcaPlot)
+dev.off()
 
-seuratObj <- SetAllIdent(seuratObj, id = "originalCellTypes")
+seuratObj 	<- SetAllIdent(seuratObj, id = "originalCellTypes")
 
-#plotInitCellTypePCAs(seuratObj, 6)	#Plot PCA diagrams with cell colors, uses its own directorial structure
+return( seuratObj)
 
 #remove values, that are too close to zero
 

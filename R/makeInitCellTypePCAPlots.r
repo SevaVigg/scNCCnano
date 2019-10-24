@@ -1,4 +1,4 @@
-plotInitCellTypePCAs <- function( seuratObj, Ncomps){
+makeInitCellTypePCAPlots <- function( seuratObj, Ncomps){
 
 library(cowplot)
 source("R/setClusterColors.r")
@@ -14,13 +14,17 @@ plotLegend	<-  get_legend(
     theme(legend.position = "bottom") 
 )
 
+maxLim <- max(apply( seuratObj@dr$pca@cell.embeddings, 2, max))
+minLim <- min(apply( seuratObj@dr$pca@cell.embeddings, 2, min)) 
+
+
 #then make a list of all plots without legends
 for (c1 in 1:(Ncomps-1)){
 	for (c2 in (c1+1):Ncomps){
 	curPlot	 <- PCAPlot( seuratObj, dim.1 = c1, dim.2 = c2, pt.size = 2, do.return = TRUE, cols.use = setClusterColors( seuratObj))
 	plotList <- c(plotList, list( curPlot +
-		xlim( -0.22, 0.12) +
-		ylim( -0.22, 0.12) + 
+		xlim( minLim, maxLim) +
+		ylim( minLim, maxLim) + 
 		theme(
 			legend.position="none", 
 			axis.text = element_text( size = 30),
@@ -31,15 +35,15 @@ for (c1 in 1:(Ncomps-1)){
 	}
 }
 
-
 #and finally add the legend
 
 nc 	<- if( Ncomps %% 2) (Ncomps-1)/2 else Ncomps/2
 nr	<- if( Ncomps %% 2) Ncomps else Ncomps-1
-pcaGrid <- do.call( plot_grid, c(plotList, nrow = nr, ncol = nc,  labels = "AUTO", label_size = 35)) 
+pcaGrid <- plot_grid( plotlist = plotList, nrow = nr, ncol = nc, labels = "AUTO", label_size = 35)
 
-#plot_grid( pcaGrid, plotLegend, ncol = 1, rel_heights = c(1, .1))  	# with a legend
-plot_grid( pcaGrid)							# without any legend
+PCAplots <- plot_grid( pcaGrid)							# without any legend
+return(PCAplots)
+
 }
 
 
