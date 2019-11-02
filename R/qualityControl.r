@@ -6,13 +6,15 @@ BiocManager::install("vsn", version = "3.8")
 library(vsn)}
 
 require(gtools)
-
-
+require(dplyr)
+require(tidyr)
+require(ggplot2)
 
 if(!require("NanoStringNorm")){
   install.packages("NanoStringNorm", dependencies = TRUE)
 }
 
+require( NanoStringNorm)
 require(preprocessCore)
 require(data.table)
 
@@ -50,23 +52,140 @@ Genes[,1]	<- NULL
 
 colnames(Genes) <- colnames(Cells) <- paste0(Cells["hpf",],"_", Cells["CellType",])
 
+qualDF		<- data.frame( t(Genes), t(Cells))
+
+#First we filter cells with probes
+
+#now check negative probes
+negProbes	<- grep("NEG", colnames( qualDF), value= TRUE)
+negProbThres	<- quantile( unlist( qualDF[ ,negProbes]), 0.97)
+negProbTable	<- apply( qualDF[ ,negProbes], c(1,2), function(x) if( x > negProbThres) 1 else 0)
+qualDF$negProbSum	<- apply( negProbTable, 1, sum)
+
+negProbDF 	<- gather( qualDF[ , negProbes], negProbe, negProbVal)
+negThreshold 	<- quantile( negProbDF$negProbVal, 0.97)
+
+ggplot(data = negProbDF, aes( x = negProbVal)) +
+	geom_vline( xintercept = negThreshold, col = "red", linetype = "longdash") +
+	geom_histogram( fill = "blue", binwidth = 2) +
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 0, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 12),
+		axis.text.y = element_text( size = 12)) +
+	scale_y_continuous( name = "Counts", breaks = seq(1000, 5000, by = 1000), expand = c(0,0)) +
+	scale_x_continuous( name = "Negative probe value", expand = c(0,0) ) +
+	ggtitle( "Histogram of negative probe expression, \naggregation by all genes and negative probes") 
+
+#now check positive probes
+posSpikes		<- c(128, 32, 8, 2, 0.5, 0.125)						# Pos probes in fM
+posProbes		<- grep("POS", rownames(Genes), value= TRUE)
+qualDF$posProbCoef 	<- apply( log2(Genes[ posProbes, ]), 2, function(x) lm( x~log2(posSpikes))$coefficients[2] )
+leftPosProbThrsld	<- quantile( qualDF$posProbCoef, 0.01)
+rightPosProbThrsld	<- quantile( qualDF$posProbCoef, 0.99)
+
+ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( x = posProbCoef)) +
+	geom_histogram( fill = "blue", binwidth = 0.01) +
+	geom_vline( xintercept = leftPosProbThrsld, col = "red", linetype = "longdash") +
+	geom_vline( xintercept = rightPosProbThrsld, col = "red", linetype = "longdash") +
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 0, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 12),
+		axis.text.y = element_text( size = 12)) +
+	scale_y_continuous( name = "Counts", expand = c(0,0)) +
+	scale_x_continuous( name = "Positive probe log(value) regression coefficient", expand = c(0,0), limits = c(0, 1.5) ) +
+	ggtitle( "Histogram of positive probe log-expression, \nregression coefficient for spiked controls") 
+
+#remove cells with 3 or more counting negative probes
+
+negProbCellIndex <- qualDF$negProbSum > 2
+gualDF		 <- qualDF[ -negProbCellIndex, ]
+
+posProbCellIndex <- qualDF$posProbCoef < leftPosProbThrsld | qualDF$posProbCoef > rightPosProbThrsld
+qualDF		 <- qualDF[ -posProbCellIndex, ]
+
 #remove genes with too low values
 #now we remove cells with a very low expression for all genes.
 testGenes 	<- setdiff( geneNames, c( "Kanamycin Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
 log2Exps	<- log2( Genes[ testGenes, ])	
 dens		<- density( t( log2Exps ))
 expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,15))$minimum
-poorCells 	<- which(sapply(log2Exps, function(x) sum(x > 2/3*expThreshold) < 3))  #cells with poor values for all genes but houskeeping
-Genes_p 	<- Genes[, -poorCells]
-Cells_p		<- Cells[, -poorCells]
+geneThreshold	<- 2/3*expThreshold
+poorCells 	<- which(sapply(log2Exps, function(x) sum(x > geneThreshold) < 3))  #cells with poor values for all genes but houskeeping
+qualDF		<- qualDF[ -poorCells, ]
 
-genes2exclude	<- c("her9", "hbp1", "gapdh")
-poorGenes 	<- rownames(log2Exps)[which( apply(log2Exps, 1, function(x) sum(x > 2/3*expThreshold) < 3))]  #cells with poor values for all genes but houskeeping
-#genesToSubset	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
+#make Probe value plot and Probe value 
+geneAverageData 		<- data.frame( gene <- factor(rownames(Genes), levels = rownames(Genes)), avExp = apply( qualDF[ , rownames(Genes) ], 2, mean))
+geneAverageData$top10median	<- apply( qualDF[ , rownames(Genes) ] , 2, function(x) median(tail(sort(unlist(x)), 10))) 
+
+ggplot( data = geneAverageData) + 
+	aes( x = gene, y = avExp) +
+	geom_col(fill = "blue") +
+	geom_hline( yintercept = geneThreshold, color = "red") + 
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 90, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 7)) +
+	scale_x_discrete( name = "Gene" ) +
+	scale_y_continuous( name = "Expression", expand = c(0,0)) +
+	ggtitle( "Average gene expression over all cells in the dataset")
+
+ggplot( data = geneAverageData) + 
+	aes( x = gene, y = log10(avExp)) +
+	geom_col(fill = "blue") +
+	geom_hline( yintercept = log(geneThreshold), color = "red") + 
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 90, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 7)) +
+	scale_x_discrete( name = "Gene" ) +
+	scale_y_continuous( name = "Expression", expand = c(0,0)) +
+	ggtitle( "Average gene expression over all cells in the dataset")
+
+ggplot( data = geneAverageData) + 
+	aes( x = gene, y = log10(avExp)) +
+	geom_col(fill = "blue") +
+	geom_hline( yintercept = log10(geneThreshold), color = "red") + 
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 90, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 7)) +
+	scale_x_discrete( name = "Gene" ) +
+	scale_y_continuous( name = "Expression", expand = c(0,0)) +
+	ggtitle( "Average gene expression over all cells in the dataset, log-scale")
+
+ggplot( data = geneAverageData) + 
+	aes( x = gene, y = log10( top10median)) +
+	geom_col(fill = "blue") +
+	geom_hline( yintercept = log10(geneThreshold), color = "red") + 
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 90, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 7)) +
+	scale_x_discrete( name = "Gene" ) +
+	scale_y_continuous( name = "Expression", expand = c(0,0)) +
+	ggtitle( "Median expression over top 10 cells, \nexpressing the gene in the dataset, log-scale")
+
+poorGenes 	<- rownames(log2Exps)[which( apply(log2Exps, 1, function(x) sum(x > geneThreshold) < 5))]  #genes poorly expressed in all cell types
+genes2exclude	<- character(0)
+#genes2exclude	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
 poorGenes	<- c(poorGenes, genes2exclude)
-geneNames	<- setdiff( geneNames, poorGenes)
-Genes_p		<- Genes_p[ geneNames, ]
-Probes		<- Probes[ Probes[ ,"Gene.Name"] %in% geneNames, ]
+goodGenes	<- setdiff( geneNames, poorGenes)
+Genes_p		<- Genes_p[ goodGenes, ]
+Probes		<- Probes[ Probes[ ,"Gene.Name"] %in% goodGenes, ]
 
 geneMatrix	<- as.matrix(Genes_p)
 normGeneMatrix	<- normalize.quantiles(geneMatrix)
@@ -74,56 +193,72 @@ normGeneMatrix	<- normalize.quantiles(geneMatrix)
 rownames(normGeneMatrix) <- rownames(Genes_p)
 colnames(normGeneMatrix) <- Cells_p["FileName", ]
 
-batches		<- unique(unlist(Cells_p["FileName",]))
-batchDates	<- unlist(lapply(batches, function(x) Cells_p["dateEx", grep(x, Cells_p["FileName",], fixed = TRUE)][1]))
-batchTypes	<- unlist(lapply(batches, function(x) Cells_p["CellType", grep(x, Cells_p["FileName",], fixed = TRUE)][1]))
-batchHpf	<- unlist(lapply(batches, function(x) Cells_p["hpf", grep(x, Cells_p["FileName",], fixed = TRUE)][1]))
+qualDF		<- data.frame( t(Genes_p), t(Cells_p))		#this data frame contains cells and cell-related information. Cells are in rows
 
-batchVals	<- lapply(batches, function(x) geneMatrix[, which(Cells_p["FileName", ]==x)])
-batchNormVals 	<- lapply(batches, function(x) normGeneMatrix[, which(Cells_p["FileName", ]==x)])
+batchList	<- split( qualDF[, goodGenes], list(qualDF$FileName, qualDF$hpf), drop = TRUE)
+batchMedian	<- sapply( batchList, function(x) median(unlist(x)))
 
-names(batchNormVals) <- as.character(batches)
-names(batchVals)     <- as.character(batches)
+qualNormDF	<- data.frame( t(normGeneMatrix), t(Cells_p))
+batchNormList	<- split( qualNormDF[ , goodGenes], list(qualNormDF$FileName, qualDF$hpf), drop = TRUE)
 
-batchMedVals	<- unlist(lapply(batchVals, median))
-batchMedNormVals<- unlist(lapply(batchNormVals, median))
+batchDF		<- data.frame( median = batchMedian, batch = names(batchMedian)) #this data frame contains batches and batch-related information
+batchDF$normMedian 	<- sapply( batchNormList, function(x) median(unlist(x)))
+batchDF$fileName	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b) paste(head( b, length(b)-1), collapse = "."))
+batchDF$cellType	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b){
+					fn <- paste(head( b, length(b)-1), collapse = ".") 
+					return( unique( qualDF[qualDF$FileName == fn, "CellType"]))})
+batchDF$hpf	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b){
+					hp <- paste(tail( b, 1), collapse = ".") 
+					return( unique( qualDF[qualDF$hpf == hp, "hpf"]))})
 
-qualMatrix	<- as.data.frame(rbind(batchHpf, batchDates, batchTypes, batchMedVals, batchMedNormVals), stringsAsFactors = FALSE)
-names(qualMatrix)	<- batches
-qualMatrix	<- qualMatrix[, order(as.numeric(qualMatrix["batchMedNormVals",]))]
+batchDF$batch 	<- factor(batchDF$batch, levels = batchDF$batch) #ggplot requires an ordered factor as x, otherwise it reorders columns
+batchDF		<- batchDF[order(batchDF$cellType),]		 #but the ordering we need is according the cell type
 
-png(paste0(plotDir, .Platform$file.sep,"batchMedians.png"))
-	plot(as.numeric(qualMatrix["batchMedNormVals", ]), main = "Medians of batches", xlab = "Batches", ylab = "CountMedian")
-	abline(h = 40, col = "red")
-	abline(h = min(as.numeric(qualMatrix["batchMedNormVals", qualMatrix["batchTypes",]=="M"])), col = "blue")
+normMedianThreshold <- min(batchDF$normMedian[ batchDF$cellType=="Tl"]) #keeping batches that retain all Tails samples
+
+batchMedianPlot <- ggplot( data = batchDF) +
+	aes( x = batch, y = normMedian) + 
+	geom_col( fill = "blue") +
+	geom_hline( yintercept = normMedianThreshold, color = "magenta") +
+	theme( 	panel.background = element_rect( fill = "gray80"),
+		title 		= element_text( size = 17),
+		axis.title = element_text( size = 15),
+		axis.text.x = element_text(
+			angle = 90,
+			hjust = 1,
+			vjust = 0.5,
+			size = 11), 
+		axis.text.y = element_text( size = 13)
+		) +
+	scale_x_discrete( name = "batch", labels = paste(batchDF$cellType, batchDF$hpf, sep = ".")) +
+	scale_y_continuous( name = "Median expression") +
+	ggtitle("Median gene expression over all genes and all cells in the batch. \nQuantile normalization" )
+
+png(paste0(plotDir, .Platform$file.sep,"batchMedians.png"), width = 960)
+	(batchMedianPlot)
 dev.off()
 
-batchVecs <- lapply(batchVals, function(x) log(as.vector(x)))
+batchVecs <- lapply(batchList, function(x) log(unlist(x)))	# legacy variable, probably not needed
 
-png(paste0(plotDir, .Platform$file.sep, "LogNotNormedBatchBoxPlot.png"), width = 960)
-	boxplot(batchVecs[colnames(qualMatrix)], 
-		main = "Not normalized, not filtered batches (log-scale)", 
-		las =2 , 
-		cex.axis = 0.7, 
-		boxwex = 1.2, 
-		at = seq(1, 2*length(batches), 2))
-dev.off()
+#png(paste0(plotDir, .Platform$file.sep, "LogNotNormedBatchBoxPlot.png"), width = 960)
+#	boxplot(batchVecs[colnames(qualMatrix)], 
+#		main = "Not normalized, not filtered batches (log-scale)", 
+#		las =2 , 
+#		cex.axis = 0.7, 
+#		boxwex = 1.2, 
+#		at = seq(1, 2*length(batches), 2))
+#dev.off()
 
-batchProbl 	<- qualMatrix[, which(as.numeric(qualMatrix["batchMedNormVals",])<40), drop = FALSE]	#threshold to keep M (MedNormVal ~ 60)
-cellsProbl_Ind	<- which(Cells_p["FileName",] %in% colnames(batchProbl))
+batchProbl 	<- batchDF[ batchDF$normMedian < normMedianThreshold, ]	#Problematic batches; threshold to keep Tl (MedNormVal ~ 90)
+cellsProbl_Ind	<- which( qualDF$FileName %in% batchProbl$fileName & qualDF$hpf %in% batchProbl$hpf)
 
+qualDF_f	<- qualDF[ -cellsProbl_Ind, ]
+Genes_f		<- t(qualDF_f[ , goodGenes])
 
-Genes_f		<- Genes_p[,-cellsProbl_Ind]
-Cells_f		<- Cells_p[,-cellsProbl_Ind]
+cat(file = qualContLogFile, nrow( qualDF_f), " cells remaining after removing batches with low medians\n")
 
-cat(file = qualContLogFile, ncol(Genes_f), " cells remaining after removing batches with low medians\n")
+ggplot( 
 
-posSpikes	<- c(128, 32, 8, 2, 0.5, 0.125)						# Pos probes in fM
-posProbes	<- c("POS_A", "POS_B", "POS_C", "POS_D", "POS_E", "POS_F")
-
-coefs		<- apply( log2(Genes_f[posProbes,]), 2, function(x) lm( x~log2(posSpikes))$coefficients[2] )
-
-sortLogCoefs	<- sort(coefs)
 
 png(paste0(plotDir, .Platform$file.sep, "LogSortPosCoefs.png"))
 	plot(sortLogCoefs, main = "Positive quality control coef values")

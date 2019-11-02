@@ -38,6 +38,13 @@ cellsWMissingGenes_I <- unlist( lapply(genesMissing_I, function(gene_I) {cell_I 
 CellTable$Genes	<- CellTable$Genes[-cellsWMissingGenes_I]
 CellTable$Cells <- CellTable$Cells[-cellsWMissingGenes_I]
 
+rownames( CellTable$Genes) <- make.names( rownames(CellTable$Genes))
+colnames( CellTable$Genes) <- make.names( colnames(CellTable$Genes))
+rownames( CellTable$Cells) <- make.names( rownames(CellTable$Cells))
+colnames( CellTable$Cells) <- make.names( colnames(CellTable$Cells))
+
+
+
 #Write deduplicated results
 
 write.csv( CellTable$Genes,  file = file.path( initialTablesPath, "expressionTableDedup.csv"   ) )
