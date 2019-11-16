@@ -22,6 +22,7 @@ if(!require("gridGraphics")){
 install.packages("gridGraphics")
 library("gridGraphics")}
 
+require(cowplot)
 resDir		<- file.path(getwd(), "Res")
 
 plotDir		<- file.path(resDir, "Plots")

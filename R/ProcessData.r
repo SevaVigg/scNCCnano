@@ -42,7 +42,7 @@ rownames( CellTable$Genes) <- make.names( rownames(CellTable$Genes))
 colnames( CellTable$Genes) <- make.names( colnames(CellTable$Genes))
 rownames( CellTable$Cells) <- make.names( rownames(CellTable$Cells))
 colnames( CellTable$Cells) <- make.names( colnames(CellTable$Cells))
-
+CellTable$Probes$Gene.Name <- make.names( CellTable$Probes$Gene.Name)
 
 
 #Write deduplicated results

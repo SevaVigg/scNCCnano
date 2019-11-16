@@ -10,6 +10,13 @@ require(dplyr)
 require(tidyr)
 require(ggplot2)
 
+
+if(!require("gridGraphics")){
+install.packages("gridGraphics")
+library("gridGraphics")}
+
+require(cowplot)
+
 if(!require("NanoStringNorm")){
   install.packages("NanoStringNorm", dependencies = TRUE)
 }
@@ -54,7 +61,7 @@ colnames(Genes) <- colnames(Cells) <- paste0(Cells["hpf",],"_", Cells["CellType"
 
 qualDF		<- data.frame( t(Genes), t(Cells))
 
-#First we filter cells with probes
+#First we filter cells according to control probes
 
 #now check negative probes
 negProbes	<- grep("NEG", colnames( qualDF), value= TRUE)
@@ -65,7 +72,7 @@ qualDF$negProbSum	<- apply( negProbTable, 1, sum)
 negProbDF 	<- gather( qualDF[ , negProbes], negProbe, negProbVal)
 negThreshold 	<- quantile( negProbDF$negProbVal, 0.97)
 
-ggplot(data = negProbDF, aes( x = negProbVal)) +
+negProbDistrPlot <- ggplot(data = negProbDF, aes( x = negProbVal)) +
 	geom_vline( xintercept = negThreshold, col = "red", linetype = "longdash") +
 	geom_histogram( fill = "blue", binwidth = 2) +
 	theme(	panel.background = element_rect( fill = "gray80"),
@@ -74,10 +81,11 @@ ggplot(data = negProbDF, aes( x = negProbVal)) +
 		hjust = 1, 
 		vjust = 0.5, 
 		size = 12),
-		axis.text.y = element_text( size = 12)) +
+		axis.text.y = element_text( size = 12),
+		plot.title  = element_text( hjust = 0)) +
 	scale_y_continuous( name = "Counts", breaks = seq(1000, 5000, by = 1000), expand = c(0,0)) +
 	scale_x_continuous( name = "Negative probe value", expand = c(0,0) ) +
-	ggtitle( "Histogram of negative probe expression, \naggregation by all genes and negative probes") 
+	ggtitle( "Negative probes, \nall neg probes in a cell aggregated") 
 
 #now check positive probes
 posSpikes		<- c(128, 32, 8, 2, 0.5, 0.125)						# Pos probes in fM
@@ -86,7 +94,7 @@ qualDF$posProbCoef 	<- apply( log2(Genes[ posProbes, ]), 2, function(x) lm( x~lo
 leftPosProbThrsld	<- quantile( qualDF$posProbCoef, 0.01)
 rightPosProbThrsld	<- quantile( qualDF$posProbCoef, 0.99)
 
-ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( x = posProbCoef)) +
+posProbDistrPlot <- ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( x = posProbCoef)) +
 	geom_histogram( fill = "blue", binwidth = 0.01) +
 	geom_vline( xintercept = leftPosProbThrsld, col = "red", linetype = "longdash") +
 	geom_vline( xintercept = rightPosProbThrsld, col = "red", linetype = "longdash") +
@@ -96,10 +104,11 @@ ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( x = posProbCoef)) +
 		hjust = 1, 
 		vjust = 0.5, 
 		size = 12),
-		axis.text.y = element_text( size = 12)) +
+		axis.text.y = element_text( size = 12),
+		plot.title  = element_text( hjust = 0)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
-	scale_x_continuous( name = "Positive probe log(value) regression coefficient", expand = c(0,0), limits = c(0, 1.5) ) +
-	ggtitle( "Histogram of positive probe log-expression, \nregression coefficient for spiked controls") 
+	scale_x_continuous( name = "log10 pos regression coef.", expand = c(0,0), limits = c(0, 1.5) ) +
+	ggtitle( "Positive probes, \nlog10 expression regression coefficient") 
 
 #remove cells with 3 or more counting negative probes
 
@@ -109,96 +118,96 @@ gualDF		 <- qualDF[ -negProbCellIndex, ]
 posProbCellIndex <- qualDF$posProbCoef < leftPosProbThrsld | qualDF$posProbCoef > rightPosProbThrsld
 qualDF		 <- qualDF[ -posProbCellIndex, ]
 
-#remove genes with too low values
+#remove genes with very low expression values in all cells
 #now we remove cells with a very low expression for all genes.
+
 testGenes 	<- setdiff( geneNames, c( "Kanamycin Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
-log2Exps	<- log2( Genes[ testGenes, ])	
-dens		<- density( t( log2Exps ))
-expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,15))$minimum
+log10Exps	<- log10( Genes[ testGenes, ])	
+dens		<- density( t( log10Exps ))
+expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(2,4))$minimum
 geneThreshold	<- 2/3*expThreshold
-poorCells 	<- which(sapply(log2Exps, function(x) sum(x > geneThreshold) < 3))  #cells with poor values for all genes but houskeeping
+poorCells 	<- which(sapply(log10Exps, function(x) sum(x > geneThreshold) < 3))  #cells with poor values for all genes but houskeeping
 qualDF		<- qualDF[ -poorCells, ]
+nCells		<- nrow( qualDF)
+
+densPlot	<- function( densAv){ plot(dens, main = "Combined expression density of exogenous probes", xlab = "Expression", ylab = "Density")
+			abline( v = geneThreshold, col = "red", lty = 5)
+			text( 5.3, 0.62, labels = paste0(nCells, " cells remaining"))
+			}	
+
+poorGenes 	<- rownames(log10Exps)[which( apply(log10Exps, 1, function(x) sum(x > expThreshold) < 5))]  #genes poorly expressed in all cell types
+genes2exclude	<- character(0)
+#genes2exclude	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
+poorGenes	<- c(poorGenes, genes2exclude)
+goodGenes	<- setdiff( geneNames, poorGenes)
+poorGenesI	<- which( colnames( qualDF) %in% poorGenes)
 
 #make Probe value plot and Probe value 
 geneAverageData 		<- data.frame( gene <- factor(rownames(Genes), levels = rownames(Genes)), avExp = apply( qualDF[ , rownames(Genes) ], 2, mean))
-geneAverageData$top10median	<- apply( qualDF[ , rownames(Genes) ] , 2, function(x) median(tail(sort(unlist(x)), 10))) 
+geneAverageData$top10median	<- apply( qualDF[ , rownames(Genes) ] , 2, function(x) median(tail(sort(unlist(x)), 10)))
+geneAverageData$filterColor	<- sapply( rownames(Genes), function(x) if( x %in% poorGenes) "red" else "blue")
 
-ggplot( data = geneAverageData) + 
+geneAverageDistributionPlot <- ggplot( data = geneAverageData) + 
 	aes( x = gene, y = avExp) +
-	geom_col(fill = "blue") +
+	geom_col( fill = geneAverageData$filterColor) +
+	geom_hline( yintercept = 10^geneThreshold, color = "red") + 
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 90, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 7),
+		plot.title  = element_text( hjust = 0)) +
+	scale_x_discrete( name = "Gene" ) +
+	scale_y_continuous( name = "Expression", expand = c(0,0)) +
+	ggtitle( "Expression average over cells")
+
+geneLogAverageDistributionPlot <- ggplot( data = geneAverageData) + 
+	aes( x = gene, y = log10(avExp)) +
+	geom_col(fill = geneAverageData$filterColor) +
 	geom_hline( yintercept = geneThreshold, color = "red") + 
 	theme(	panel.background = element_rect( fill = "gray80"),
 		axis.text = element_text(size = 12), 
 		axis.text.x = element_text(angle = 90, 
 		hjust = 1, 
 		vjust = 0.5, 
-		size = 7)) +
+		size = 7),
+		plot.title  = element_text( hjust = 0)) +
 	scale_x_discrete( name = "Gene" ) +
-	scale_y_continuous( name = "Expression", expand = c(0,0)) +
-	ggtitle( "Average gene expression over all cells in the dataset")
+	scale_y_continuous( name = "Log 10 expression", expand = c(0,0)) +
+	ggtitle( "log10 expression average over cells")
 
-ggplot( data = geneAverageData) + 
-	aes( x = gene, y = log10(avExp)) +
-	geom_col(fill = "blue") +
-	geom_hline( yintercept = log(geneThreshold), color = "red") + 
-	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.text = element_text(size = 12), 
-		axis.text.x = element_text(angle = 90, 
-		hjust = 1, 
-		vjust = 0.5, 
-		size = 7)) +
-	scale_x_discrete( name = "Gene" ) +
-	scale_y_continuous( name = "Expression", expand = c(0,0)) +
-	ggtitle( "Average gene expression over all cells in the dataset")
-
-ggplot( data = geneAverageData) + 
-	aes( x = gene, y = log10(avExp)) +
-	geom_col(fill = "blue") +
-	geom_hline( yintercept = log10(geneThreshold), color = "red") + 
-	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.text = element_text(size = 12), 
-		axis.text.x = element_text(angle = 90, 
-		hjust = 1, 
-		vjust = 0.5, 
-		size = 7)) +
-	scale_x_discrete( name = "Gene" ) +
-	scale_y_continuous( name = "Expression", expand = c(0,0)) +
-	ggtitle( "Average gene expression over all cells in the dataset, log-scale")
-
-ggplot( data = geneAverageData) + 
+geneTop10CellMedianPlot <- ggplot( data = geneAverageData) + 
 	aes( x = gene, y = log10( top10median)) +
-	geom_col(fill = "blue") +
-	geom_hline( yintercept = log10(geneThreshold), color = "red") + 
+	geom_col(fill = geneAverageData$filterColor) +
+	geom_hline( yintercept = geneThreshold, color = "red") + 
 	theme(	panel.background = element_rect( fill = "gray80"),
 		axis.text = element_text(size = 12), 
 		axis.text.x = element_text(angle = 90, 
 		hjust = 1, 
 		vjust = 0.5, 
-		size = 7)) +
+		size = 7),
+		plot.title  = element_text( hjust = 0)) +
 	scale_x_discrete( name = "Gene" ) +
 	scale_y_continuous( name = "Expression", expand = c(0,0)) +
-	ggtitle( "Median expression over top 10 cells, \nexpressing the gene in the dataset, log-scale")
+	ggtitle( "Median log10 expression in top 10 cells")
 
-poorGenes 	<- rownames(log2Exps)[which( apply(log2Exps, 1, function(x) sum(x > geneThreshold) < 5))]  #genes poorly expressed in all cell types
-genes2exclude	<- character(0)
-#genes2exclude	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
-poorGenes	<- c(poorGenes, genes2exclude)
-goodGenes	<- setdiff( geneNames, poorGenes)
-Genes_p		<- Genes_p[ goodGenes, ]
+#Now exclude genes that are found in small number of cells
+qualDF		<- qualDF[ , -poorGenesI]
 Probes		<- Probes[ Probes[ ,"Gene.Name"] %in% goodGenes, ]
 
-geneMatrix	<- as.matrix(Genes_p)
+geneMatrix	<- t(as.matrix( qualDF[ , goodGenes]))
 normGeneMatrix	<- normalize.quantiles(geneMatrix)
 
-rownames(normGeneMatrix) <- rownames(Genes_p)
-colnames(normGeneMatrix) <- Cells_p["FileName", ]
+rownames(normGeneMatrix) <- rownames( geneMatrix)
+colnames(normGeneMatrix) <- colnames( geneMatrix)
 
-qualDF		<- data.frame( t(Genes_p), t(Cells_p))		#this data frame contains cells and cell-related information. Cells are in rows
+#qualDF		<- data.frame( t(Genes_p), t(Cells_p))		#this data frame contains cells and cell-related information. Cells are in rows
 
 batchList	<- split( qualDF[, goodGenes], list(qualDF$FileName, qualDF$hpf), drop = TRUE)
 batchMedian	<- sapply( batchList, function(x) median(unlist(x)))
 
-qualNormDF	<- data.frame( t(normGeneMatrix), t(Cells_p))
+qualNormDF	<- qualDF; qualNormDF[ , goodGenes] <- t(normGeneMatrix)
 batchNormList	<- split( qualNormDF[ , goodGenes], list(qualNormDF$FileName, qualDF$hpf), drop = TRUE)
 
 batchDF		<- data.frame( median = batchMedian, batch = names(batchMedian)) #this data frame contains batches and batch-related information
@@ -214,40 +223,122 @@ batchDF$hpf	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b){
 batchDF$batch 	<- factor(batchDF$batch, levels = batchDF$batch) #ggplot requires an ordered factor as x, otherwise it reorders columns
 batchDF		<- batchDF[order(batchDF$cellType),]		 #but the ordering we need is according the cell type
 
-normMedianThreshold <- min(batchDF$normMedian[ batchDF$cellType=="Tl"]) #keeping batches that retain all Tails samples
+normMedianThreshold <- 10^geneThreshold #keeping batches that retain all control samples
 
-batchMedianPlot <- ggplot( data = batchDF) +
-	aes( x = batch, y = normMedian) + 
-	geom_col( fill = "blue") +
-	geom_hline( yintercept = normMedianThreshold, color = "magenta") +
-	theme( 	panel.background = element_rect( fill = "gray80"),
-		title 		= element_text( size = 17),
-		axis.title = element_text( size = 15),
-		axis.text.x = element_text(
-			angle = 90,
-			hjust = 1,
-			vjust = 0.5,
-			size = 11), 
-		axis.text.y = element_text( size = 13)
-		) +
-	scale_x_discrete( name = "batch", labels = paste(batchDF$cellType, batchDF$hpf, sep = ".")) +
-	scale_y_continuous( name = "Median expression") +
-	ggtitle("Median gene expression over all genes and all cells in the batch. \nQuantile normalization" )
+#batchMedianPlot <- ggplot( data = batchDF) +
+#	aes( x = batch, y = normMedian) + 
+#	geom_col( fill = "blue") +
+#	geom_hline( yintercept = normMedianThreshold, color = "magenta") +
+#	theme( 	panel.background = element_rect( fill = "gray80"),
+#		title 		= element_text( size = 17),
+#		axis.title = element_text( size = 15),
+#		axis.text.x = element_text(
+#			angle = 90,
+#			hjust = 1,
+#			vjust = 0.5,
+#			size = 11), 
+#		axis.text.y = element_text( size = 13),
+#		plot.title  = element_text( hjust = 0)
+#		) +
+#	scale_x_discrete( name = "batch", labels = paste(batchDF$cellType, batchDF$hpf, sep = ".")) +
+#	scale_y_continuous( name = "Median expression") +
+#	ggtitle("Median expression in batches, \ngene and cells aggregated, \nquantile normalization" )
 
-png(paste0(plotDir, .Platform$file.sep,"batchMedians.png"), width = 960)
-	(batchMedianPlot)
-dev.off()
-
-batchVecs <- lapply(batchList, function(x) log(unlist(x)))	# legacy variable, probably not needed
-
-#png(paste0(plotDir, .Platform$file.sep, "LogNotNormedBatchBoxPlot.png"), width = 960)
-#	boxplot(batchVecs[colnames(qualMatrix)], 
-#		main = "Not normalized, not filtered batches (log-scale)", 
-#		las =2 , 
-#		cex.axis = 0.7, 
-#		boxwex = 1.2, 
-#		at = seq(1, 2*length(batches), 2))
+#png(paste0(plotDir, .Platform$file.sep,"batchMedians.png"), width = 960)
+#	(batchMedianPlot)
 #dev.off()
+
+#batchVecs <- lapply(batchList, function(x) log(unlist(x)))	# legacy variable, probably not needed
+
+batchGeneEx 		<- gather( qualDF[c(goodGenes, "hpf", "FileName", "CellType")], key = "Gene", value = "Expression", goodGenes)  
+
+#we will use CellType.hpf levels to lable columns
+cellHpfList		<- split( batchGeneEx, list(batchGeneEx$FileName, batchGeneEx$hpf), drop = TRUE)
+batchGeneEx	 	<- do.call( rbind, lapply( cellHpfList, 
+				function(x) data.frame(x, 
+					cellHpf = paste(x$CellType, x$hpf, sep = "."),
+					fileHpf = paste(x$FileName, x$hpf, sep = ".") )))
+fileHpfLevels		<- levels( batchGeneEx$fileHpf)   
+fileHpfLabels		<- sapply(fileHpfLevels, function(x) unique(batchGeneEx[ batchGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- factor( fileHpfLabels, levels = sort(levels( fileHpfLabels)))
+fileHpfLabels		<- sort(fileHpfLabels)
+#fileHpfLabels		<- fileHpfLabels[ sort(names(fileHpfLabels))]
+batchGeneEx$fileHpf	<- factor( batchGeneEx$fileHpf, levels = names(fileHpfLabels))
+fileHpfTags		<- as.character( fileHpfLabels)
+ 
+batchBoxPlotNotNormalized <- ggplot( data = batchGeneEx, aes( x = fileHpf, y = log10(Expression))) +
+	geom_boxplot( fill = "blue") +
+	theme( 	panel.background = element_rect( fill = "gray80"),
+	title 		= element_text( size = 17),
+	axis.title = element_text( size = 15),
+	axis.text.x = element_text(
+		angle = 90,
+		hjust = 1,
+		vjust = 0.5,
+		size = 11), 
+	axis.text.y = element_text( size = 13),
+	plot.title  = element_text( hjust = 0)
+	) +
+	geom_hline( yintercept = log10(normMedianThreshold), col = "red", linetype = "longdash") +
+	scale_x_discrete( name = "batch", labels = fileHpfTags) +
+	scale_y_continuous( name = "log10 expression", expand = c(0,0)) +
+	ggtitle( "log-expression in batches, \nnot normalized")
+
+batchQuantNormGeneEx <- gather( qualNormDF[c(goodGenes, "hpf", "FileName", "CellType")], key = "batchFile", value = "Expression", goodGenes)  
+
+cellHpfList		<- split( batchQuantNormGeneEx, list(batchQuantNormGeneEx$FileName, batchQuantNormGeneEx$hpf), drop = TRUE)
+batchQuantNormGeneEx	 	<- do.call( rbind, lapply( cellHpfList, 
+				function(x) data.frame(x, 
+					cellHpf = paste(x$CellType, x$hpf, sep = "."),
+					fileHpf = paste(x$FileName, x$hpf, sep = ".") )))
+fileHpfLevels		<- levels( batchQuantNormGeneEx$fileHpf)   
+fileHpfLabels		<- sapply(fileHpfLevels, function(x) unique(batchQuantNormGeneEx[ batchQuantNormGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- factor( fileHpfLabels, levels = sort(levels( fileHpfLabels)))
+fileHpfLabels		<- sort(fileHpfLabels)
+#fileHpfLabels		<- fileHpfLabels[ sort(names(fileHpfLabels))]
+batchQuantNormGeneEx$fileHpf	<- factor( batchQuantNormGeneEx$fileHpf, levels = names(fileHpfLabels))
+fileHpfTags		<- as.character( fileHpfLabels)
+
+batchBoxPlotQuantileNormalized <- ggplot( data = batchQuantNormGeneEx, aes( x = fileHpf, y = log10(Expression))) +
+	geom_boxplot( fill = "blue") +
+	theme( 	panel.background = element_rect( fill = "gray80"),
+	title 		= element_text( size = 17),
+	axis.title = element_text( size = 15),
+	axis.text.x = element_text(
+		angle = 90,
+		hjust = 1,
+		vjust = 0.5,
+		size = 11), 
+	axis.text.y = element_text( size = 13),
+	plot.title  = element_text( hjust = 0)
+	) +
+	geom_hline( yintercept = log10(normMedianThreshold), col = "red", linetype = "longdash") +
+	scale_x_discrete( name = "batch", 
+			labels = fileHpfTags) +
+	scale_y_continuous( name = "log10 expression", expand = c(0,0)) +
+	ggtitle( "log expression in batches, \nquantile normalized")
+
+batchAgrMedian <- aggregate( list( Expression = batchQuantNormGeneEx$Expression), by = list( batchMedian = batchQuantNormGeneEx$fileHpf), FUN = median)
+batchAgrMedian$hpfTag 	<- fileHpfTags 
+
+batchMedianPlotQuantileNormalized <- ggplot( data = batchAgrMedian, aes( x = batchMedian, y = Expression)) +
+	geom_col( fill = "blue") +
+	theme( 	panel.background = element_rect( fill = "gray80"),
+	title 		= element_text( size = 17),
+	axis.title = element_text( size = 15),
+	axis.text.x = element_text(
+		angle = 90,
+		hjust = 1,
+		vjust = 0.5,
+		size = 11), 
+	axis.text.y = element_text( size = 13),
+	plot.title  = element_text( hjust = 0)
+	) +
+	geom_hline( yintercept = normMedianThreshold, col = "red", linetype = "longdash") +
+	scale_x_discrete( name = "batch", 
+			labels = fileHpfTags) +
+	scale_y_continuous( name = "Median expression", expand = c(0,0)) +
+	ggtitle( "Median expression in batches, \nquantile normalized")
 
 batchProbl 	<- batchDF[ batchDF$normMedian < normMedianThreshold, ]	#Problematic batches; threshold to keep Tl (MedNormVal ~ 90)
 cellsProbl_Ind	<- which( qualDF$FileName %in% batchProbl$fileName & qualDF$hpf %in% batchProbl$hpf)
@@ -257,83 +348,152 @@ Genes_f		<- t(qualDF_f[ , goodGenes])
 
 cat(file = qualContLogFile, nrow( qualDF_f), " cells remaining after removing batches with low medians\n")
 
-ggplot( 
+#
+#png(paste0(plotDir, .Platform$file.sep, "LogSortPosCoefs.png"))
+#	plot(sortLogCoefs, main = "Positive quality control coef values")
+#	abline( h = 1,   col = "green")
+#	abline( h = 1.1, col = "red")
+#	abline( h = 0.9, col = "red")
+#dev.off()
+
+#keepCoefs <- which(coefs > 0.9 & coefs < 1.1)
+#
+#Genes_ff	<- Genes_f[,keepCoefs]
+#Cells_ff	<- Cells_f[,keepCoefs]
+#
+#cat(file = qualContLogFile, ncol(Genes_ff), " cells remaining after removing cells with poor positive control values\n")
+#
+
+KanamycinPosTopQuant	<- quantile( log10(qualDF_f$Kanamycin.Pos), 0.995)
+KanamycinPosBotQuant	<- quantile( log10(qualDF_f$Kanamycin.Pos), 0.005)
+
+kanamycinExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(Kanamycin.Pos))) +
+	geom_histogram( fill = "blue", binwidth = 0.05) +
+	geom_vline( xintercept = KanamycinPosTopQuant, col = "red", linetype = "longdash") +
+	geom_vline( xintercept = KanamycinPosBotQuant, col = "red", linetype = "longdash") +
+	geom_vline( xintercept = min( log10( qualDF_f$Kanamycin.Pos[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
+	geom_vline( xintercept = max( log10( qualDF_f$Kanamycin.Pos[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
+	geom_vline( xintercept = min( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
+	geom_vline( xintercept = max( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 0, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 12),
+		axis.text.y = element_text( size = 12)) +
+	scale_y_continuous( name = "Counts", expand = c(0,0)) +
+	scale_x_continuous( name = "log10 Kanamycin expression", expand = c(0,0), limits = c(0, 7) ) +
+	ggtitle( "Kanamycin expresspion") 
 
 
-png(paste0(plotDir, .Platform$file.sep, "LogSortPosCoefs.png"))
-	plot(sortLogCoefs, main = "Positive quality control coef values")
-	abline( h = 1,   col = "green")
-	abline( h = 1.1, col = "red")
-	abline( h = 0.9, col = "red")
-dev.off()
-
-keepCoefs <- which(coefs > 0.9 & coefs < 1.1)
-
-Genes_ff	<- Genes_f[,keepCoefs]
-Cells_ff	<- Cells_f[,keepCoefs]
-
-cat(file = qualContLogFile, ncol(Genes_ff), " cells remaining after removing cells with poor positive control values\n")
-
-KanamycinPos_Distr		<- log( as.numeric(Genes_ff["Kanamycin Pos", ]))
-names(KanamycinPos_Distr)	<- colnames(Genes_ff)
-
-KanamycinPosTopQuant	<- 0.995
-KanamycinPosBotQuant	<- 0.005
-
-png( file.path( plotDir, "Kanamycin_Distr_plot.png"))
-	plot(sort( KanamycinPos_Distr))
-	abline( h = quantile( KanamycinPos_Distr, KanamycinPosTopQuant), col = "red")
-	abline( h = quantile( KanamycinPos_Distr, KanamycinPosBotQuant), col = "red")
-	abline( h = min( KanamycinPos_Distr[ grep("M", names( KanamycinPos_Distr))]), col = "black")
-	abline( h = max( KanamycinPos_Distr[ grep("M", names( KanamycinPos_Distr))]), col = "black")
-	abline( h = max( KanamycinPos_Distr[ grep("I", names( KanamycinPos_Distr))]), col = "cyan")
-	abline( h = min( KanamycinPos_Distr[ grep("I", names( KanamycinPos_Distr))]), col = "cyan")
-dev.off()
+#
+#png( file.path( plotDir, "Kanamycin_Distr_plot.png"))
+#	plot(sort( KanamycinPos_Distr))
+#	abline( h = quantile( KanamycinPos_Distr, KanamycinPosTopQuant), col = "red")
+#	abline( h = quantile( KanamycinPos_Distr, KanamycinPosBotQuant), col = "red")
+#	abline( h = min( KanamycinPos_Distr[ grep("M", names( KanamycinPos_Distr))]), col = "black")
+#	abline( h = max( KanamycinPos_Distr[ grep("M", names( KanamycinPos_Distr))]), col = "black")
+#	abline( h = max( KanamycinPos_Distr[ grep("I", names( KanamycinPos_Distr))]), col = "cyan")
+#	abline( h = min( KanamycinPos_Distr[ grep("I", names( KanamycinPos_Distr))]), col = "cyan")
+#dev.off()
 
 
-KanamycinPos_keep	<- which( KanamycinPos_Distr > quantile( KanamycinPos_Distr, KanamycinPosBotQuant)
-				& KanamycinPos_Distr < quantile( KanamycinPos_Distr, KanamycinPosTopQuant))
+KanamycinPos_keep	<- which( log10(qualDF_f$Kanamycin.Pos) > KanamycinPosBotQuant  
+				& log10(qualDF_f$Kanamycin.Pos) < KanamycinPosTopQuant)
 
-Genes_fff	<- Genes_ff[,KanamycinPos_keep]
-Cells_fff	<- Cells_ff[,KanamycinPos_keep]
+qualDF_ff	<- qualDF_f[ KanamycinPos_keep, ]
+Genes_ff	<- t(qualDF_f[ KanamycinPos_keep, goodGenes])
 
-cat(file = qualContLogFile, ncol(Genes_fff), " cells remaining after removing cells with Kanamycin Pos dropouts\n")
+cat(file = qualContLogFile, nrow( qualDF_ff), " cells remaining after removing cells with Kanamycin Pos dropouts\n")
+
+rpl13TopQuant	<- quantile( log10(qualDF_ff$rpl13), 0.97)
+rpl13BotQuant	<- quantile( log10(qualDF_ff$rpl13), 0.03)
+
+rpl13ExpressionDistributionPlot <- ggplot( data = qualDF_ff, aes( x = log10(rpl13))) +
+	geom_histogram( fill = "blue", binwidth = 0.05) +
+	geom_vline( xintercept = rpl13TopQuant, col = "red", linetype = "longdash") +
+	geom_vline( xintercept = rpl13BotQuant, col = "red", linetype = "longdash") +
+	geom_vline( xintercept = min( log10( qualDF_ff$rpl13[ grep("M", rownames(qualDF_ff))])), col = "black", linetype = "longdash") +
+	geom_vline( xintercept = max( log10( qualDF_ff$rpl13[ grep("M", rownames(qualDF_ff))])), col = "black", linetype = "longdash") +
+	geom_vline( xintercept = min( log10( qualDF_ff$rpl13[ grep("I", rownames(qualDF_ff))])), col = "cyan", linetype = "longdash") +
+	geom_vline( xintercept = max( log10( qualDF_ff$rpl13[ grep("I", rownames(qualDF_ff))])), col = "cyan", linetype = "longdash") +
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 0, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 12),
+		plot.title  = element_text( hjust = 0),
+		axis.text.y = element_text( size = 12)) +
+	scale_y_continuous( name = "Counts", expand = c(0,0)) +
+	scale_x_continuous( name = "log10 Rpl13 Expression", expand = c(0,0), limits = c(0, 7) ) +
+	ggtitle( "Rpl13 expression") 
+
+
+#
+#png( file.path( plotDir, "Kanamycin_Distr_plot.png"))
+#	plot(sort( rpl13_Distr))
+#	abline( h = quantile( rpl13_Distr, rpl13TopQuant), col = "red")
+#	abline( h = quantile( rpl13_Distr, rpl13BotQuant), col = "red")
+#	abline( h = min( rpl13_Distr[ grep("M", names( rpl13_Distr))]), col = "black")
+#	abline( h = max( rpl13_Distr[ grep("M", names( rpl13_Distr))]), col = "black")
+#	abline( h = max( rpl13_Distr[ grep("I", names( rpl13_Distr))]), col = "cyan")
+#	abline( h = min( rpl13_Distr[ grep("I", names( rpl13_Distr))]), col = "cyan")
+#dev.off()
+
+
+rpl13_keep	<- which( log10(qualDF_ff$rpl13) > rpl13BotQuant  
+				& log10(qualDF_ff$rpl13) < rpl13TopQuant)
+
+qualDF_fff	<- qualDF_ff[ rpl13_keep, ]
+
+#qualDF_fff[ , "Kanamycin.Pos"] <- qualDF_fff[ 1, "Kanamycin.Pos"]
+#qualDF_fff[ , "rpl13"]	       <- qualDF_fff[ 1, "rpl13"]
+Genes_fff	<- t(qualDF_ff[ rpl13_keep, goodGenes])
 
 
 
-rpl13_Distr	<- log(as.numeric(Genes_fff["rpl13", ]))
-names(rpl13_Distr) <- colnames(Genes_fff)
+#rpl13_Distr	<- log(as.numeric(Genes_fff["rpl13", ]))
+#names(rpl13_Distr) <- colnames(Genes_fff)
+#
+#rpl13TopQuant	<- 0.97
+#rpl13BotQuant	<- 0.03
+#
+#rpl13_keep	<- which( rpl13_Distr > quantile(rpl13_Distr, rpl13BotQuant) & rpl13_Distr < quantile(rpl13_Distr, rpl13TopQuant))
+#
+#png( file.path( plotDir, "rpl13_Distr_plot.png"))
+#	plot(sort(rpl13_Distr))
+#	abline( h = quantile( rpl13_Distr, rpl13TopQuant), col = "red")
+#	abline( h = quantile( rpl13_Distr, rpl13BotQuant), col = "red")
+#	abline( h = min( rpl13_Distr[ grep("M", names(rpl13_Distr))]), col = "black")
+#	abline( h = max( rpl13_Distr[ grep("M", names(rpl13_Distr))]), col = "black")
+#	abline( h = max( rpl13_Distr[ grep("I", names(rpl13_Distr))]), col = "cyan")
+#	abline( h = min( rpl13_Distr[ grep("I", names(rpl13_Distr))]), col = "cyan")
+#dev.off()
 
-rpl13TopQuant	<- 0.97
-rpl13BotQuant	<- 0.03
+#Genes_ffff	<- Genes_fff[,rpl13_keep]
+#Cells_ffff	<- Cells_fff[,rpl13_keep]
 
-rpl13_keep	<- which( rpl13_Distr > quantile(rpl13_Distr, rpl13BotQuant) & rpl13_Distr < quantile(rpl13_Distr, rpl13TopQuant))
-
-png( file.path( plotDir, "rpl13_Distr_plot.png"))
-	plot(sort(rpl13_Distr))
-	abline( h = quantile( rpl13_Distr, rpl13TopQuant), col = "red")
-	abline( h = quantile( rpl13_Distr, rpl13BotQuant), col = "red")
-	abline( h = min( rpl13_Distr[ grep("M", names(rpl13_Distr))]), col = "black")
-	abline( h = max( rpl13_Distr[ grep("M", names(rpl13_Distr))]), col = "black")
-	abline( h = max( rpl13_Distr[ grep("I", names(rpl13_Distr))]), col = "cyan")
-	abline( h = min( rpl13_Distr[ grep("I", names(rpl13_Distr))]), col = "cyan")
-dev.off()
-
-Genes_ffff	<- Genes_fff[,rpl13_keep]
-Cells_ffff	<- Cells_fff[,rpl13_keep]
-
-cat(file = qualContLogFile, ncol(Genes_ffff), " cells remaining after removing cells with rpl13 dropouts\n")
+cat(file = qualContLogFile, ncol(Genes_fff), " cells remaining after removing cells with rpl13 dropouts\n")
 
 normIteration <- 0
 repeat{									       #iterations over the background level								      
 normIteration <- normIteration + 1
 cat("Starting iteration ", normIteration, "\n")
 
-NanoTable	<- cbind(Probes[,"Class.Name"], Probes[,"Gene.Name"], Probes[,"Accession.."], Genes_ffff, stringsAsFactors = FALSE)
-colnames(NanoTable)[1:3] <- c("Code.Class", "Name", "Accession")
+#NanoTable	<- cbind(Probes[,"Class.Name"], Probes[,"Gene.Name"], Probes[,"Accession.."], Genes_fff, stringsAsFactors = FALSE)
+NanoTable	<- data.frame( Probes[, c("Class.Name", "Gene.Name", "Accession..")], t(qualDF_fff[ , goodGenes]), stringsAsFactors = FALSE)
 
-NanoTable[c("Kanamycin Pos", "rpl13"), "Code.Class"] <- "Housekeeping"
-NanoTableNormed <- NanoStringNorm(x = NanoTable, CodeCount = "sum", Background = "mean", SampleContent = "housekeeping.geo.mean")
+colnames(NanoTable)[1:3] <- c("Code.Class", "Name", "Accession")
+rownames(NanoTable) 	<- NanoTable$Name
+
+myCodeCount 	<- "geo.mean"
+myBackground	<- "mean"
+mySampleContent	<- "housekeeping.geo.mean"
+
+NanoTable[c("Kanamycin.Pos", "rpl13"), "Code.Class"] <- "Housekeeping"
+NanoTableNormed <- NanoStringNorm(x = NanoTable, CodeCount = myCodeCount, Background = myBackground, SampleContent = mySampleContent)
 
 nf	 	<- NanoTableNormed$sample.summary.stats.norm$pos.norm.factor	#recommended values for normfactors are between 0.3 and 3
 bg	 	<- NanoTableNormed$sample.summary.stats.norm$background.level	#recommended values for background are within 3 sd from the mean
@@ -352,66 +512,143 @@ cat( file = qualContLogFile, "Iteration ", normIteration, length(rc_drop), " cel
 "%u%"		<- union							#union() supports only two arguments
 norm_drop	<- nf_drop %u% sm_drop %u% bg_drop %u% rc_drop
 
+cat( "Cells to drop ->" , length(norm_drop), "\n")
+
 if( length(norm_drop) == 0){break}
 
-Genes_ffff	<- Genes_ffff[, -norm_drop]
-Cells_ffff	<- Cells_ffff[, -norm_drop]
+#Genes_ffff	<- Genes_ffff[, -norm_drop]
+#Cells_ffff	<- Cells_ffff[, -norm_drop]
+
+qualDF_fff	<- qualDF_fff[ -norm_drop , ]
+Genes_fff	<- t(qualDF_fff[ , goodGenes])
 
 }										# repeat
 
-cat( file = qualContLogFile, ncol(Genes_ffff), " cells remaining after removing cells with poor normalization statistics\n")
+cat( file = qualContLogFile, ncol(Genes_fff), " cells remaining after removing cells with poor normalization statistics\n")
 
-NanoTable	<- cbind(Probes[,"Class.Name"], Probes[,"Gene.Name"], Probes[,"Accession.."], Genes_ffff, stringsAsFactors = FALSE)
+#we assigned the normalized value as a fresh round of normalization only on cells which survived the previous round
+
+NanoTable	<- data.frame( Probes[, c("Class.Name", "Gene.Name", "Accession..")], t(qualDF_fff[ , goodGenes]), stringsAsFactors = FALSE)
+
 colnames(NanoTable)[1:3] <- c("Code.Class", "Name", "Accession")
-NanoTable[c("Kanamycin Pos", "rpl13"), "Code.Class"] <- "Housekeeping"
-Genes_n		 <- NanoStringNorm(x = NanoTable, CodeCount = "sum", Background = "mean", SampleContent = "housekeeping.geo.mean", return.matrix.of.endogenous.probes = TRUE)
+rownames(NanoTable) 	<- NanoTable$Name
 
-geneMatrix_n	<- as.matrix(Genes_n)
+NanoTable[c("Kanamycin.Pos", "rpl13"), "Code.Class"] <- "Housekeeping"
+Genes_n <- NanoStringNorm(x = NanoTable, CodeCount = myCodeCount, Background = myBackground, SampleContent = mySampleContent, return.matrix.of.endogenous.probes = TRUE)
+Genes_n	<- Genes_n + 1
 
-batches_n	<- unique(unlist(Cells_ffff["batch",]))
-batchDates_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["dateEx", grep(x, Cells_ffff["batch",])][1]))
-batchTypes_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["CellType", grep(x, Cells_ffff["batch",])][1]))
-batchHpf_n	<- unlist(lapply(batches_n, function(x) Cells_ffff["hpf", grep(x, Cells_ffff["batch",])][1]))
+goodCells	<- colnames( Genes_n)
+signGenes	<- rownames( Genes_n)
 
-batchVals_n	<- lapply(batches_n, function(x) geneMatrix_n[, which(Cells_ffff["batch", ]==x)])
+qualNanoNormDF 	<- data.frame( t(Genes_n), qualDF_fff[ goodCells, c("num", "batch", "hpf", "dateEx", "Desk", "CellType", "FileName", "negProbSum", "posProbCoef")])  
+batchNanoNormGeneEx <- gather( qualNanoNormDF[  , c( signGenes, "hpf", "FileName", "CellType")], key = "Gene", value = "Expression", signGenes)  
 
-names(batchVals_n) <- as.character(batches_n)
+cellHpfList		<- split( batchNanoNormGeneEx, list(batchNanoNormGeneEx$FileName, batchNanoNormGeneEx$hpf), drop = TRUE)
+batchNanoNormGeneEx	 	<- do.call( rbind, lapply( cellHpfList, 
+				function(x) data.frame(x, 
+					cellHpf = paste(x$CellType, x$hpf, sep = "."),
+					fileHpf = paste(x$FileName, x$hpf, sep = ".") )))
+fileHpfLevels		<- levels( batchNanoNormGeneEx$fileHpf)   
+fileHpfLabels		<- sapply(fileHpfLevels, function(x) unique(batchNanoNormGeneEx[ batchNanoNormGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- factor( fileHpfLabels, levels = sort(levels( fileHpfLabels)))
+fileHpfLabels		<- sort(fileHpfLabels)
+#fileHpfLabels		<- fileHpfLabels[ sort(names(fileHpfLabels))]
+batchNanoNormGeneEx$fileHpf	<- factor( batchNanoNormGeneEx$fileHpf, levels = names(fileHpfLabels))
+fileHpfTags		<- as.character( fileHpfLabels)
 
-batchMedVals_n	<- unlist(lapply(batchVals_n, median))
-
-qualMatrix_n	<- as.data.frame(rbind(batchHpf_n, batchDates_n, batchTypes_n, batchMedVals_n), stringsAsFactors = FALSE)
-names(qualMatrix_n)	<- batches_n
-qualMatrix_n	<- qualMatrix_n[, order(as.numeric(qualMatrix_n["batchMedVals_n",]))]
-
-png(paste0(plotDir, .Platform$file.sep,"NormalizedBatchMedians.png"))
-	plot(as.numeric(qualMatrix_n["batchMedVals_n", ]), main = "Medians of normalized batches", xlab = "Batches", ylab = "CountMedian")
-dev.off()
-
-batchVecs_n <- lapply(batchVals_n, function(x) log(as.vector(x)+1))
-
-png(paste0(plotDir, .Platform$file.sep, "LogNormalizedBatchBoxPlot.png"), width = 960)
-	boxplot(batchVecs_n[colnames(qualMatrix_n)], 
-		main = "Normalized and filtered batches (log-scale)", 
-		las =2 , 
-		cex.axis = 0.7, 
-		boxwex = 1.2, 
-		at = seq(1, 2*length(batches_n), 2))
-dev.off()
+boxPlotNanoStringNormalized <- ggplot( data = batchNanoNormGeneEx, aes( x = fileHpf, y = log10(Expression))) +
+	geom_boxplot( fill = "blue") +
+	theme( 	panel.background = element_rect( fill = "gray80"),
+	title 		= element_text( size = 17),
+	axis.title = element_text( size = 15),
+	axis.text.x = element_text(
+		angle = 90,
+		hjust = 1,
+		vjust = 0.5,
+		size = 11), 
+	axis.text.y = element_text( size = 13), 
+	plot.title  = element_text( hjust = 0)
+	) +
+	geom_hline( yintercept = log10(normMedianThreshold), col = "red", linetype = "longdash") +
+	scale_x_discrete( name = "batch", 
+		labels = fileHpfTags) +
+	scale_y_continuous( name = "Gene expression", expand = c(0,0)) +
+	ggtitle( "log-expression in batches,\nNanoString normalization")
 
 
 write.table(Genes_n, file = file.path(resQCDir, "NormalizedExTable.csv"), sep = "\t")
 
-
-
-cells_dt 	<- as.data.table( t(Cells_ffff))
-cells_tbl	<- cells_dt[, .N, .(CellType,hpf)]
+cells_tbl <- table(qualNanoNormDF$CellType)
 
 write.table(cells_tbl, file=qualContLogFile, sep = "\t")
 
 close(qualContLogFile)	
 
-write.table( Genes_ffff, file = file.path( resQCDir, "expressionTableDedupQC.csv"), sep = "\t" )
-write.table( Cells_ffff, file = file.path( resQCDir, "cellDescripitonsDedupQC.csv"),sep = "\t" )
+write.table( Genes_n, file = file.path( resQCDir, "New_expressionTableDedupQC.csv"), sep = "\t" )
+write.table( qualDF_fff[ , c("num", "batch", "hpf", "dateEx", "Desk", "CellType", "FileName", "negProbSum", "posProbCoef")] , file = file.path( resQCDir, "New_cellDescripitonsDedupQC.csv"),sep = "\t" )
+
+#and now make the final figure
+
+firstLine	<- plot_grid(
+			densPlot(dens),
+#			geneAverageDistributionPlot 		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			geneLogAverageDistributionPlot 		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			geneTop10CellMedianPlot			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			nrow = 1,
+			align = "h",
+			labels = c("A", "B", "C"),
+			label_size = 25,
+			rel_widths = c( 1, 1)
+			)
+
+secondLine	<- plot_grid( 
+			negProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			posProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			kanamycinExpressionDistributionPlot 	+ theme( plot.margin = unit( c( 0, 0.3, 0, 0.3), "inches")), 
+			rpl13ExpressionDistributionPlot		+ theme( plot.margin = unit( c( 0, 0.3, 0, 0.3), "inches")), 
+			nrow = 1,
+			align = "h",
+			labels = c("D", "E", "F", "D"),
+			label_size = 25,
+			rel_widths = c( 1, 1)
+			)
+
+thirdLine	<- plot_grid(
+			batchMedianPlotQuantileNormalized 	+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			batchBoxPlotNotNormalized		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			nrow = 1,
+			align = "h",
+			labels = c("H", "I"),
+			label_size = 25,
+			rel_widths = c( 1, 1)
+			)
+
+forthLine	<- plot_grid(
+			batchBoxPlotQuantileNormalized		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			boxPlotNanoStringNormalized		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			nrow = 1,
+			align = "h",
+			labels = c("J", "K"),
+			label_size = 25,
+			rel_widths = c( 1, 1)
+			)
+
+
+
+qualityControlPlot 	<- plot_grid( 
+				firstLine  + theme( plot.margin = unit( c( 0.3, 0, 0.3, 1), "inches")),  
+				secondLine + theme( plot.margin = unit( c( 0.3, 0, 0.3, 1), "inches")),  
+				thirdLine + theme( plot.margin = unit( c( 0.3, 0, 0.3, 1), "inches")),  
+				forthLine + theme( plot.margin = unit( c( 0.3, 0, 0., 1), "inches")),  
+					align = "v",
+					labels = '',
+					rel_heights = c(1, 1),
+					ncol = 1) +
+			   theme( plot.margin = unit( c( 1, 1, 1, 1), "inches"))
+
+png( file.path( plotDir, paste0("qualityControlMainPlot", ".png")), width = 1536, height = 2048)
+	plot( qualityControlPlot)
+dev.off()
 
 
 
