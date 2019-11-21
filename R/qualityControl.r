@@ -9,7 +9,7 @@ require(gtools)
 require(dplyr)
 require(tidyr)
 require(ggplot2)
-
+require(grid)
 
 if(!require("gridGraphics")){
 install.packages("gridGraphics")
@@ -72,6 +72,11 @@ qualDF$negProbSum	<- apply( negProbTable, 1, sum)
 negProbDF 	<- gather( qualDF[ , negProbes], negProbe, negProbVal)
 negThreshold 	<- quantile( negProbDF$negProbVal, 0.97)
 
+negProbCellIndex	<- which(qualDF$negProbSum < 3)
+nCellNeg		<- length(negProbCellIndex)
+nCellNegGrob 		<- grobTree( textGrob( paste0(nCellNeg, " cells remaining"), x=0.5,  y=0.95, hjust=0,
+  				gp=gpar(col="black", fontsize=13, fontface="bold")))
+
 negProbDistrPlot <- ggplot(data = negProbDF, aes( x = negProbVal)) +
 	geom_vline( xintercept = negThreshold, col = "red", linetype = "longdash") +
 	geom_histogram( fill = "blue", binwidth = 2) +
@@ -85,14 +90,22 @@ negProbDistrPlot <- ggplot(data = negProbDF, aes( x = negProbVal)) +
 		plot.title  = element_text( hjust = 0)) +
 	scale_y_continuous( name = "Counts", breaks = seq(1000, 5000, by = 1000), expand = c(0,0)) +
 	scale_x_continuous( name = "Negative probe value", expand = c(0,0) ) +
+	annotation_custom( nCellNegGrob) +
 	ggtitle( "Negative probes, \nall neg probes in a cell aggregated") 
+
+qualDF		 	<- qualDF[ negProbCellIndex, ]
 
 #now check positive probes
 posSpikes		<- c(128, 32, 8, 2, 0.5, 0.125)						# Pos probes in fM
-posProbes		<- grep("POS", rownames(Genes), value= TRUE)
-qualDF$posProbCoef 	<- apply( log2(Genes[ posProbes, ]), 2, function(x) lm( x~log2(posSpikes))$coefficients[2] )
+posProbes		<- grep("POS", colnames( qualDF), value= TRUE)
+qualDF$posProbCoef 	<- apply( log2( qualDF[ , posProbes ]), 1, function(x) lm( x~log2(posSpikes))$coefficients[2] )
 leftPosProbThrsld	<- quantile( qualDF$posProbCoef, 0.01)
 rightPosProbThrsld	<- quantile( qualDF$posProbCoef, 0.99)
+
+posProbCellIndex 	<- which(qualDF$posProbCoef > leftPosProbThrsld & qualDF$posProbCoef < rightPosProbThrsld)
+nCellPos		<- length( posProbCellIndex)
+nCellPosGrob 		<- grobTree( textGrob( paste0(nCellPos, " cells remaining"), x=0.1,  y=0.95, hjust=0,
+  				gp=gpar(col="black", fontsize=13, fontface="bold")))
 
 posProbDistrPlot <- ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( x = posProbCoef)) +
 	geom_histogram( fill = "blue", binwidth = 0.01) +
@@ -107,46 +120,71 @@ posProbDistrPlot <- ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( 
 		axis.text.y = element_text( size = 12),
 		plot.title  = element_text( hjust = 0)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
-	scale_x_continuous( name = "log10 pos regression coef.", expand = c(0,0), limits = c(0, 1.5) ) +
-	ggtitle( "Positive probes, \nlog10 expression regression coefficient") 
+	scale_x_discrete( name = "log10 pos regression coef.", expand = c(0,0), limits = c(0, 1.5) ) +
+	annotation_custom( nCellPosGrob) +
+	ggtitle( "Positive probes, \nlog2 expression regression coefficient") 
+#function(){ plot(dens, main = "Combined expression density of exogenous probes", xlab = "Expression", ylab = "Density")
+#			abline( v = geneThreshold, col = "red", lty = 5)
+#			text( 5.3, 0.62, labels = paste0(nCells, " cells remaining"))
+#			}	
 
-#remove cells with 3 or more counting negative probes
 
-negProbCellIndex <- qualDF$negProbSum > 2
-gualDF		 <- qualDF[ -negProbCellIndex, ]
-
-posProbCellIndex <- qualDF$posProbCoef < leftPosProbThrsld | qualDF$posProbCoef > rightPosProbThrsld
-qualDF		 <- qualDF[ -posProbCellIndex, ]
-
-#remove genes with very low expression values in all cells
-#now we remove cells with a very low expression for all genes.
+qualDF		 <- qualDF[ posProbCellIndex, ]
 
 testGenes 	<- setdiff( geneNames, c( "Kanamycin Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
 log10Exps	<- log10( Genes[ testGenes, ])	
-dens		<- density( t( log10Exps ))
-expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(2,4))$minimum
-geneThreshold	<- 2/3*expThreshold
+
+dens		<- density( t( log10Exps )) 
+expMinimal	<- optimize(approxfun(dens$x,dens$y),interval=c(2,4))$minimum
+geneThreshold	<- expMinimal
 poorCells 	<- which(sapply(log10Exps, function(x) sum(x > geneThreshold) < 3))  #cells with poor values for all genes but houskeeping
 qualDF		<- qualDF[ -poorCells, ]
 nCells		<- nrow( qualDF)
+nCellsExpGrob 	<- grobTree( textGrob( paste0(nCells, " cells remaining"), x=0.5,  y=0.95, hjust=0,
+  				gp=gpar(col="black", fontsize=13, fontface="bold")))
 
-densPlot	<- function( densAv){ plot(dens, main = "Combined expression density of exogenous probes", xlab = "Expression", ylab = "Density")
-			abline( v = geneThreshold, col = "red", lty = 5)
-			text( 5.3, 0.62, labels = paste0(nCells, " cells remaining"))
-			}	
 
-poorGenes 	<- rownames(log10Exps)[which( apply(log10Exps, 1, function(x) sum(x > expThreshold) < 5))]  #genes poorly expressed in all cell types
+densPlot	<- ggplot( data = data.frame( dens$x, dens$y), mapping = aes( dens$x, dens$y)) + 
+			geom_line() +
+			geom_vline( xintercept = geneThreshold, color = "red") +
+			scale_x_continuous( name = "Expression" ) +
+			scale_y_continuous( name = "cell density") +
+			annotation_custom( nCellsExpGrob) +
+			ggtitle( "Density of gene expression \nover exogenous probes")
+
+
+#remove genes with very low expression values in all cells
+geneAverageData 		<- data.frame( gene <- factor(rownames(Genes), levels = rownames(Genes)), avExp = apply( qualDF[ , rownames(Genes) ], 2, mean))
+geneAverageData$top5		<- apply( qualDF[ , rownames(Genes) ] , 2, function(x) head(tail(sort(unlist(x)), 5), 1))	# smallest of the top five
+
+poorGenes 	<- rownames(log10Exps)[which( apply(log10Exps, 1, function(x) sum(x > geneThreshold) < 6))]  #genes poorly expressed in all cell types
 genes2exclude	<- character(0)
 #genes2exclude	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
 poorGenes	<- c(poorGenes, genes2exclude)
 goodGenes	<- setdiff( geneNames, poorGenes)
 poorGenesI	<- which( colnames( qualDF) %in% poorGenes)
 
-#make Probe value plot and Probe value 
-geneAverageData 		<- data.frame( gene <- factor(rownames(Genes), levels = rownames(Genes)), avExp = apply( qualDF[ , rownames(Genes) ], 2, mean))
-geneAverageData$top10median	<- apply( qualDF[ , rownames(Genes) ] , 2, function(x) median(tail(sort(unlist(x)), 10)))
 geneAverageData$filterColor	<- sapply( rownames(Genes), function(x) if( x %in% poorGenes) "red" else "blue")
 
+geneTop5CellPlot <- ggplot( data = geneAverageData) + 
+	aes( x = gene, y = log10( top5 )) +
+	geom_col(fill = geneAverageData$filterColor) +
+	geom_hline( yintercept = geneThreshold, color = "red") + 
+	theme(	panel.background = element_rect( fill = "gray80"),
+		axis.text = element_text(size = 12), 
+		axis.text.x = element_text(angle = 90, 
+		hjust = 1, 
+		vjust = 0.5, 
+		size = 7),
+		plot.title  = element_text( hjust = 0)) +
+	scale_x_discrete( name = "Gene" ) +
+	scale_y_continuous( name = "Expression", expand = c(0,0)) +
+	ggtitle( "5th rank statistics of gene expression")
+
+#now we remove cells with a very low expression for all genes.
+
+
+#make Probe value plot and Probe value 
 geneAverageDistributionPlot <- ggplot( data = geneAverageData) + 
 	aes( x = gene, y = avExp) +
 	geom_col( fill = geneAverageData$filterColor) +
@@ -223,7 +261,7 @@ batchDF$hpf	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b){
 batchDF$batch 	<- factor(batchDF$batch, levels = batchDF$batch) #ggplot requires an ordered factor as x, otherwise it reorders columns
 batchDF		<- batchDF[order(batchDF$cellType),]		 #but the ordering we need is according the cell type
 
-normMedianThreshold <- 10^geneThreshold #keeping batches that retain all control samples
+normMedianThreshold <- 90 #keeping batches that retain all control samples
 
 #batchMedianPlot <- ggplot( data = batchDF) +
 #	aes( x = batch, y = normMedian) + 
@@ -383,7 +421,7 @@ kanamycinExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(K
 		size = 12),
 		axis.text.y = element_text( size = 12)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
-	scale_x_continuous( name = "log10 Kanamycin expression", expand = c(0,0), limits = c(0, 7) ) +
+	scale_x_discrete( name = "log10 Kanamycin expression", expand = c(0,0), limits = c(0, 7) ) +
 	ggtitle( "Kanamycin expresspion") 
 
 
@@ -427,7 +465,7 @@ rpl13ExpressionDistributionPlot <- ggplot( data = qualDF_ff, aes( x = log10(rpl1
 		plot.title  = element_text( hjust = 0),
 		axis.text.y = element_text( size = 12)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
-	scale_x_continuous( name = "log10 Rpl13 Expression", expand = c(0,0), limits = c(0, 7) ) +
+	scale_x_discrete( name = "log10 Rpl13 Expression", expand = c(0,0), limits = c(0, 7) ) +
 	ggtitle( "Rpl13 expression") 
 
 
@@ -590,10 +628,10 @@ write.table( qualDF_fff[ , c("num", "batch", "hpf", "dateEx", "Desk", "CellType"
 #and now make the final figure
 
 firstLine	<- plot_grid(
-			densPlot(dens),
-#			geneAverageDistributionPlot 		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
-			geneLogAverageDistributionPlot 		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
-			geneTop10CellMedianPlot			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			negProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			posProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			geneTop5CellPlot 			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+#			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
 			nrow = 1,
 			align = "h",
 			labels = c("A", "B", "C"),
@@ -602,13 +640,13 @@ firstLine	<- plot_grid(
 			)
 
 secondLine	<- plot_grid( 
-			negProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
-			posProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			densPlot				+ theme( plot.margin = unit( c( 0, 0.3, 0, 0.3), "inches")), 
 			kanamycinExpressionDistributionPlot 	+ theme( plot.margin = unit( c( 0, 0.3, 0, 0.3), "inches")), 
-			rpl13ExpressionDistributionPlot		+ theme( plot.margin = unit( c( 0, 0.3, 0, 0.3), "inches")), 
+			rpl13ExpressionDistributionPlot		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			geneAverageDistributionPlot 		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
 			nrow = 1,
 			align = "h",
-			labels = c("D", "E", "F", "D"),
+			labels = c("D", "E", "F", "G"),
 			label_size = 25,
 			rel_widths = c( 1, 1)
 			)
