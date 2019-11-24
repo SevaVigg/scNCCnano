@@ -136,7 +136,7 @@ log10Exps	<- log10( Genes[ testGenes, ])
 
 dens		<- density( t( log10Exps )) 
 expMinimal	<- optimize(approxfun(dens$x,dens$y),interval=c(2,4))$minimum
-geneThreshold	<- expMinimal
+geneThreshold	<- 2/3*expMinimal
 poorCells 	<- which(sapply(log10Exps, function(x) sum(x > geneThreshold) < 3))  #cells with poor values for all genes but houskeeping
 qualDF		<- qualDF[ -poorCells, ]
 nCells		<- nrow( qualDF)
