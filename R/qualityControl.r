@@ -142,7 +142,7 @@ genesPerCell	<- 3
 poorCellsDens 	<- which( apply(log10Exps, 1, function(x) sum(x > geneLogThreshold) <= genesPerCell ))  #cells with poor values for all genes but houskeeping
 qualDF		<- qualDF[ -poorCellsDens, ]
 nCells		<- nrow( qualDF)
-nCellsExpGrob 	<- grobTree( textGrob( paste0("At least ", genesPerCell, " genes per a cell \nabove the threshold\n", nCells, " cells remaining"), x=0.45,  y=0.9, hjust=0,
+nCellsExpGrob 	<- grobTree( textGrob( paste0("At least ", genesPerCell, " genes per cell \nabove the threshold\n", nCells, " cells remaining"), x=0.45,  y=0.9, hjust=0,
   				gp=gpar(col="black", hjust = "bottom", fontsize = 26, fontface="bold")))
 
 
@@ -190,9 +190,9 @@ geneTop5CellPlot <- ggplot( data = geneAverageData) +
 		axis.text.y	= element_text( margin = margin( l = 10)), 
 		plot.title  	= element_text( size = 34, hjust = 0)) +
 	scale_x_discrete( name = "Probe" ) +
-	scale_y_continuous( name = "5th rank log10 probe counts", expand = c(0,0), limits = c(0, 7)) +
+	scale_y_continuous( name = "log10 probe count", expand = c(0,0), limits = c(0, 7)) +
 	annotation_custom( nGenesGrob) +
-	ggtitle( "5th rank statistics of probe counts")
+	ggtitle( "top 5th probe count")
 
 #now we remove cells with a very low expression for all genes.
 
@@ -611,7 +611,7 @@ forthLine	<- plot_grid(
 			boxPlotNanoStringNormalized		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
 			nrow = 1,
 			align = "h",
-			labels = c("H", "J", "K"),
+			labels = c("H", "I", "J"),
 			label_size = 40,
 			rel_widths = c( 0.3, 0.3, 0.4)
 			)
@@ -626,7 +626,8 @@ qualityControlPlot 	<- plot_grid(
 					align = "v",
 					labels = '',
 					rel_heights = c(1, 1),
-					ncol = 1) +
+					ncol = 1, 
+					label_size = 40) +
 			   theme( plot.margin = unit( c( 1, 1, 1, 1), "inches"))
 
 png( file.path( plotDir, paste0("qualityControlMainPlot", ".png")), width = 2480, height = 3506)

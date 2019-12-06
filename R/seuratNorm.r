@@ -1,6 +1,6 @@
 #This is a minimal version of seurat preparing
 #it requires scTables prepared by makeScTables.r
-#this script also sets up one of the cell sets from "allCells", "WT", "WT_Sox10" )
+#this script also sets up one of the cell sets from "AllCells", "WT", "WT_Sox10" )
 
 if (!require("Seurat")){
 BiocManager::install("Seurat")
@@ -15,7 +15,7 @@ if(!require("e1071")){
 }
 
 
-experimentType	<- "WT"	# may be ("allCells", "WT", and "WT_Sox10")	 
+#experimentType	<- "AllCells"	# may be ("AllCells", "WT", and "WT_Sox10")	 
 
 resDir		<- file.path(getwd(), "Res")
 scTablesDir	<- file.path( resDir, "scTables")
@@ -54,15 +54,17 @@ cellNamesDF	<- data.frame( cellNames = colnames(Cells), row.names = colnames(Cel
 ipmc		<- AddMetaData( object = ipmc, newTypeDF, col.name = "newType")
 ipmc		<- AddMetaData( object = ipmc, cellNamesDF, col.name = "cellNames")
 
-ipmc@ident		<- as.factor( celltype)
+ipmc@ident	<- as.factor( celltype)
 
-ipmc			<- ScaleData(ipmc, do.scale = TRUE, do.center = TRUE)
+ipmc		<- ScaleData(ipmc, do.scale = TRUE, do.center = TRUE)
 
-ipmc 			<- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE, do.print = FALSE)
+ipmc 		<- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE, do.print = FALSE)
 
-ipmc			<- StashIdent(object = ipmc, save.name = "originalCellTypes")
+ipmc		<- StashIdent(object = ipmc, save.name = "originalCellTypes")
 
-ipmc@misc		<- "allGenes"
+genCellTypeIdentDF	<- data.frame( genCellTypeIdent =sapply( ipmc@meta.data$originalCellTypes, function(x) if(grepl("^[0-9]", x)) return("G") else return(x)), row.names = colnames( Cells)) 
+ipmc		<- AddMetaData( object = ipmc, genCellTypeIdentDF, col.name = "genCellTypeIdent")
+ipmc@misc	<- "allGenes"
 
 
 
