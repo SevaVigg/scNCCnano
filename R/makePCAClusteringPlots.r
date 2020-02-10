@@ -2,6 +2,7 @@ makePCAClusteringPlots 	<- function( seuratObj, clResolution){
 
 source("R/setClusterColors.r")
 source("R/makeLineagesPCASpace.r")
+source("R/getClusterTypes.r")
 
 resDir		<- file.path(getwd(), "Res")
 

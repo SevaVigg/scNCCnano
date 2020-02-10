@@ -36,8 +36,8 @@ require(gtools)
 dens		<- density( t(as.matrix(logExps)))
 expThreshold	<- optimize(approxfun(dens$x,dens$y),interval=c(5,14))$minimum 
 
-logExps		<- apply( logExps, c(1, 2), function(x) if (x < 5.) 0 else x) 
-logExps		<- apply( logExps, c(1, 2), function(x) if (x > 15) 15 else x) 
+#logExps		<- apply( logExps, c(1, 2), function(x) if (x < 5.) 0 else x) 
+#logExps		<- apply( logExps, c(1, 2), function(x) if (x > 15) 15 else x) 
 
 #rename cell types, prepare the annotated cell table
 celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "general") return( x[3]) else return( x[6] ))) 

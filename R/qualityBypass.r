@@ -60,11 +60,10 @@ Genes[,1]	<- NULL
 colnames(Genes) <- colnames(Cells) <- paste0(Cells["hpf",],"_", Cells["CellType",])
 
 qualDF		<- data.frame( t(Genes), t(Cells))
-qualDF$Cell	<- gsub( ".", "_", rownames(qualDF), fixed = TRUE)
 
 #Remove mitfa-/- mutants
 
-qualDF		<- qualDF[ -grep( "mitfa", qualDF$Cell), ]
+qualDF		<- qualDF[ -grep( "mitfa", rownames(qualDF)), ]
 
 #First we filter cells according to control probes
 
@@ -125,46 +124,20 @@ posProbDistrPlot <- ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( 
 	coord_cartesian(xlim = c(0, 1.25)) +  
 	annotation_custom( nCellPosGrob) +
 	ggtitle( "Positive probes") 
-				
+#function(){ plot(dens, main = "Combined expression density of exogenous probes", xlab = "Expression", ylab = "Density")
+#			abline( v = geneLogThreshold, col = "red", lty = 5)
+#			text( 5.3, 0.62, labels = paste0(nCells, " cells remaining"))
+#			}	
+
 
 qualDF		 <- qualDF[ posProbCellIndex, ]
 
-#We check agreement between external (Kanamycin) and internal (rpl13) controls. We do this by making a linear model and looking at residuals
-
-lmKanRpl		<- lm( qualDF$Kanamycin.Pos ~ qualDF$rpl13 )
-qualDF$KanRplRes	<- lmKanRpl$residuals
-leftKanRplThrsld	<- quantile( qualDF$KanRplRes, 0.025)
-rightKanRplThrsld	<- quantile( qualDF$KanRplRes, 0.975)
-
-kanRplIndex 		<- which(qualDF$KanRplRes > leftKanRplThrsld & qualDF$KanRplRes < rightKanRplThrsld)
-nCellKanRpl		<- length( kanRplIndex)
-nCellKanRplGrob 	<- grobTree( textGrob( paste0(nCellKanRpl, " cells remaining"), x=0.05,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
-
-kanRplDistrPlot <- ggplot( data = qualDF[ , "KanRplRes", drop = FALSE], aes( x = KanRplRes)) +
-	geom_histogram( aes(y = ..count..), fill = "deepskyblue2", bins = 50) +
-	geom_vline( xintercept = leftKanRplThrsld, col = "red", linetype = "solid") +
-	geom_vline( xintercept = rightKanRplThrsld, col = "red", linetype = "solid") +
-	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.title 	= element_text( size = 30),  
-		axis.text 	= element_text( size = 24), 
-		axis.text.x 	= element_text( angle = 0, hjust = 1, vjust = 0.5),
-		axis.text.y	= element_text( margin = margin( l = 10)), 
-		plot.title  	= element_text( size = 34, hjust = 0)) +
-	scale_y_continuous( name = "Counts", expand = c(0,0)) +
-	scale_x_continuous( name = "regression coef. of Kanamycin and rpl13 probes", expand = c(0,0) ) +
-	coord_cartesian(xlim = c( min(qualDF$KanRplRes), max(qualDF$KanRplRes))) +  
-	annotation_custom( nCellKanRplGrob) +
-	ggtitle( "Kanamycin rpl13 agreement") 
-
-qualDF	<- qualDF[ kanRplIndex, ]
-	
 exoGenes 	<- setdiff( geneNames, c( "Kanamycin.Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
 log10Exps	<- log10( qualDF[ ,exoGenes])	
 
 dens		<- density(as.matrix(log10Exps)) 
 expLogMinimal	<- optimize(approxfun(dens$x,dens$y),interval=c(2,4))$minimum
-geneLogThreshold <- 2/3*expLogMinimal
+geneLogThreshold <- expLogMinimal
 genesPerCell	<- 3	 
 poorCellsDens 	<- which( apply(log10Exps, 1, function(x) sum(x > geneLogThreshold) <= genesPerCell ))  #cells with poor values for all genes but houskeeping
 qualDF		<- qualDF[ -poorCellsDens, ]
@@ -274,59 +247,73 @@ geneTop10CellMedianPlot <- ggplot( data = geneAverageData) +
 qualDF		<- qualDF[ , setdiff( colnames(qualDF), poorGenes) ]
 Probes		<- Probes[ Probes[ ,"Gene.Name"] %in% goodGenes, ]
 
-#calculate quantile normalization
 geneMatrix	<- t(as.matrix( qualDF[ , exoGenes]))
 normGeneMatrix	<- normalize.quantiles(geneMatrix)
 
 rownames(normGeneMatrix) <- rownames( geneMatrix)
 colnames(normGeneMatrix) <- colnames( geneMatrix)
 
+batchList	<- split( qualDF[, exoGenes], list(qualDF$FileName, qualDF$hpf), drop = TRUE)
+batchMedian	<- sapply( batchList, function(x) median(unlist(x)))
 
 qualNormDF	<- qualDF; qualNormDF[ , exoGenes] <- t(normGeneMatrix)
+batchNormList	<- split( qualNormDF[ , exoGenes], list(qualNormDF$FileName, qualDF$hpf), drop = TRUE)
 
-#Now we compare batches
+batchDF		<- data.frame( median = batchMedian, batch = names(batchMedian)) #this data frame contains batches and batch-related information
+batchDF$normMedian 	<- sapply( batchNormList, function(x) median(unlist(x)))
+batchDF$Good 		<- sapply( batchDF$normMedian, function(x) x>= 10^geneLogThreshold)
+batchDF$fileName	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b) paste(head( b, length(b)-1), collapse = ".")) #we need to restore the FileName back
+batchDF$cellType	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b){
+					fn <- paste(head( b, length(b)-1), collapse = ".") 
+					return( unique( qualDF[qualDF$FileName == fn, "CellType"]))})					#fetch the CellType from qualDF
+batchDF$hpf	<- sapply(strsplit(as.character(batchDF$batch), "[.]"), function(b){
+					hp <- paste(tail( b, 1), collapse = ".") 
+					return( unique( qualDF[qualDF$hpf == hp, "hpf"]))})						#fetch the hpf from qualDF
 
-batchGeneEx 		<- gather( qualDF[c(exoGenes, "hpf", "FileName", "CellType", "Cell")], key = "Gene", value = "Expression", exoGenes)
-batchGeneEx		<- batchGeneEx[ batchGeneEx$Expression > 1, ]
-batchGeneEx$cellHpf	<- paste( batchGeneEx$CellType, batchGeneEx$hpf, sep = ".") 
-batchGeneEx$fileHpf	<- paste( batchGeneEx$FileName, batchGeneEx$hpf, sep = ".") 
-batchGeneEx$fileHpf	<- factor( batchGeneEx$fileHpf, levels = unique( batchGeneEx[ order(batchGeneEx$cellHpf, batchGeneEx$fileHpf), "fileHpf"] ))
+batchDF$batch 	<- factor(batchDF$batch, levels = batchDF$batch) #ggplot requires an ordered factor as x, otherwise it reorders columns
+batchDF		<- batchDF[order(batchDF$cellType),]		 #but the ordering we need is according the cell type
 
-batchQuantNormGeneEx 	<- gather( qualNormDF[c(exoGenes, "hpf", "FileName", "CellType", "Cell")], key = "Gene", value = "Expression", exoGenes) 
-batchQuantNormGeneEx	<- batchQuantNormGeneEx[ batchQuantNormGeneEx$Expression > 1, ]
-batchQuantNormGeneEx$cellHpf	<- paste( batchQuantNormGeneEx$CellType, batchQuantNormGeneEx$hpf, sep = ".") 
-batchQuantNormGeneEx$fileHpf	<- paste( batchQuantNormGeneEx$FileName, batchQuantNormGeneEx$hpf, sep = ".")
-batchQuantNormGeneEx$fileHpf	<- factor( batchQuantNormGeneEx$fileHpf, 
-					levels = unique(batchQuantNormGeneEx[ order(batchQuantNormGeneEx$cellHpf, batchQuantNormGeneEx$fileHpf), "fileHpf"] ))
+#normMedianThreshold <- 90 #keeping batches that retain all control samples
 
+#batchMedianPlot <- ggplot( data = batchDF) +
+#	aes( x = batch, y = normMedian) + 
+#	geom_col( fill = "deepskyblue2") +
+#	geom_hline( yintercept = normMedianThreshold, color = "magenta") +
+#	theme( 	panel.background = element_rect( fill = "gray80"),
+#		title 		= element_text( size = 34),
+#		axis.title = element_text( size = 30),
+#		axis.text.x = element_text(
+#			angle = 90,
+#			hjust = 1,
+#			vjust = 0.5,
+#			size = 11), 
+#		axis.text.y = element_text( size = 13),
+#		plot.title  = element_text( hjust = 0)
+#		) +
+#	scale_x_discrete( name = "batch", labels = paste(batchDF$cellType, batchDF$hpf, sep = ".")) +
+#	scale_y_continuous( name = "Median expression") +
+#	ggtitle("Median expression in batches, \ngene and cells aggregated, \nquantile normalization" )
+
+#png(paste0(plotDir, .Platform$file.sep,"batchMedians.png"), width = 960)
+#	(batchMedianPlot)
+#dev.off()
+
+#batchVecs <- lapply(batchList, function(x) log(unlist(x)))	# legacy variable, probably not needed
+
+batchGeneEx 		<- gather( qualDF[c(exoGenes, "hpf", "FileName", "CellType")], key = "Gene", value = "Expression", exoGenes) #This variable contains gene expression vectorrise over cells  
+
+#we will use CellType.hpf levels to lable columns
 cellHpfList		<- split( batchGeneEx, list(batchGeneEx$FileName, batchGeneEx$hpf), drop = TRUE)
-
-#batchDF is the data.frame containing information about batches
-batchDF			<- aggregate(   list( medianExp = batchGeneEx$Expression), 
-					by = list( 	FileName	= batchGeneEx$FileName,
-							cellHpf 	= batchGeneEx$cellHpf, 
-							fileHpf 	= batchGeneEx$fileHpf, 
-							CellType	= batchGeneEx$CellType,
-							hpf 		= batchGeneEx$hpf),
-					FUN = median)
-
-batchQuantNormMedian		<- aggregate(   list( medianExp = batchQuantNormGeneEx$Expression), 
-					by = list( 	FileName	= batchQuantNormGeneEx$FileName,
-							cellHpf 	= batchQuantNormGeneEx$cellHpf, 
-							fileHpf 	= batchQuantNormGeneEx$fileHpf,
-							CellType	= batchQuantNormGeneEx$CellType,
-							hpf 		= batchQuantNormGeneEx$hpf), 
-					FUN = median)
-batchDF$normMedian	<- batchQuantNormMedian$medianExp
-
-batchDF$fileHpf		<- factor(  batchDF$fileHpf, levels = unique( batchDF[ order(batchDF$cellHpf, batchDF$fileHpf), "fileHpf"] ))
-batchDF			<- batchDF[ order( batchDF$fileHpf), ]
-
-
-batchDF$Good		<- batchDF$normMedian >= 10^geneLogThreshold
-
+batchGeneEx	 	<- do.call( rbind, lapply( cellHpfList, 
+				function(x) data.frame(x, 
+					cellHpf = paste(x$CellType, x$hpf, sep = "."),
+					fileHpf = paste(x$FileName, x$hpf, sep = ".") )))
 fileHpfLevels		<- levels( batchGeneEx$fileHpf)   
-fileHpfLabels		<- sapply( fileHpfLevels, function(x) unique(batchGeneEx[ batchGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- sapply(fileHpfLevels, function(x) unique(batchGeneEx[ batchGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- factor( fileHpfLabels, levels = sort(levels( fileHpfLabels)))
+fileHpfLabels		<- sort(fileHpfLabels)
+#fileHpfLabels		<- fileHpfLabels[ sort(names(fileHpfLabels))]
+batchGeneEx$fileHpf	<- factor( batchGeneEx$fileHpf, levels = names(fileHpfLabels))					#We need this to lable the columns. 
 fileHpfTags		<- as.character( fileHpfLabels)
 
 batchBoxPlotNotNormalized <- ggplot( data = batchGeneEx, aes( x = fileHpf, y = log10(Expression))) +
@@ -342,6 +329,23 @@ batchBoxPlotNotNormalized <- ggplot( data = batchGeneEx, aes( x = fileHpf, y = l
 	scale_x_discrete( name = "batch", labels = fileHpfTags) +
 	scale_y_continuous( name = "log10 probe counts", expand = c(0,0), limits = c(0, 7)) +
 	ggtitle( "log10 probe counts in batches, not normalized")
+
+
+
+batchQuantNormGeneEx <- gather( qualNormDF[c( exoGenes, "hpf", "FileName", "CellType")], key = "batchFile", value = "Expression", exoGenes)  
+
+cellHpfList		<- split( batchQuantNormGeneEx, list(batchQuantNormGeneEx$FileName, batchQuantNormGeneEx$hpf), drop = TRUE)
+batchQuantNormGeneEx	 	<- do.call( rbind, lapply( cellHpfList, 
+				function(x) data.frame(x, 
+					cellHpf = paste(x$CellType, x$hpf, sep = "."),
+					fileHpf = paste(x$FileName, x$hpf, sep = ".") )))
+fileHpfLevels		<- levels( batchQuantNormGeneEx$fileHpf)   
+fileHpfLabels		<- sapply(fileHpfLevels, function(x) unique(batchQuantNormGeneEx[ batchQuantNormGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- factor( fileHpfLabels, levels = sort(levels( fileHpfLabels)))
+fileHpfLabels		<- sort(fileHpfLabels)
+#fileHpfLabels		<- fileHpfLabels[ sort(names(fileHpfLabels))]
+batchQuantNormGeneEx$fileHpf	<- factor( batchQuantNormGeneEx$fileHpf, levels = names(fileHpfLabels))
+fileHpfTags		<- as.character( fileHpfLabels)
 
 batchBoxPlotQuantileNormalized <- ggplot( data = batchQuantNormGeneEx, aes( x = fileHpf, y = log10(Expression))) +
 	geom_boxplot( fill = sapply(batchDF$Good, function(x) if(x) "deepskyblue2" else "red")) +
@@ -361,7 +365,7 @@ batchAgr		<- aggregate( list( medianExp = batchQuantNormGeneEx$Expression), by =
 batchAgrQuart		<- aggregate( list( quart3Exp = batchQuantNormGeneEx$Expression), by = list( batch = batchQuantNormGeneEx$fileHpf), FUN = quantile, probs = 0.75)
 batchAgr$quart3Exp	<- batchAgrQuart$quart3Exp
 batchAgr$hpfTag 	<- fileHpfTags 
-cellsBatchGood		<- which( qualDF$FileName %in% batchDF[ batchDF$Good, "FileName"] & qualDF$hpf %in% batchDF[ batchDF$Good, "hpf"])
+cellsBatchGood		<- which( qualDF$FileName %in% batchDF[ batchDF$Good, "fileName"] & qualDF$hpf %in% batchDF[ batchDF$Good, "hpf"])
 nCellsBatch		<- length( cellsBatchGood)
 nCellsBatchGrob 		<- grobTree( textGrob( paste0(nCellsBatch, " cells remaining"), x=0.05,  y=0.95, hjust=0,
   				gp=gpar(col="black", fontsize = 26, fontface="bold")))
@@ -384,7 +388,6 @@ batchQuartPlotQuantileNormalized <- ggplot( data = batchAgr, aes( x = batch, y =
 
 qualDF_f	<- qualDF[ cellsBatchGood, ]
 Genes_f		<- t(qualDF_f[ , goodGenes])
-
 
 #cat(file = qualContLogFile, nrow( qualDF_f), " cells remaining after removing batches with low medians\n")
 #cat(file = qualContLogFile, ncol(Genes_f), " cells remaining after removing cells with rpl13 dropouts\n")
@@ -448,28 +451,25 @@ rpl13ExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(rpl13
 	scale_x_continuous( name = "log10 rpl13 counts", expand = c(0,0) ) +
 	coord_cartesian( xlim = c(0, 7), expand = FALSE) +
 	annotation_custom( nCellsRplGrob) +
-	ggtitle( "Rpl13 counts")
+	ggtitle( "Rpl13 counts") 
 
-#We need to separate all NanoString tags into two sets, selecting those with expressions of 1 (possible dropouts) which we do not normalize  
+qualDF_f		<- qualDF_f[ goodCellsRpl, ]
 
 
 normIteration <- 0
 repeat{									       #iterations over the background level								      
-nanoGenes	<- t(qualDF_f[ , goodGenes] - 1)  #We need true zero counts and the landscape table    
-
 normIteration <- normIteration + 1
 cat("Starting iteration ", normIteration, "\n")
 
 #NanoTable	<- cbind(Probes[,"Class.Name"], Probes[,"Gene.Name"], Probes[,"Accession.."], Genes_fff, stringsAsFactors = FALSE)
-NanoTable	<- data.frame( Probes[, c("Class.Name", "Gene.Name", "Accession..")], nanoGenes , stringsAsFactors = FALSE)
+NanoTable	<- data.frame( Probes[, c("Class.Name", "Gene.Name", "Accession..")], t(qualDF_f[ , goodGenes]), stringsAsFactors = FALSE)
 
 colnames(NanoTable)[1:3] <- c("Code.Class", "Name", "Accession")
 rownames(NanoTable) 	<- NanoTable$Name
 
 myCodeCount 	<- "none"
-myBackground	<- "mean.2sd"
+myBackground	<- "mean"
 mySampleContent	<- "housekeeping.sum"
-
 
 NanoTable[c("Kanamycin.Pos", "rpl13"), "Code.Class"] <- "Housekeeping"
 NanoTableNormed <- NanoStringNorm(x = NanoTable, CodeCount = myCodeCount, Background = myBackground, SampleContent = mySampleContent)
@@ -507,17 +507,14 @@ cat( file = qualContLogFile, ncol(Genes_f), " cells remaining after removing cel
 
 #we assigned the normalized value as a fresh round of normalization only on cells which survived the previous round
 
-
-nanoGenes	<- t(qualDF_f[ , goodGenes] - 1)  #We need true zero counts and the landscape table    
-NanoTable	<- data.frame( Probes[, c("Class.Name", "Gene.Name", "Accession..")], nanoGenes, stringsAsFactors = FALSE)
+NanoTable	<- data.frame( Probes[, c("Class.Name", "Gene.Name", "Accession..")], t(qualDF_f[ , goodGenes]), stringsAsFactors = FALSE)
 
 colnames(NanoTable)[1:3] <- c("Code.Class", "Name", "Accession")
 rownames(NanoTable) 	<- NanoTable$Name
 
 NanoTable[c("Kanamycin.Pos", "rpl13"), "Code.Class"] <- "Housekeeping"
 Genes_n <- NanoStringNorm(x = NanoTable, CodeCount = myCodeCount, Background = myBackground, SampleContent = mySampleContent, return.matrix.of.endogenous.probes = TRUE)
-
-Genes_n <- trunc(Genes_n) 
+Genes_n	<- Genes_n + 1
 
 goodCells	<- colnames( Genes_n)
 signGenes	<- rownames( Genes_n)
@@ -525,28 +522,25 @@ signGenes	<- rownames( Genes_n)
 qualNanoNormDF 	<- data.frame( t(Genes_n), qualDF_f[ goodCells, c("num", "batch", "hpf", "dateEx", "Desk", "CellType", "FileName", "negProbSum", "posProbCoef")])  
 batchNanoNormGeneEx <- gather( qualNanoNormDF[  , c( signGenes, "hpf", "FileName", "CellType")], key = "Gene", value = "Expression", signGenes)  
 
-batchNanoNormGeneEx$cellHpf	<- paste( batchNanoNormGeneEx$CellType, batchNanoNormGeneEx$hpf, sep = ".") 
-batchNanoNormGeneEx$fileHpf	<- paste( batchNanoNormGeneEx$FileName, batchNanoNormGeneEx$hpf, sep = ".") 
-batchNanoNormGeneEx$fileHpf	<- factor( batchNanoNormGeneEx$fileHpf, levels = unique( batchNanoNormGeneEx[ order(batchNanoNormGeneEx$cellHpf, batchNanoNormGeneEx$fileHpf), "fileHpf"] ))
-
-batchDF			<- aggregate(   list( medianExp = batchNanoNormGeneEx$Expression), 
-					by = list( 	FileName	= batchNanoNormGeneEx$FileName,
-							cellHpf 	= batchNanoNormGeneEx$cellHpf, 
-							fileHpf 	= batchNanoNormGeneEx$fileHpf, 
-							CellType	= batchNanoNormGeneEx$CellType,
-							hpf 		= batchNanoNormGeneEx$hpf),
-					FUN = median)
-
+cellHpfList		<- split( batchNanoNormGeneEx, list(batchNanoNormGeneEx$FileName, batchNanoNormGeneEx$hpf), drop = TRUE)
+batchNanoNormGeneEx	 	<- do.call( rbind, lapply( cellHpfList, 
+				function(x) data.frame(x, 
+					cellHpf = paste(x$CellType, x$hpf, sep = "."),
+					fileHpf = paste(x$FileName, x$hpf, sep = ".") )))
 fileHpfLevels		<- levels( batchNanoNormGeneEx$fileHpf)   
-fileHpfLabels		<- sapply( fileHpfLevels, function(x) unique(batchNanoNormGeneEx[ batchNanoNormGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- sapply(fileHpfLevels, function(x) unique(batchNanoNormGeneEx[ batchNanoNormGeneEx$fileHpf == x, "cellHpf"]))
+fileHpfLabels		<- factor( fileHpfLabels, levels = sort(levels( fileHpfLabels)))
+fileHpfLabels		<- sort(fileHpfLabels)
+#fileHpfLabels		<- fileHpfLabels[ sort(names(fileHpfLabels))]
+batchNanoNormGeneEx$fileHpf	<- factor( batchNanoNormGeneEx$fileHpf, levels = names(fileHpfLabels))
 fileHpfTags		<- as.character( fileHpfLabels)
+
 
 nCellNanoGrob 		<- grobTree( textGrob( paste0( length( goodCells), " cells remaining"), x=0.05,  y=0.95, hjust=0,
   				gp=gpar(col="black", fontsize = 26, fontface="bold")))
 
-batchNanoNormGeneExNonZero <- batchNanoNormGeneEx[ batchNanoNormGeneEx$Expression > 0, ]
 
-boxPlotNanoStringNormalized <- ggplot( data = batchNanoNormGeneExNonZero, aes( x = fileHpf, y = log10(Expression))) +
+boxPlotNanoStringNormalized <- ggplot( data = batchNanoNormGeneEx, aes( x = fileHpf, y = log10(Expression))) +
 	geom_boxplot( fill = "deepskyblue2") +
 	theme( 	panel.background = element_rect( fill = "gray80"),
 		plot.title = element_text( size = 34, hjust = 0),
@@ -561,9 +555,10 @@ boxPlotNanoStringNormalized <- ggplot( data = batchNanoNormGeneExNonZero, aes( x
 	geom_hline( yintercept = geneLogThreshold, col = "red", linetype = "solid") +
 	scale_x_discrete( name = "batch", 
 			  labels = fileHpfTags) +
-	scale_y_continuous( name = "log10 probe counts", expand = c(0,0), limits = c(-0.5,7)) +
+	scale_y_continuous( name = "log10 probe counts", expand = c(0,0), limits = c(0,7)) +
 	annotation_custom( nCellNanoGrob) +
 	ggtitle( "log10 probe counts in batches,\nNanoString normalization")
+
 
 write.table(Genes_n, file = file.path(resQCDir, "NormalizedExTable.csv"), sep = "\t")
 

@@ -74,4 +74,6 @@ png( file.path( heatMapDir, paste0( "HeatMap_", LineageType, "_Lineage.png" )))
 dev.off()
 
 }else{ draw(hplot, annotation_legend_side = "bottom")}
+
+return( curveDF)
 } 
