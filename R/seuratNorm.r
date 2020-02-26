@@ -64,6 +64,9 @@ ipmc		<- StashIdent(object = ipmc, save.name = "originalCellTypes")
 
 genCellTypeIdentDF	<- data.frame( genCellTypeIdent =sapply( ipmc@meta.data$originalCellTypes, function(x) if(grepl("^[0-9]", x)) return("G") else return(x)), row.names = colnames( Cells)) 
 ipmc		<- AddMetaData( object = ipmc, genCellTypeIdentDF, col.name = "genCellTypeIdent")
+
+#now reorder levels so that I and M go togeather in the plot
+
 ipmc@misc	<- "allGenes"
 
 

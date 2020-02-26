@@ -38,10 +38,11 @@ cellsWMissingGenes_I <- unlist( lapply(genesMissing_I, function(gene_I) {cell_I 
 CellTable$Genes	<- CellTable$Genes[-cellsWMissingGenes_I]
 CellTable$Cells <- CellTable$Cells[-cellsWMissingGenes_I]
 
+cellNames	<- paste0("C", 1:ncol(CellTable$Genes), "_", CellTable$Cells["CellType", ], "_", CellTable$Cells["hpf", ])
 rownames( CellTable$Genes) <- make.names( rownames(CellTable$Genes))
-colnames( CellTable$Genes) <- make.names( colnames(CellTable$Genes))
+colnames( CellTable$Genes) <- cellNames
 rownames( CellTable$Cells) <- make.names( rownames(CellTable$Cells))
-colnames( CellTable$Cells) <- make.names( colnames(CellTable$Cells))
+colnames( CellTable$Cells) <- cellNames
 CellTable$Probes$Gene.Name <- make.names( CellTable$Probes$Gene.Name)
 
 

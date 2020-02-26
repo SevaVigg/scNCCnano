@@ -57,8 +57,6 @@ Genes[,1]	<- NULL
 
 #remove mitfa 
 
-colnames(Genes) <- colnames(Cells) <- paste0(Cells["hpf",],"_", Cells["CellType",])
-
 qualDF		<- data.frame( t(Genes), t(Cells))
 qualDF$Cell	<- gsub( ".", "_", rownames(qualDF), fixed = TRUE)
 
@@ -164,7 +162,7 @@ log10Exps	<- log10( qualDF[ ,exoGenes])
 
 dens		<- density(as.matrix(log10Exps)) 
 expLogMinimal	<- optimize(approxfun(dens$x,dens$y),interval=c(2,4))$minimum
-geneLogThreshold <- 2/3*expLogMinimal
+geneLogThreshold <- expLogMinimal
 genesPerCell	<- 3	 
 poorCellsDens 	<- which( apply(log10Exps, 1, function(x) sum(x > geneLogThreshold) <= genesPerCell ))  #cells with poor values for all genes but houskeeping
 qualDF		<- qualDF[ -poorCellsDens, ]
@@ -501,7 +499,7 @@ if( length(norm_drop) == 0){break}
 qualDF_f	<- qualDF_f[ -norm_drop , ]
 Genes_f		<- t(qualDF_f[ , goodGenes])
 
-}										# repeat
+}	#repeat iterations
 
 cat( file = qualContLogFile, ncol(Genes_f), " cells remaining after removing cells with poor normalization statistics\n")
 
@@ -576,7 +574,7 @@ close(qualContLogFile)
 write.table( Genes_n, file = file.path( resQCDir, "New_NormalizedExTable.csv"), sep = "\t" )
 write.table( t(qualDF_f[ , c("num", "batch", "hpf", "dateEx", "Desk", "CellType", "FileName", "negProbSum", "posProbCoef")]) , file = file.path( resQCDir, "New_cellDescripitonsDedupQC.csv"),sep = "\t" )
 
-#and now make the final figure
+#and now make the final figure. plot_grid opens an empty window, I don't know how to suppress this
 
 firstLine	<- plot_grid(
 			negProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
