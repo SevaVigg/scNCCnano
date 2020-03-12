@@ -1,18 +1,17 @@
 getClusterTypes <- function( seuratObj){
 
-#This funciton takes a factor whose names are cells and whose values are clusters and assigns colors to clusters with predominant cell types
-if(!require(data.table)){
-  install.packages("data.table")}
+#This funciton takes a factor whose names are target cell types and whose values are clusters
+
+source("R/calcTargetClusterQuals.r")
 
 clFactor     <- seuratObj@ident
 
-cellClusters <- sapply( unique(levels(clFactor)), function(x) unlist( transpose( strsplit( names( clFactor[clFactor == x]), "\\." ))[[1]]))
-nClust	     <- length(levels( clFactor))
+cellClusters <- sapply( levels( clFactor), function(x) WhichCells( seuratObj, ident = x))
+nClust	     <- length( levels( clFactor))
 
-
-cl_IP	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("I", x)])==0) 0 else ( 1 + length( grep("I", x)))/sqrt(1+length(x))))
-cl_MC	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("M", x)])==0) 0 else ( 1 + length( grep("M", x)))/sqrt(1+length(x))))
-cl_tail	<- which.max( sapply(cellClusters, function(x) if(length(x[grep("Tl", x)])==0) 0 else ( 1 + length( grep("Tl", x)))/sqrt(1+length(x))))
+cl_IP	<- which.max( calcTargetClusterQuals( seuratObj, "I")) 
+cl_MC	<- which.max( calcTargetClusterQuals( seuratObj, "M")) 
+cl_tail	<- which.max( calcTargetClusterQuals( seuratObj, "Tl")) 
 
 clusterTypes 			<- levels( clFactor) 
 if (length(unique(c(cl_IP, cl_MC, cl_tail))) < 3) {cat( "Some reference clusters conincide \n")

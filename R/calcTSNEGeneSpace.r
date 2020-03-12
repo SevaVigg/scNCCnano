@@ -3,7 +3,7 @@
 # the cells that are not found in initSeurObj are put at random positions
 
 
-calcTSNEGeneSpace <- function( newSeurObj, TSNErandSeed, Norm = FALSE, initSeurObj = NULL){
+calcTSNEGeneSpace <- function( newSeurObj, TSNErandSeed = 25, Norm = FALSE, initSeurObj = NULL){
 
 require( proxy)
 
@@ -47,7 +47,7 @@ rtsneRes	<- Rtsne( distanceMatrix, is_distance = TRUE,
 				theta = 0, 
 				eta = 500, 
 				pca = FALSE, 
-				max_iter = 5000,
+				max_iter = 500,
 				pca_center = FALSE,
 				normalize = Norm,
 				Y_init = initNew

@@ -50,8 +50,8 @@ seuratWT <- calcTSNEGeneSpace( seuratWT, TSNESeed, Norm = FALSE)
 #seuratWT	<- RunTSNE( seuratWT, genes.use = rownames( seuratWT@data), perplexity = 20, 
 
 
-#UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
-UMAPSeed <- 42
+UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
+#UMAPSeed <- 42
 
 cat( file = file.path( geneSetPlotDir, "UMAPSeed.txt"), UMAPSeed, "\n")
 
@@ -210,19 +210,4 @@ dev.off()
 #plotInitCellTypePCAs(seuratObj, 6)	#Plot PCA diagrams with cell colors, uses its own directorial structure
 
 #remove values, that are too close to zero
-
-
-	umapPlotWT	<- DimPlot(object = seuratWT, reduction.use = 'umap',  cols.use = setCellTypeColors( seuratWT), pt.size = 2, do.return = TRUE)
-	umapPlotWT 	<- umapPlotWT +
-#		xlim( -0.22, 0.12) +
-#		ylim( -0.22, 0.12) + 
-		theme(
-			legend.position="none", 
-			axis.text = element_text( size = 24),
-			axis.title  = element_text( size = 30, face = "bold"),
-			axis.title.x = element_text( margin = margin(t = 10, r = 0, b = 0, l = 0, unit = "pt")),
-			axis.title.y = element_text( margin = margin(t = 10,  r = 20, b = 0, l = 0, unit = "pt")),
-			panel.background = element_rect(fill = "gray60")
-		)  
-
 

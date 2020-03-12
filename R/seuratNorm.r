@@ -1,6 +1,8 @@
+seuratNorm 	<- function( experimentType){
+
 #This is a minimal version of seurat preparing
 #it requires scTables prepared by makeScTables.r
-#this script also sets up one of the cell sets from "AllCells", "WT", "WT_Sox10" )
+#experimentType can be "AllCells", "WT", "WT_Sox10" )
 
 if (!require("Seurat")){
 BiocManager::install("Seurat")
@@ -68,7 +70,8 @@ ipmc		<- AddMetaData( object = ipmc, genCellTypeIdentDF, col.name = "genCellType
 #now reorder levels so that I and M go togeather in the plot
 
 ipmc@misc	<- "allGenes"
-
+return( ipmc)
+}
 
 
 

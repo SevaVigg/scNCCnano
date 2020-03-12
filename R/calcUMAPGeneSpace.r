@@ -1,4 +1,6 @@
-calcUMAPGeneSpace <- function( seurAll, seurWT = NULL, UMAPRandSeed = 42, Dim = 2, assay.use = "RNA", reduction.key = "UMAP", reduction.name = "umap", experimentType = "allCells"){
+calcUMAPGeneSpace <- function( seurAll, seurWT = NULL, experimentType = "allCells",
+			UMAPRandSeed = 42L, Dim = 2, minDist = 0.65, myNeighbors = 20L, myMetric = "cosine",  
+			assay.use = "RNA", reduction.key = "UMAP", reduction.name = "umap"){
 
 #experimentType = c("allCells", "allCondWT", "WToutAll")
 # 'allCells' performs standard UMAP of seurAll
@@ -7,15 +9,13 @@ calcUMAPGeneSpace <- function( seurAll, seurWT = NULL, UMAPRandSeed = 42, Dim = 
 # we cannot subset to WT because WT depends on imputation on the WT cells only
 #UMAP parameters
 
-myNeighbors 	<- 20L
-myMinDist 	<- 0.005
-myMetric 	<- "cosine"
-
 umapRes	<- list( All = list(), WT = list())
 
 if(!require(reticulate)){install.packages("reticulate")}
 library(reticulate)
 
+#np <- import(module = "numpy")
+#np$np.random.seed(42)
 
 SetIfNull <- function(x, default) {
   if (is.null(x)) {
@@ -39,7 +39,7 @@ cellsWT <- setdiff( colnames( seurAll@data), grep( "sox", colnames(seurAll@data)
 
 if( experimentType == "allCells") 
 { resObj <- RunUMAP( seurAll, genes.use = rownames(seurAll@data), max.dim = Dim, seed.use = UMAPRandSeed, 
-	n_neighbors = myNeighbors, min_dist = myMinDist, metric = myMetric)
+	n_neighbors = myNeighbors, min_dist = minDist, metric = myMetric)
 	umapRes$All <- resObj
 	return( umapRes)
 }else{
@@ -47,7 +47,7 @@ if( experimentType == "allCells")
 if( experimentType == "WToutAll"){
 	seurAll	<- SubsetData( seurAll, cells.use = cellsWT, do.scale = TRUE) 
 	resObj  <- RunUMAP( seurAll,  genes.use = rownames(seurAll@data), max.dim = Dim, seed.use = UMAPRandSeed, 
-			n_neighbors = myNeighbors, min_dist = myMinDist, metric = myMetric)
+			n_neighbors = myNeighbors, min_dist = minDist, metric = myMetric)
 	umapRes$WT <- resObj
 	return( umapRes)
 }else{
@@ -76,7 +76,7 @@ parameters.to.store <- as.list(x = environment(), all = TRUE)[names(formals("Run
     umap_import <- import(module = "umap", delay_load = TRUE)
     umap <- umap_import$UMAP(n_neighbors = as.integer(x = myNeighbors), 
         n_components = as.integer(x = Dim), metric = myMetric, 
-        min_dist = myMinDist)
+        min_dist = minDist, transform_seed = as.integer( x = UMAPRandSeed))
 #we fit on the wtData and transform all data
     umap 		<- umap$fit( as.matrix( x = wtData))
 
