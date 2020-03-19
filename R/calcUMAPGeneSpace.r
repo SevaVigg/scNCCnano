@@ -1,6 +1,6 @@
-calcUMAPGeneSpace <- function( seurAll, seurWT = NULL, experimentType = "allCells",
+calcUmapGeneSpace <- function( seurAll, seurWT = NULL, experimentType = "allCells",
 			UMAPRandSeed = 42L, Dim = 2, minDist = 0.65, myNeighbors = 20L, myMetric = "cosine",  
-			assay.use = "RNA", reduction.key = "UMAP", reduction.name = "umap"){
+			assay.use = "RNA", reduction.key = "UMAP", reduction.name = "umap", mySpread = 1){
 
 #experimentType = c("allCells", "allCondWT", "WToutAll")
 # 'allCells' performs standard UMAP of seurAll
@@ -36,38 +36,10 @@ SetCalcParams <- function(object, calculation, time = TRUE, ...) {
 }
 
 cellsWT <- setdiff( colnames( seurAll@data), grep( "sox", colnames(seurAll@data), value = TRUE))
-
-if( experimentType == "allCells") 
-{ resObj <- RunUMAP( seurAll, genes.use = rownames(seurAll@data), max.dim = Dim, seed.use = UMAPRandSeed, 
-	n_neighbors = myNeighbors, min_dist = minDist, metric = myMetric)
-	umapRes$All <- resObj
-	return( umapRes)
-}else{
-
-if( experimentType == "WToutAll"){
-	seurAll	<- SubsetData( seurAll, cells.use = cellsWT, do.scale = TRUE) 
-	resObj  <- RunUMAP( seurAll,  genes.use = rownames(seurAll@data), max.dim = Dim, seed.use = UMAPRandSeed, 
-			n_neighbors = myNeighbors, min_dist = minDist, metric = myMetric)
-	umapRes$WT <- resObj
-	return( umapRes)
-}else{
-
-#now we have "allCondWT"
-
-if( experimentType == "allCondWT"){
-
 allData	<- GetAssayData( object = seurAll, assay.type = assay.use, 
             		slot = "scale.data")
 transformCells	<- colnames( x = seurAll@data)
-
-#if there is a separate WT object use it to take train data
-
-if( !is.null( seurWT)){ wtData <- GetAssayData(seurWT, slot = "scale.data")}
-#otherwise take data by subsetting the allData
-		       else{ wtData <- allData[ , cellsWT ]}
-
-wtData 	<- t(wtData)
-allData	<- t(allData)
+allData		<- t(allData)
 
 #now calculate UMAP for init data
 parameters.to.store <- as.list(x = environment(), all = TRUE)[names(formals("RunUMAP"))]
@@ -75,8 +47,50 @@ parameters.to.store <- as.list(x = environment(), all = TRUE)[names(formals("Run
 #fetch UMAP
     umap_import <- import(module = "umap", delay_load = TRUE)
     umap <- umap_import$UMAP(n_neighbors = as.integer(x = myNeighbors), 
-        n_components = as.integer(x = Dim), metric = myMetric, 
+        n_components = as.integer(x = Dim), metric = myMetric, spread = as.numeric( x = mySpread),  
         min_dist = minDist, transform_seed = as.integer( x = UMAPRandSeed))
+
+if( experimentType == "allCells") 
+{ 
+		transformAll 	<- umap$fit_transform( as.matrix( x = allData))
+    		allResObj 	<- seurAll
+    		colnames(x = transformAll) <- paste0(reduction.key, 1:ncol(x = transformAll))
+    		rownames(x = transformAll) <- transformCells
+    		allResObj 	<- SetCalcParams(object = allResObj, calculation = "RunUMAP", 
+        				... = parameters.to.store)
+    		allResObj 	<- SetDimReduction(object = allResObj, reduction.type = reduction.name, 
+        				slot = "cell.embeddings", new.data = as.matrix(x = transformAll))
+    		allResObj 	<- SetDimReduction(object = allResObj, reduction.type = reduction.name, 
+        				slot = "key", new.data = reduction.key)
+		umapRes$All <- allResObj
+		return( umapRes)
+	}else{
+	if( experimentType == "WToutAll"){
+		seurWT <- SubsetData( seurAll, cells.use = cellsWT)
+		wtData <- allData[ cellsWT, ]
+    		transformWT	<- umap$fit_transform( as.matrix( x = wtData))
+    		wtResObj <- seurWT
+    		colnames(x = transformWT) <- paste0(reduction.key, 1:ncol(x = transformWT))
+    		rownames(x = transformWT) <- cellsWT
+    		wtResObj <- SetCalcParams(object = wtResObj, calculation = "RunUMAP", 
+        		... = parameters.to.store)
+    		wtResObj <- SetDimReduction(object = wtResObj, reduction.type = reduction.name, 
+        		slot = "cell.embeddings", new.data = as.matrix(x = transformWT))
+    		wtResObj <- SetDimReduction(object = wtResObj, reduction.type = reduction.name, 
+        		slot = "key", new.data = reduction.key)
+		umapRes$WT <- wtResObj
+	return( umapRes)
+}else{
+
+#now we have "allCondWT"
+
+if( experimentType == "allCondWT"){
+#if there is a separate WT object use it to take train data
+
+if( !is.null( seurWT)){ wtData <- GetAssayData(seurWT, slot = "scale.data"); wtData <- t(wtData)}
+#otherwise take data by subsetting the allData
+		       else{ wtData <- allData[ cellsWT, ]}
+
 #we fit on the wtData and transform all data
     umap 		<- umap$fit( as.matrix( x = wtData))
 
@@ -110,6 +124,6 @@ parameters.to.store <- as.list(x = environment(), all = TRUE)[names(formals("Run
     umapRes$All <- allResObj; umapRes$WT <- wtResObj
     return( umapRes)
 }else{ cat("Unknown experiment type")}
-}
-}
+}	#allCondWT
+}	
 }

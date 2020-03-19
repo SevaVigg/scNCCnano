@@ -45,7 +45,7 @@ seuratAll		<- seuratNorm("allCells")
 umapDim			<- 5 
 pcaDim			<- 6 
 
-umapRes			<- calcUMAPGeneSpace( seuratAll, seurWT = seuratWT,  Dim = umapDim, myNeighbors = 15L, 
+umapRes			<- calcUmapGeneSpace( seuratAll, seurWT = seuratWT,  Dim = umapDim, myNeighbors = 15L, 
 				minDist = 0.3,  UMAPRandSeed = 42, experimentType <- "allCondWT")
 
 myResolutionPCAwt 	<- 0.9
@@ -71,7 +71,7 @@ seuratAll		<- calcTSNEGeneSpace( seuratAll, TSNErandSeed = 42, initSeurObj = seu
 visSeed			<- 42 
 
 seuratWTHiDUmap		<- seuratWT
-umapRes			<- calcUMAPGeneSpace( seuratAll, seurWT = seuratWT, Dim = 2, myNeighbors = 20L, 
+umapRes			<- calcUmapGeneSpace( seuratAll, seurWT = seuratWT, Dim = 2, myNeighbors = 20L, 
 				minDist = 0.6, UMAPRandSeed = visSeed, experimentType <- "allCondWT")
 seuratWT		<- umapRes$WT
 seuratAll		<- umapRes$All

@@ -1,32 +1,25 @@
-#plot2DAllCurves	<- function( seuratObj, slingShotObj, lineageTypes = c("M", "I"), dimRed){
+plot2DAllCurves	<- function( seur2D, clIdent, lineageEnds = c("M", "I"), dimRed){
 
-#seuratObject must contain results of clustering and tSNE and UMAP 2D pre-calculated
+#seuratObject must contain results of 2D dimension reduction for plotting and tSNE and UMAP 2D pre-calculated
+#clIdent contains clustering of cells for making rough lineages. seurat@ident formate (factor) would work
+#cluster colors are those from seur2D
+
+require("slingshot")
 
 source("R/setClusterColors.r")
 source("R/getLineageCoords.r")
 
-lineageIds 	<- which(unlist(lapply( slingShotObj@lineages, function(x) tail(x, 1) %in% lineageTypes))) 
 
-prinCurveDF	<- slingPseudotime( slingShotObj)
-curveWeightDF	<- slingCurveWeights( slingShotObj)
-prinCurve_F	<- prinCurveDF[ which(curveWeightDF[ ,LineageId] > 0.995) , LineageId]
-lineageLines	<- as.data.frame(seuratObj@dr[[ dimRed ]]@cell.embeddings[ names( prinCurve_F), ])
+cells		<- GetCellEmbeddings( seur2D, reduction.type = dimRed)
+slingLins	<- getLineages( cells, clIdent, start.clus = "E", end.clus = lineageEnds)
+slingCurves	<- getCurves( slingLins, extend = "n")
 
-#make 2D umap for visulaization
-seuratObj	<- RunUMAP( seuratObj, genes.use = rownames( seuratObj@data), max.dim = 2, reduction.name = 'umap', n_neighbors = 15L, 
-				min_dist = 0.39, metric = "cosine", seed.use = visSeed, spread = 1 )
+lineageIds 	<- which(unlist(lapply( slingLins@lineages, function(x) tail(x, 1) %in% lineageEnds))) 
 
-plotVals	<- seuratObj@dr[[ dimRed ]]@cell.embeddings
-cellColors 	<- setClusterColors( seuratObj)[ seuratObj@ident]
+cellColors 	<- setClusterColors( seur2D)[ seur2D@ident]
+plot( cells, col = cellColors, cex = 1, pch = 16)
 
-lineageLines	<- as.data.frame(seuratObj@dr[[ dimRed ]]@cell.embeddings[ names( sort(prinCurve_F)), ])
-
-plot( plotVals, col = cellColors, cex = 1, pch = 16)
-
-for (LineageId in LineageIds){
-
-
-sapply( lineageLines, function(x) {lines(t(x)); points(t(x), pch = 16)})
+lapply( lineageIds, function(x) lines( slingCurves@curves[[x]] ))
 }
 
 #}
