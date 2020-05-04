@@ -453,7 +453,7 @@ rpl13ExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(rpl13
 
 normIteration <- 0
 repeat{									       #iterations over the background level								      
-nanoGenes	<- t(qualDF_f[ , goodGenes] - 1)  #We need true zero counts and the landscape table    
+nanoGenes	<- t(qualDF_f[ , goodGenes] - 1)  #We need zero counts and the landscape table    
 
 normIteration <- normIteration + 1
 cat("Starting iteration ", normIteration, "\n")
@@ -636,6 +636,55 @@ qualityControlPlot 	<- plot_grid(
 png( file.path( plotDir, paste0("qualityControlMainPlot", ".png")), width = 2480, height = 3506)
 	plot( qualityControlPlot)
 dev.off()
+
+#Plot separate plots 
+
+#png( file.path( plotDir, paste0("negProbDistrPlot", ".png")), width = 2480, height = 3506)
+#	(negProbDistrPlot)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("posProbDistrPlot", ".png")), width = 2480, height = 3506)
+#	(posProbDistrPlot)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("densPlot", ".png")), width = 2480, height = 3506)
+#	(densPlot)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("geneTop5CellPlot", ".png")), width = 2480, height = 3506)
+#	(geneTop5CellPlot)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("batchBoxPlotNotNormalized", ".png")), width = 2480, height = 3506)
+#	(batchBoxPlotNotNormalized)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("batchQuartPlotQuantileNormalized", ".png")), width = 2480, height = 3506)
+#	(batchQuartPlotQuantileNormalized)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("batchBoxPlotQuantileNormalized", ".png")), width = 2480, height = 3506)
+#	(batchBoxPlotQuantileNormalized)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("kanamycinExpressionDistributionPlot", ".png")), width = 2480, height = 3506)
+#	(kanamycinExpressionDistributionPlot)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("rpl13ExpressionDistributionPlot", ".png")), width = 2480, height = 3506)
+#	(rpl13ExpressionDistributionPlot)
+#dev.off()
+#
+#png( file.path( plotDir, paste0("boxPlotNanoStringNormalized", ".png")), width = 2480, height = 3506)
+#	(boxPlotNanoStringNormalized)
+#dev.off()
+
+
+
+
+
+
+
 
 
 

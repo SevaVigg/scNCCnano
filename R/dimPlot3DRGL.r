@@ -7,7 +7,7 @@ require("rgl")
 source("R/setClusterColors.r")
 
 open3d()
-bg3d("darkblue")
+bg3d("grey")
 
 x <- seuratObj@dr[[dimRed]]@cell.embeddings[,1]
 y <- seuratObj@dr[[dimRed]]@cell.embeddings[,2]

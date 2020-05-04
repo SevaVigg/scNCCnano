@@ -6,13 +6,12 @@
 #
 # Directory structure :     Res <- Plots <- geneSpace
 
-#makeGeneSpacePlots <- function( seuratObj){
-
 source("R/getClusterTypes.r")
 source("R/calcTSNEGeneSpace.r")
 source("R/setCellTypeColors.r")
 source("R/setClusterColors.r")
-source("R/calcUMAPGeneSpace.r")
+source("R/calcUmapGeneSpace.r")
+source("R/seuratNorm.r")
 
 library(ape)
 require(proxy)
@@ -32,19 +31,17 @@ dir.create(plotDir, showWarnings = FALSE)
 geneSpacePlotDir <- file.path( plotDir, "geneSpacePlots")
 dir.create( geneSpacePlotDir, showWarnings = FALSE)
 
-experimentType <- "WT"
-source("R/seuratNorm.r")
-
-seuratWT <- ipmc
+seuratWT 	<- seuratNorm("WT")
+seuratAll	<- seuratNorm("allCells")
 
 seuratWT@meta.data$genCellTypeIdent 	<- factor( seuratWT@meta.data$genCellTypeIdent, levels = c( "Tl", "G", "I", "M"))
 seuratWT <- SetAllIdent( seuratWT, id = "genCellTypeIdent")
 
-geneSetPlotDir	 <- file.path( geneSpacePlotDir, seuratWT@misc)
-dir.create( geneSetPlotDir, showWarnings = FALSE) 
+initCellTypePlotDir	 <- file.path( geneSpacePlotDir, "initCellTypes")
+dir.create( initCellTypePlotDir, showWarnings = FALSE) 
 
 TSNESeed <- as.numeric(as.POSIXct(Sys.time()))
-	cat( file = file.path( geneSetPlotDir, "TSNESeed.txt"), TSNESeed, "\n")
+	cat( file = file.path( initCellTypePlotDir, "TSNESeed.txt"), TSNESeed, "\n")
 
 seuratWT <- calcTSNEGeneSpace( seuratWT, TSNESeed, Norm = FALSE)
 #seuratWT	<- RunTSNE( seuratWT, genes.use = rownames( seuratWT@data), perplexity = 20, 
@@ -53,7 +50,7 @@ seuratWT <- calcTSNEGeneSpace( seuratWT, TSNESeed, Norm = FALSE)
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 #UMAPSeed <- 42
 
-cat( file = file.path( geneSetPlotDir, "UMAPSeed.txt"), UMAPSeed, "\n")
+cat( file = file.path( initCellTypePlotDir, "UMAPSeed.txt"), UMAPSeed, "\n")
 
 #Prepare tsneWT plot
 
@@ -71,25 +68,17 @@ cat( file = file.path( geneSetPlotDir, "UMAPSeed.txt"), UMAPSeed, "\n")
 		) +
 	xlab( label = "tSNE1")+ylab( label = "tSNE2")
 
-experimentType <- "AllCells"
-source("R/seuratNorm.r")
-
-seuratAll <- ipmc
-
 #reorder values to have a cuter DotPlot
 
-seuratAll	<- SetAllIdent( seuratAll, id = 'genCellTypeIdent')
 seuratAll@meta.data$genCellTypeIdent 	<- factor( seuratAll@meta.data$genCellTypeIdent, levels = c("M", "I", "sox10-", "G", "Tl"))
-seuratAll@ident <- factor( seuratAll@ident, levels = c("M", "I", "sox10-", "G", "Tl"))
-
-geneSetPlotDir	 <- file.path( geneSpacePlotDir, seuratAll@misc)
-dir.create( geneSetPlotDir, showWarnings = FALSE) 
+seuratAll	<- SetAllIdent( seuratAll, id = 'genCellTypeIdent')
 
 seuratAll <- calcTSNEGeneSpace( seuratAll, TSNESeedAllCells, Norm = TRUE, initSeurObj = seuratWT)
+
 #seuratAll	<- RunTSNE( seuratAll, genes.use = rownames( seuratAll@data), perplexity = 20, 
 #seruatObj 	<- RunUMAP( seuratAll, genes.use = rownames( seuratAll@data), n_neighbors = 15L, min.dist = 0.01, metric = "cosine", seed.use = UMAPSeedAllCells)
 
-umapRes 	<- calcUMAPGeneSpace( seuratAll, seurWT = seuratWT, UMAPRandSeed = UMAPSeed, Dim = 2, experimentType = 'allCondWT')	
+umapRes 	<- calcUmapGeneSpace( seuratAll, seurWT = seuratWT, UMAPRandSeed = UMAPSeed, Dim = 2, experimentType = 'allCondWT', mySpread = 1, minDist = 0.65)	
 
 	tsnePlotAllCells 	<- DimPlot( object = seuratAll, reduction.use = 'tsne', cols.use = setCellTypeColors( seuratAll), pt.size = 2, do.return = TRUE)
 	tsnePlotAllCells 	<- tsnePlotAllCells +
@@ -191,23 +180,8 @@ umapRes 	<- calcUMAPGeneSpace( seuratAll, seurWT = seuratWT, UMAPRandSeed = UMAP
 			   theme( plot.margin = unit( c( 1, 1, 5, 1), "inches"))
 
 
-png( file.path( geneSetPlotDir, "InitCellTypesPlots.png"), width = 2480, height = 3506)
+png( file.path( initCellTypePlotDir, "InitCellTypesPlots.png"), width = 2480, height = 3506)
 	plot( gridPlot)
 dev.off()
 
-
-
-#levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
-#seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
-#seuratObj@ident <- droplevels(seuratObj@ident)
-#source("R/plotInitCellTypePCAs.r")
-#png( file.path( PCAPlotDirName, "geneSpacePlotsDir.png"), width = 480, height = 640)
-#	plotInitCellTypePCAs( seuratObj, 5)
-#dev.off() 
-
-#seuratObj <- SetAllIdent(seuratObj, id = "originalCellTypes")
-
-#plotInitCellTypePCAs(seuratObj, 6)	#Plot PCA diagrams with cell colors, uses its own directorial structure
-
-#remove values, that are too close to zero
 

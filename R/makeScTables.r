@@ -15,7 +15,7 @@ genesQC	<- read.table( file = file.path( dirQCres, "New_NormalizedExTable.csv"),
 cellsQC	<- read.table( file = file.path( dirQCres, "New_cellDescripitonsDedupQC.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
 
 allGenes	<- rownames(genesQC)
-logExps 	<- log2(1+genesQC)
+logExps 	<- log10(1+genesQC)
 
 
 allCellsDir 	<- file.path( scTablesDir, "allCells")
@@ -24,14 +24,14 @@ dir.create( allCellsDir , showWarnings = FALSE)
 randSeedAll 	<- as.integer(Sys.time())
 logExpsImp	<- imputeDropouts(logExps, randSeedAll)
 
-#noiseTol	<- log2(19)
-noiseTol	<- 0
+noiseTol	<- log10(30)
+#noiseTol	<- 0
 
 #remove values, that are too close to zero
 logExpsImp	<- apply( logExpsImp, c(1,2), function(x) if(x>noiseTol) x else 0)
 logExpsImp	<- logExpsImp[, which( apply( logExpsImp, 2, sum) >0)]
 cellsQCImp	<- cellsQC[, colnames(logExpsImp)]
-genesQCImp	<- genesQC[, colnames(logExpsImp)]
+genesQCImp	<- 10^logExpsImp - 1
 
 cat( file = file.path( allCellsDir, "ImputeSeedAll.txt"), randSeedAll)
 write.table( logExps, file = file.path( allCellsDir, "logExpTableDedupQC.csv"), sep = "\t")
@@ -49,7 +49,7 @@ logExpsWTImp	<- imputeDropouts(logExpsWT, randSeedWT)
 logExpsWTImp	<- apply( logExpsWTImp, c(1,2), function(x) if(x>noiseTol) x else 0)
 logExpsWTImp	<- logExpsWTImp[, which( apply( logExpsWTImp, 2, sum) >0)]
 cellsQCWTImp	<- cellsQC[, colnames(logExpsWTImp)]
-genesQCWTImp	<- genesQC[, colnames(logExpsWTImp)]
+genesQCWTImp	<- 10^logExpsWTImp - 1
 
 cat( file = file.path( WTDir, "ImputeSeedWT.txt"), randSeedWT)
 write.table( logExpsWT, file = file.path( WTDir, "logExpTableDedupQC.csv"), sep = "\t")

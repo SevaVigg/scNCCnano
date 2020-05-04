@@ -6,24 +6,26 @@ source("R/getClusterTypes.r")
 source("R/calcTargetClusterQuals.r")
 source("R/calcUmapGeneSpace.r")
 
-Spread		<- 6
+#initialize parameters
+Spread		<- 8
 minUmapDim 	<- 3
-maxUmapDim	<- 6
-minMyResolution	<- 4
-maxMyResolution	<- 6
+maxUmapDim	<- 7
+minMyResolution	<- 3
+maxMyResolution	<- 5
 minMinDist	<- 3
 maxMinDist	<- Spread
 
 umapDims	<- seq( minUmapDim, maxUmapDim)
 minDists	<- seq( minMinDist, maxMinDist, by = 0.1) 
 resolutions	<- seq( minMyResolution, maxMyResolution, by = 0.2)
+umapRandSeed	<- 2
 
 #initialize variables
 currSeurObj 	<- StashIdent( seuratObj, save.name = "currentClust")
 bestSeurObj	<- StashIdent( seuratObj, save.name = "bestClust")
 
-currSeurObj 	<- calcUmapGeneSpace( currSeurObj, Dim = minUmapDim, myNeighbors = 15L, mySpread = Spread,  
-				minDist = minMinDist,  UMAPRandSeed = 42, experimentType <- "allCells")$All
+currSeurObj 	<- calcUmapGeneSpace( currSeurObj, Dim = minUmapDim, myNeighbors = 20L, mySpread = Spread,  
+				minDist = minMinDist,  UMAPRandSeed = umapRandSeed, experimentType <- "allCells")$All
 
 currSeurObj	<- makeUmapClusters( currSeurObj, umapDim = minUmapDim, myResolution = minMyResolution)
 
@@ -33,8 +35,8 @@ bestClusterQual <- calcTargetClusterQuals( currSeurObj, targetCellType = "M")["M
 
 for (minDist in minDists) {	
    for (umapDim in umapDims) { 
-	currSeurObj <- calcUmapGeneSpace( currSeurObj, Dim = umapDim, myNeighbors = 15L, 
-				minDist = minDist,  UMAPRandSeed = 42, experimentType <- "allCells", mySpread = Spread)$All
+	currSeurObj <- calcUmapGeneSpace( currSeurObj, Dim = umapDim, myNeighbors = 20L, 
+				minDist = minDist,  UMAPRandSeed = umapRandSeed, experimentType <- "allCells", mySpread = Spread)$All
 
 	for( myResolution in resolutions){
 		cat( "Finding best UMAP cluster, umapDim = ", umapDim, " myResolution = ", myResolution, minDist, "minDist", "\n")
@@ -51,5 +53,6 @@ for (minDist in minDists) {
 	}	#umapDim
      }	#minDist
 cat( "Best cluster quality ", bestClusterQual, "for D = ", bestParams$UMAPDim, " R = ", bestParams$Resolution, " minDist = ", minDist, "\n")
+
 return( bestSeurObj) 
 } #makeBestPcaClusters

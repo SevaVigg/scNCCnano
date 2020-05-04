@@ -37,20 +37,20 @@ dir.create( clusteringPlotDir, showWarnings = FALSE)
 clusterResName		<- file.path( resDir, "frozenClusters")
 dir.create( clusterResName, showWarning = FALSE) 
 
-seuratWT		<- seuratNorm("WT")
-seuratAll		<- seuratNorm("allCells")
+#seuratWT		<- seuratNorm("WT")
+#seuratAll		<- seuratNorm("allCells")
 
 #make trees after dimension reduction with UMAP
 
-umapDim			<- 5 
+umapDim			<- 4 
 pcaDim			<- 6 
 
 umapRes			<- calcUmapGeneSpace( seuratAll, seurWT = seuratWT,  Dim = umapDim, myNeighbors = 15L, 
-				minDist = 0.3,  UMAPRandSeed = 42, experimentType <- "allCondWT")
+				minDist = 4,  UMAPRandSeed = 42, experimentType <- "allCondWT", mySpread = 6)
 
 myResolutionPCAwt 	<- 0.9
 myResolutionPCAall	<- 0.8
-myResolutionUMAP	<- 1
+myResolutionUMAP	<- 4
 
 seuratWT		<- makeUmapClusters( umapRes$WT,  umapDim, myResolutionUMAP)
 seuratAll		<- makeUmapClusters( umapRes$All, umapDim, myResolutionUMAP)
@@ -63,16 +63,16 @@ seuratAll		<- makePCAGeneClusters( seuratAll, pcaDim, myResolutionPCAall)
 
 #may be some strange tSNE was calculated by other scripts, thus we recalculate tSNE as well
 
-seuratWT		<- calcTSNEGeneSpace( seuratWT, TSNErandSeed = 42) 
-seuratAll		<- calcTSNEGeneSpace( seuratAll, TSNErandSeed = 42, initSeurObj = seuratWT)
+#seuratWT		<- calcTSNEGeneSpace( seuratWT, TSNErandSeed = 42) 
+#seuratAll		<- calcTSNEGeneSpace( seuratAll, TSNErandSeed = 42, initSeurObj = seuratWT)
 
 #we have spoiled 2D umap needed for visualization, so we recalculate umap in 2D. Before that we save the hi-dimensional umap to use it to make lineages
 
 visSeed			<- 42 
 
 seuratWTHiDUmap		<- seuratWT
-umapRes			<- calcUmapGeneSpace( seuratAll, seurWT = seuratWT, Dim = 2, myNeighbors = 20L, 
-				minDist = 0.6, UMAPRandSeed = visSeed, experimentType <- "allCondWT")
+umapRes			<- calcUmapGeneSpace( seuratAll, seurWT = seuratWT, Dim = 2, myNeighbors = 15L, 
+				minDist = 4, UMAPRandSeed = visSeed, experimentType <- "allCondWT", mySpread = 6)
 seuratWT		<- umapRes$WT
 seuratAll		<- umapRes$All
 

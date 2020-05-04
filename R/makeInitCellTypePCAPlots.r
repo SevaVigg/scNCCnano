@@ -1,4 +1,4 @@
-makeInitCellTypePCAPlots <- function( seuratObj, Ncomps, doReturn, doPrint = TRUE){
+makeInitCellTypePCAPlots <- function( seuratObj, nComps){
 
 library(cowplot)
 source("R/setClusterColors.r")
@@ -23,8 +23,8 @@ minLim <- min(apply( seuratObj@dr$pca@cell.embeddings, 2, min))
 
 
 #then make a list of all plots without legends
-for (c1 in 1:(Ncomps-1)){
-	for (c2 in (c1+1):Ncomps){
+for (c1 in 1:(nComps-1)){
+	for (c2 in (c1+1):nComps){
 	curPlot	 <- PCAPlot( seuratObj, dim.1 = c1, dim.2 = c2, pt.size = 3, do.return = TRUE, cols.use = setClusterColors( seuratObj))
 	plotList <- c(plotList, list( curPlot +
 		#xlim( minLim, maxLim) +
@@ -33,8 +33,10 @@ for (c1 in 1:(Ncomps-1)){
 			legend.position="none", 
 			axis.text = element_text( size = 24),
 			axis.title  = element_text( size = 30),
+			axis.title.y = element_text( vjust = -3),
+			axis.title.x = element_text( vjust = 3),
 			panel.background = element_rect(fill = "gray60"),
-			plot.margin = unit(c(.4, .4, .4, .4), "inches")
+			plot.margin = unit(c(.3, .3, .3, .3), "inches")
 		) + 
 		scale_x_continuous( 	name = paste0( "\nPC", c1, " : ", format( varExplained[c1], digits = 0), "% of variance"), 
 					limits = c(minLim, maxLim), 
@@ -48,14 +50,12 @@ for (c1 in 1:(Ncomps-1)){
 
 #and finally add the legend
 
-nc 	<- if( Ncomps %% 2) (Ncomps-1)/2 else Ncomps/2
-nr	<- if( Ncomps %% 2) Ncomps else Ncomps-1
+nc 	<- if( nComps %% 2) (nComps-1)/2 else nComps/2
+nr	<- if( nComps %% 2) nComps else nComps-1
 pcaGrid <- plot_grid( plotlist = plotList, nrow = nr, ncol = nc, labels = "AUTO", label_size = 40) + theme( plot.margin = unit( c(1, 1, 1, 1), "inches"))
 
 PCAplots <- plot_grid( pcaGrid) # without any legend
-
-if( doReturn) return(PCAplots)
-
+return( PCAplots)
 }
 
 
