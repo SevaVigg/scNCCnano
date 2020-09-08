@@ -28,7 +28,7 @@ geneExpsImp	<- read.table( file = file.path( dataDir, "geneExpTableDedupQCimp.cs
 Cells		<- read.table( file = file.path( dataDir, "cellDescriptionsDedupQC.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
 
 #reorder cells
-cells_ind 	<- order(as.numeric(Cells["hpf",]))			# order with hpf increasing
+cells_ind 	<- order(as.numeric(Cells["CellType",]))			# order with CellType increasing
 logExps		<- logExps[, cells_ind]
 geneExpsImp	<- geneExpsImp[, cells_ind]
 Cells		<- Cells[, cells_ind]

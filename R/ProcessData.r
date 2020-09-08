@@ -38,7 +38,7 @@ cellsWMissingGenes_I <- unlist( lapply(genesMissing_I, function(gene_I) {cell_I 
 CellTable$Genes	<- CellTable$Genes[-cellsWMissingGenes_I]
 CellTable$Cells <- CellTable$Cells[-cellsWMissingGenes_I]
 
-cellNames	<- paste0("C", 1:ncol(CellTable$Genes), "_", CellTable$Cells["CellType", ], "_", CellTable$Cells["hpf", ])
+cellNames	<- paste0(CellTable$Cells["CellType", ], "_", "C", 1:ncol(CellTable$Genes), "_",  CellTable$Cells["hpf", ])
 rownames( CellTable$Genes) <- make.names( rownames(CellTable$Genes))
 colnames( CellTable$Genes) <- cellNames
 rownames( CellTable$Cells) <- make.names( rownames(CellTable$Cells))
@@ -58,15 +58,22 @@ source("R/qualityControl.r")
 #imputation
 source("R/makeScTables.r")
 
+
+#start seurat analysis
 plotDir		<- file.path(resDir, "Plots")
 dir.create(plotDir, showWarnings = FALSE)
 
 PCADir		<- file.path( plotDir, "PCA")
 dir.create( PCADir, showWarnings = FALSE)
 
+seuratWT 	<- seuratNorm("WT")
+seuratAll	<- seuratNorm("allCells")
+
+seuratAll <- SetAllIdent( seuratAll, id = "genCellTypeIdent")
+seuratWT <- SetAllIdent( seuratWT, id = "genCellTypeIdent")
+
 #init cell type distributions, also prepares seuratWT and seuratAll objects
-source("makeGeneSpacePlots.r")
-  
+#source("R/makeGeneSpacePlots.r")  
 
 #PCA analysis
 source("R/makeInitCellTypePCAPlots.r")

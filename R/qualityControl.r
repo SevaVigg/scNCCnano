@@ -64,6 +64,9 @@ qualDF$Cell	<- gsub( ".", "_", rownames(qualDF), fixed = TRUE)
 
 qualDF		<- qualDF[ -grep( "mitfa", qualDF$Cell), ]
 
+#order so that general cell type go first
+qualDF <- qualDF[order(qualDF$CellType), ]
+
 #First we filter cells according to control probes
 
 #now check negative probes
@@ -77,12 +80,12 @@ negThreshold 	<- quantile( negProbDF$negProbVal, 0.97)
 
 negProbCellIndex	<- which(qualDF$negProbSum < 3)
 nCellNeg		<- length(negProbCellIndex)
-nCellNegGrob 		<- grobTree( textGrob( paste0(nCellNeg, " cells remaining"), x=0.55,  y=0.95, hjust=0,
+nCellNegGrob 		<- grobTree( textGrob( paste0(nCellNeg, " cells remaining"), x=0.1,  y=0.95, hjust=0,
   				gp=gpar(col="black", fontsize = 26, fontface="bold")))
 
 negProbDistrPlot <- ggplot(data = negProbDF, aes( x = negProbVal)) +
 	geom_vline( xintercept = negThreshold, col = "red", linetype = "solid") +
-	geom_histogram( fill = "deepskyblue2", binwidth = 2) +
+	geom_histogram( fill = "deepskyblue2", breaks = seq(0, 40, by = 2)) +
 	theme(	panel.background = element_rect( fill = "gray80"),
 		axis.title 	= element_text( size = 30),
 		axis.text 	= element_text( size = 24), 
@@ -109,7 +112,7 @@ nCellPosGrob 		<- grobTree( textGrob( paste0(nCellPos, " cells remaining"), x=0.
   				gp=gpar(col="black", fontsize = 26, fontface="bold")))
 
 posProbDistrPlot <- ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( x = posProbCoef)) +
-	geom_histogram( aes(y = ..count..), fill = "deepskyblue2", binwidth = 0.01) +
+	geom_histogram( aes(y = ..count..), fill = "deepskyblue2", breaks = seq( 0.75, 1.25, by = 0.01)) +
 	geom_vline( xintercept = leftPosProbThrsld, col = "red", linetype = "solid") +
 	geom_vline( xintercept = rightPosProbThrsld, col = "red", linetype = "solid") +
 	theme(	panel.background = element_rect( fill = "gray80"),
@@ -119,8 +122,8 @@ posProbDistrPlot <- ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( 
 		axis.text.y	= element_text( margin = margin( l = 10)), 
 		plot.title  	= element_text( size = 34, hjust = 0)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
-	scale_x_continuous( name = "regression coef. of log positive probe counts", expand = c(0,0), breaks = seq(0, 1.25, 0.25)) +
-	coord_cartesian(xlim = c(0, 1.25)) +  
+	scale_x_continuous( name = "regression coef. of log positive probe counts", expand = c(0,0)) +
+	coord_cartesian(xlim = c( 0.75, 1.25)) +  
 	annotation_custom( nCellPosGrob) +
 	ggtitle( "Positive probes") 
 				
@@ -150,10 +153,10 @@ kanRplDistrPlot <- ggplot( data = qualDF[ , "KanRplRes", drop = FALSE], aes( x =
 		axis.text.y	= element_text( margin = margin( l = 10)), 
 		plot.title  	= element_text( size = 34, hjust = 0)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
-	scale_x_continuous( name = "regression coef. of Kanamycin and rpl13 probes", expand = c(0,0) ) +
-	coord_cartesian(xlim = c( min(qualDF$KanRplRes), max(qualDF$KanRplRes))) +  
+	scale_x_continuous( name = "Kanamycin vs rpl13, residual", expand = c(0,0) ) +
+	coord_cartesian(xlim = c( min(qualDF$KanRplRes), 0.6*max(qualDF$KanRplRes))) +  
 	annotation_custom( nCellKanRplGrob) +
-	ggtitle( "Kanamycin rpl13 agreement") 
+	ggtitle( "Kanamycin vs rpl13") 
 
 qualDF	<- qualDF[ kanRplIndex, ]
 	
@@ -167,7 +170,7 @@ genesPerCell	<- 3
 poorCellsDens 	<- which( apply(log10Exps, 1, function(x) sum(x > geneLogThreshold) <= genesPerCell ))  #cells with poor values for all genes but houskeeping
 qualDF		<- qualDF[ -poorCellsDens, ]
 nCells		<- nrow( qualDF)
-nCellsExpGrob 	<- grobTree( textGrob( paste0("At least ", genesPerCell, " genes per cell \nabove the threshold\n", nCells, " cells remaining"), x=0.45,  y=0.9, hjust=0,
+nCellsExpGrob 	<- grobTree( textGrob( paste0("At least ", genesPerCell, " genes per cell \nabove the threshold\n", nCells, " cells remaining"), x=0.2,  y=0.9, hjust=0,
   				gp=gpar(col="black", hjust = "bottom", fontsize = 26, fontface="bold")))
 
 
@@ -191,8 +194,7 @@ geneAverageData$top5		<- apply( qualDF[ , rownames(Genes) ] , 2, function(x) hea
 
 cellsPerGene	<- 5 
 poorGenes 	<- colnames(log10Exps)[which( apply(log10Exps, 2, function(x) sum(x > expLogMinimal) <= cellsPerGene))]  #genes poorly expressed in all cell types
-genes2exclude	<- character(0)
-#genes2exclude	<- c("csf1r", "sox5", "dpf3", "ets1a", "fgfr3_v2", "mycl1a", "smad9", "pax3_v2", "hbp1")
+genes2exclude	<- character(0) #a stub for excluding genes manually
 poorGenes	<- c(poorGenes, genes2exclude)
 goodGenes	<- setdiff( geneNames, poorGenes)
 exoGenes	<- setdiff( exoGenes, poorGenes)
@@ -200,7 +202,7 @@ exoGenes	<- setdiff( exoGenes, poorGenes)
 geneAverageData$filterColor	<- sapply( rownames(Genes), function(x) if( x %in% poorGenes) "red" else "deepskyblue2")
 
 
-nGenesGrob 			<- grobTree( textGrob( paste0( "Gene scoring in at least ", cellsPerGene, " cells\n", length( exoGenes), " genes remainng"), 
+nGenesGrob 			<- grobTree( textGrob( paste0( length( exoGenes), " genes remainng"), 
 				x=0.05,  y=0.9, hjust=0, gp=gpar(col="black", fontsize = 26, fontface="bold")))
 
 
@@ -217,7 +219,7 @@ geneTop5CellPlot <- ggplot( data = geneAverageData) +
 	scale_x_discrete( name = "Probe" ) +
 	scale_y_continuous( name = "log10 probe count", expand = c(0,0), limits = c(0, 7)) +
 	annotation_custom( nGenesGrob) +
-	ggtitle( "top 5th probe count")
+	ggtitle( "5th rank statistics for probe count")
 
 #now we remove cells with a very low expression for all genes.
 
@@ -400,10 +402,10 @@ kanamycinExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(K
 	geom_histogram( fill = "deepskyblue2", binwidth = 0.05) +
 	geom_vline( xintercept = log10(KanamycinPosTopQuant), col = "red", linetype = "solid") +
 	geom_vline( xintercept = log10(KanamycinPosBotQuant), col = "red", linetype = "solid") +
-	geom_vline( xintercept = min( log10( qualDF_f$Kanamycin.Pos[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
-	geom_vline( xintercept = max( log10( qualDF_f$Kanamycin.Pos[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
-	geom_vline( xintercept = min( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
-	geom_vline( xintercept = max( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
+#	geom_vline( xintercept = min( log10( qualDF_f$Kanamycin.Pos[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
+#	geom_vline( xintercept = max( log10( qualDF_f$Kanamycin.Pos[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
+#	geom_vline( xintercept = min( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
+#	geom_vline( xintercept = max( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
 	theme(	panel.background = element_rect( fill = "gray80"),
 		plot.title = element_text( size = 34, hjust = 0), 
 		axis.title = element_text( size = 30), 
@@ -431,10 +433,10 @@ rpl13ExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(rpl13
 	geom_histogram( fill = "deepskyblue2", binwidth = 0.05) +
 	geom_vline( xintercept = log10( rpl13TopQuant), col = "red", linetype = "solid") +
 	geom_vline( xintercept = log10( rpl13BotQuant), col = "red", linetype = "solid") +
-	geom_vline( xintercept = min( log10( qualDF_f$rpl13[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
-	geom_vline( xintercept = max( log10( qualDF_f$rpl13[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
-	geom_vline( xintercept = min( log10( qualDF_f$rpl13[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
-	geom_vline( xintercept = max( log10( qualDF_f$rpl13[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
+#	geom_vline( xintercept = min( log10( qualDF_f$rpl13[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
+#	geom_vline( xintercept = max( log10( qualDF_f$rpl13[ grep("M", rownames(qualDF_f))])), col = "black", linetype = "longdash") +
+#	geom_vline( xintercept = min( log10( qualDF_f$rpl13[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
+#	geom_vline( xintercept = max( log10( qualDF_f$rpl13[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
 	theme(	panel.background = element_rect( fill = "gray80"),
 		plot.title  	= element_text( size = 34, hjust = 0),
 		axis.title 	= element_text( size = 30), 
@@ -579,11 +581,11 @@ write.table( t(qualDF_f[ , c("num", "batch", "hpf", "dateEx", "Desk", "CellType"
 firstLine	<- plot_grid(
 			negProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
 			posProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
+			kanRplDistrPlot				+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
 			densPlot				+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
-#			+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
 			nrow = 1,
 			align = "h",
-			labels = c("A", "B", "C"),
+			labels = c("A", "B", "C", "D"),
 			label_size = 40,
 			rel_widths = c( 1/3, 1/3, 1/3 )
 			)
@@ -593,7 +595,7 @@ secondLine	<- plot_grid(
 			batchBoxPlotNotNormalized		+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
 			nrow = 1,
 			align = "h",
-			labels = c("D", "E"),
+			labels = c("E", "F"),
 			label_size = 40,
 			rel_widths = c(1, 1)
 			)
@@ -603,7 +605,7 @@ thirdLine	<- plot_grid(
 			batchBoxPlotQuantileNormalized		+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
 			nrow = 1,
 			align = "h",
-			labels = c("F", "G"),
+			labels = c("G", "H"),
 			label_size = 40,
 			rel_widths = c( 1, 1)
 			)
@@ -614,7 +616,7 @@ forthLine	<- plot_grid(
 			boxPlotNanoStringNormalized		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
 			nrow = 1,
 			align = "h",
-			labels = c("H", "I", "J"),
+			labels = c("I", "J", "K"),
 			label_size = 40,
 			rel_widths = c( 0.3, 0.3, 0.4)
 			)

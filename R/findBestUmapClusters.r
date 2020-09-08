@@ -7,9 +7,9 @@ source("R/calcTargetClusterQuals.r")
 source("R/calcUmapGeneSpace.r")
 
 #initialize parameters
-Spread		<- 8
+Spread		<- 10
 minUmapDim 	<- 3
-maxUmapDim	<- 7
+maxUmapDim	<- 10
 minMyResolution	<- 3
 maxMyResolution	<- 5
 minMinDist	<- 3
