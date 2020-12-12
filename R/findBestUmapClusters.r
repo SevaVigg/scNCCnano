@@ -7,35 +7,35 @@ source("R/calcTargetClusterQuals.r")
 source("R/calcUmapGeneSpace.r")
 
 #initialize parameters
-Spread		<- 10
-minUmapDim 	<- 3
-maxUmapDim	<- 10
-minMyResolution	<- 3
-maxMyResolution	<- 5
-minMinDist	<- 3
-maxMinDist	<- Spread
+Spread		<- 9.5 
+minUmapDim 	<- 6
+maxUmapDim	<- 8
+minMyResolution	<- 1
+maxMyResolution	<- 3
+minMinDist	<- 1
+maxMinDist	<- 3
 
-umapDims	<- seq( minUmapDim, maxUmapDim)
+umapDims	<- seq( maxUmapDim, minUmapDim)
 minDists	<- seq( minMinDist, maxMinDist, by = 0.1) 
 resolutions	<- seq( minMyResolution, maxMyResolution, by = 0.2)
-umapRandSeed	<- 2
+umapRandSeed	<- 42
 
 #initialize variables
 currSeurObj 	<- StashIdent( seuratObj, save.name = "currentClust")
 bestSeurObj	<- StashIdent( seuratObj, save.name = "bestClust")
 
-currSeurObj 	<- calcUmapGeneSpace( currSeurObj, Dim = minUmapDim, myNeighbors = 20L, mySpread = Spread,  
+currSeurObj 	<- calcUmapGeneSpace( currSeurObj, Dim = minUmapDim, myNeighbors = 25L, mySpread = Spread,  
 				minDist = minMinDist,  UMAPRandSeed = umapRandSeed, experimentType <- "allCells")$All
 
 currSeurObj	<- makeUmapClusters( currSeurObj, umapDim = minUmapDim, myResolution = minMyResolution)
 
-currParams	<- list( Resolution = minMyResolution, UMAPdim = minUmapDim, minDist = minMinDist) 
+currParams	<- list( Resolution = minMyResolution, umapDim = minUmapDim, minDist = minMinDist) 
 bestParams	<- currParams
 bestClusterQual <- calcTargetClusterQuals( currSeurObj, targetCellType = "M")["M"] * calcTargetClusterQuals( currSeurObj, targetCellType = "I")["I"]
 
 for (minDist in minDists) {	
    for (umapDim in umapDims) { 
-	currSeurObj <- calcUmapGeneSpace( currSeurObj, Dim = umapDim, myNeighbors = 20L, 
+	currSeurObj <- calcUmapGeneSpace( currSeurObj, Dim = umapDim, myNeighbors = 25L, 
 				minDist = minDist,  UMAPRandSeed = umapRandSeed, experimentType <- "allCells", mySpread = Spread)$All
 
 	for( myResolution in resolutions){
@@ -43,16 +43,20 @@ for (minDist in minDists) {
 		currParams$Resolution = myResolution; currParams$UMAPDim = umapDim; currParams$minDist = minDist
 		currSeurObj 	<- makeUmapClusters( currSeurObj, umapDim, myResolution)
 		currClusterQual <- calcTargetClusterQuals( currSeurObj, targetCellType = "M")["M"] * calcTargetClusterQuals( currSeurObj, targetCellType = "I")["I"]
-		cat( "Cluster Quality = ", currClusterQual, "\n")
+		cat( "Cluster Quality = ", currClusterQual, " Best Cluster Quality = ", bestClusterQual,  "\n")
 	if( currClusterQual > bestClusterQual) { 
+		cat("do switching  ")
 		bestClusterQual <- currClusterQual
 		bestParams 	<- currParams
 		bestSeurObj	<- StashIdent( currSeurObj, save.name = paste0( "Best_D", bestParams$UMAPDim, "_R", bestParams$Resolution, "_minDist", bestParams$minDist))
-		cat("Current best D = ", bestParams$PCADim, "Resolution", bestParams$Resolution, "minDist ", bestParams$minDist, "\n")}else{ cat("Weak combination\n")} 
+		cat("New current best D = ", bestParams$umapDim, "for Resolution = ", bestParams$Resolution, "minDist =", bestParams$minDist, "\n")
+		}else{
+	 	cat("Weak combination, the current best D = ", bestParams$umapDim, "for Resolution = ", bestParams$Resolution, "minDist =", bestParams$minDist, "\n")} 
+
 		}	#for myResolution
 	}	#umapDim
      }	#minDist
-cat( "Best cluster quality ", bestClusterQual, "for D = ", bestParams$UMAPDim, " R = ", bestParams$Resolution, " minDist = ", minDist, "\n")
+cat( "Best cluster quality ", bestClusterQual, "for D = ", bestParams$UMAPDim, " R = ", bestParams$Resolution, " minDist = ", bestParams$minDist, "\n")
 
 return( bestSeurObj) 
 } #makeBestPcaClusters

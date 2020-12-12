@@ -1,4 +1,4 @@
-getTargetCurve <- function( seuratObj, lineageStart = "E", lineageEnds = c("M", "I", "14"), target = "I", dimRed = "umap"){
+getTargetCurve <- function( seuratObj, lineageStart = "eNCC", lineageEnds = c("M", "I", "X"), target = "I", dimRed = "umap"){
 
 require( "slingshot")
 source("R/setCellTypeColors.r")
@@ -17,7 +17,7 @@ LineageId <- which(unlist(lapply( slingLins@lineages, function(x) tail(x, 1) == 
 #slingShotObj	<- getCurves(slingShotObj)
 prinCurveDF	<- slingPseudotime( slingLins)
 curveWeightDF	<- slingCurveWeights( slingLins)
-prinCurve_F	<- prinCurveDF[ which(curveWeightDF[ ,LineageId] > 0.995) , LineageId]
+prinCurve_F	<- prinCurveDF[ which(curveWeightDF[ ,LineageId] > 0.99) , LineageId]
 curveCells 	<- sort( prinCurve_F)
 targetCurve 	<- list( target = target, cells = curveCells)
 

@@ -23,7 +23,7 @@ LineageId <- which(unlist(lapply( slingShotObj@lineages, function(x) tail(x, 1) 
 prinCurveDF	<- slingPseudotime( slingShotObj)
 curveWeightDF	<- slingCurveWeights( slingShotObj)
 prinCurve_F	<- prinCurveDF[ which(curveWeightDF[ ,LineageId] > 0.995) , LineageId]
-targetCurve	<- logExps[ tanyaGenes, names( sort( prinCurve_F))]
+targetCurve	<- seuratObj@data[ tanyaGenes, names( sort( prinCurve_F))]
 clusterColors	<- setClusterColors( seuratObj)
 LineageType	<- tail(slingShotObj@lineages[LineageId][[1]],1)
 

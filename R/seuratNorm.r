@@ -28,10 +28,10 @@ geneExpsImp	<- read.table( file = file.path( dataDir, "geneExpTableDedupQCimp.cs
 Cells		<- read.table( file = file.path( dataDir, "cellDescriptionsDedupQC.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
 
 #reorder cells
-cells_ind 	<- order(as.numeric(Cells["CellType",]))			# order with CellType increasing
-logExps		<- logExps[, cells_ind]
-geneExpsImp	<- geneExpsImp[, cells_ind]
-Cells		<- Cells[, cells_ind]
+#cells_ind 	<- order(as.numeric(Cells["CellType",]))			# order with CellType increasing
+#logExps		<- logExps[, cells_ind]
+#geneExpsImp	<- geneExpsImp[, cells_ind]
+#Cells		<- Cells[, cells_ind]
 
 celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "general") return( x[3]) else return( x[6] ))) 
 
@@ -55,7 +55,7 @@ ipmc 		<- RunPCA( ipmc, pc.genes = rownames(ipmc@data), weight.by.var = FALSE, d
 
 ipmc		<- StashIdent(object = ipmc, save.name = "originalCellTypes")
 
-genCellTypeIdentDF	<- data.frame( genCellTypeIdent =sapply( ipmc@meta.data$originalCellTypes, function(x) if(grepl("^[0-9]", x)) return("G") else return(x)), row.names = colnames( Cells)) 
+genCellTypeIdentDF	<- data.frame( genCellTypeIdent =sapply( ipmc@meta.data$originalCellTypes, function(x) if(grepl("^[0-9]", x)) return("R") else return(x)), row.names = colnames( Cells)) 
 ipmc		<- AddMetaData( object = ipmc, genCellTypeIdentDF, col.name = "genCellTypeIdent")
 
 #now reorder levels so that I and M go togeather in the plot

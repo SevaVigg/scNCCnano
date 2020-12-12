@@ -1,16 +1,16 @@
-createSlingShotObject <- function( seuratObj, dimRed, maxDim, startClust = "E"){
+createSlingShotObject <- function( seuratObj, dimRed, startClust = "eNCC", endClust = c("I", "M", "X")){
 
-source("R/getClusterTypes.r")
+source("R/getFinalClusterTypes.r")
 
 if(!require(slingshot)){
   install.packages("slingshot")
   library("slingshot")	
 }
 
-coordMatrixMD  <-  seuratObj@dr[[dimRed]]@cell.embeddings[,1:maxDim ]
+coordMatrixMD  <-  as.matrix(seuratObj@dr[[dimRed]]@cell.embeddings)
 
-clTypes		<- getClusterTypes( seuratObj)
-slingShotObj 	<- slingshot(coordMatrixMD, seuratObj@ident, start.clus = startClust ,end.clus=c(clTypes["I"], clTypes["M"]), reassign = TRUE)
+clTypes		<- getFinalClusterTypes( seuratObj)
+slingShotObj 	<- slingshot(coordMatrixMD, seuratObj@ident, start.clus = startClust ,end.clus = endClust, reassign = TRUE)
 
 }
 

@@ -1,9 +1,11 @@
 make2Dmap <- function( seurObj){
 
-#UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
-UMAPSeed <- 42
+source("R/calcUmapGeneSpace.r")
+source("R/setClusterColors.r")
+UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
+#UMAPSeed <- 42
 
-seurObj <- calcUmapGeneSpace( seurObj, experimentType = "allCells", Dim = 2, minDist = 4, mySpread = 4, UMAPRandSeed = UMAPSeed)$All
+seurObj <- calcUmapGeneSpace( seurObj, experimentType = "allCells", Dim = 2, minDist = 4, mySpread = 4, myNeighbors = 25L, UMAPRandSeed = UMAPSeed)$All
 save( seurObj, file = file.path( clusterDataDir, "visualisation2Dumap"))
 
 
@@ -15,6 +17,6 @@ png( file.path( clusterDataDir, "controlLtkFeature.png"))
 	FeaturePlot( seurObj, reduction.use = "umap", features.plot = "ltk")
 dev.off()
 
-return()
+return( seurObj)
 }
 
