@@ -110,12 +110,24 @@ dev.off()
 source("R/findBestUmapClusters.r")
 bestUmap <- findBestUmapClusters( seuratWT)
 
-
 source("R/getFinalClusterTypes.r")
 levels(bestUmap@ident) <- names(getFinalClusterTypes( bestUmap))
 
+#build coarse grain cluster tree
+bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = FALSE)
+levels(bestUmap@ident) <- names(getFinalClusterTypes( bestUmap))
+bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = FALSE)
+
+clusterPlotDir		<- file.path( plotDir, "clusterPlots")
+dir.create( clusterPlotDir, showWarnings = FALSE)
+
+png( file.path( clusterPlotDir, "coarseGrainClusterTree.png"))
+	PlotClusterTree( bestUmap) 
+dev.off()
+
+
 cgDotPlot 	<- DotPlot( bestUmap, genes.plot = rev(rownames( bestUmap@data)), x.lab.rot = TRUE, dot.scale = 10, 
-					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
+					plot.legend = TRUE, dot.min = 0., scale.by = "radius",  do.return = TRUE, cols.use = c("cyan", "red"))
 	cgDotPlot		<- cgDotPlot +
 		theme(
 			legend.position="none", 
@@ -124,42 +136,12 @@ cgDotPlot 	<- DotPlot( bestUmap, genes.plot = rev(rownames( bestUmap@data)), x.l
 			axis.title  = element_text( size = 30, face = "bold"),
 #panel.background = element_rect(fill = "gray90")
 			)
-
 png( file.path( dotPlotDir, "coarseGrainDotPlot.png"), width = 1600, height = 600)
 	( cgDotPlot)
 dev.off()
 
-#build coarse grain cluster tree
-bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = FALSE)
-levels(bestUmap@ident) <- names(getFinalClusterTypes( bestUmap))
-bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = FALSE)
-
 clusterDataDir		<- file.path(resDir, "clusterData")
 dir.create( clusterDataDir, showWarnings = FALSE)
-
-clusterPlotDir		<- file.path( plotDir, "clusterPlots")
-dir.create( clusterPlotDir, showWarnings = FALSE)
-
-
-png( file.path( clusterPlotDir, "coarseGrainClusterTree.png"))
-	PlotClusterTree( bestUmap) 
-dev.off()
-
-
-bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = FALSE)
-
-
-clusterDataDir		<- file.path(resDir, "clusterData")
-dir.create( clusterDataDir, showWarnings = FALSE)
-
-clusterPlotDir		<- file.path( plotDir, "clusterPlots")
-dir.create( clusterPlotDir, showWarnings = FALSE)
-
-
-png( file.path( clusterPlotDir, "coarseGrainClusterTree.png"))
-	PlotClusterTree( bestUmap) 
-dev.off()
-
 
 save( bestUmap, file = file.path( clusterDataDir, "bestUmap.rObj"))
 bestUmap <- StashIdent( bestUmap, save.name = "bestClustersIdent")
@@ -184,15 +166,15 @@ dev.off()
 
 source("R/setClusterColors.r")
 
-valCutoff 		<- 0.89
+valCutoff 		<- 0.9
 
 valCutoffIdentName	<- paste0( "cutoffIdent", valCutoff)
 
+valUmap <- ValidateClusters( bestUmap, pc.use = 1:8, top.genes = 4, min.connectivity = 0.005, acc.cutoff = valCutoff)
 
-valUmap <- ValidateClusters( bestUmap, pc.use = 1:7, top.genes = 4, min.connectivity = 0, acc.cutoff = 0.7)
-for (i in seq(0.71, valCutoff, 0.01)){ cat(i, "\n")
-  valUmap <- ValidateClusters( valUmap, pc.use = 1:7, top.genes = 4, min.connectivity = 0, acc.cutoff = i)
-}
+#for (i in seq(0.71, valCutoff, 0.01)){ cat(i, "\n")
+#  valUmap <- ValidateClusters( valUmap, pc.use = 1:7, top.genes = 4, min.connectivity = 0, acc.cutoff = i)
+#}
 
 levels(valUmap@ident) <- names( getFinalClusterTypes( valUmap))
 valUmap <- BuildClusterTree( valUmap, pcs.use = 1:8, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = TRUE)
