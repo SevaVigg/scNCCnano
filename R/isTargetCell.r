@@ -1,7 +1,7 @@
 isTargetCell <- function( seuratObj, cellName, targetCellType){
 	XgeneList <- c("pax7a", "pax7b")
-	LgeneList <- c( "ltk", "phox2b", "foxo1a", "tfec")
+	HMPgeneList <- c( "ltk", "foxo1a")
 	if( targetCellType %in% c("M", "I", "Tl")) {return( grepl( targetCellType, cellName))}else{ 	
 	if( targetCellType == "X") { sum( seuratObj@data[ XgeneList, cellName]) > 4*length(XgeneList)} else{ 
-	if( targetCellType == "HMP") { sum( seuratObj@data[ LgeneList, cellName]) > 3*length(LgeneList)} else return( FALSE)}}
+	if( targetCellType == "HMP") { sum( seuratObj@data[ HMPgeneList, cellName]) > 3*length(HMPgeneList)} else return( FALSE)}}
 }

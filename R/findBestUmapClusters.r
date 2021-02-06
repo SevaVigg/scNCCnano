@@ -7,18 +7,21 @@ source("R/calcTargetClusterQuals.r")
 source("R/calcUmapGeneSpace.r")
 
 #initialize parameters
-Spread		<- 9.5 
+Spread		<- 10 
 minUmapDim 	<- 6
-maxUmapDim	<- 8
-minMyResolution	<- 1
+maxUmapDim	<- 9
+minMyResolution	<- 0.5
 maxMyResolution	<- 3
 minMinDist	<- 1
-maxMinDist	<- 3
+maxMinDist	<- 5
+nReplicates	<- 2
+
 
 umapDims	<- seq( maxUmapDim, minUmapDim)
 minDists	<- seq( minMinDist, maxMinDist, by = 0.1) 
 resolutions	<- seq( minMyResolution, maxMyResolution, by = 0.2)
-umapRandSeed	<- 42
+#umapRandSeed	<- 42
+umapRandSeed	<- as.numeric(as.POSIXct(Sys.time()))
 
 #initialize variables
 currSeurObj 	<- StashIdent( seuratObj, save.name = "currentClust")
@@ -33,10 +36,13 @@ currParams	<- list( Resolution = minMyResolution, umapDim = minUmapDim, minDist 
 bestParams	<- currParams
 bestClusterQual <- calcTargetClusterQuals( currSeurObj, targetCellType = "M")["M"] * calcTargetClusterQuals( currSeurObj, targetCellType = "I")["I"]
 
+for (replicate in 1:nReplicates){
+	cat( "Replicate ", replicate, "\n")
 for (minDist in minDists) {	
    for (umapDim in umapDims) { 
 	currSeurObj <- calcUmapGeneSpace( currSeurObj, Dim = umapDim, myNeighbors = 25L, 
-				minDist = minDist,  UMAPRandSeed = umapRandSeed, experimentType <- "allCells", mySpread = Spread)$All
+				minDist = minDist,  UMAPRandSeed = as.numeric(as.POSIXct(Sys.time()))
+, experimentType <- "allCells", mySpread = Spread)$All
 
 	for( myResolution in resolutions){
 		cat( "Finding best UMAP cluster, umapDim = ", umapDim, " myResolution = ", myResolution, minDist, "minDist", "\n")
@@ -52,10 +58,10 @@ for (minDist in minDists) {
 		cat("New current best D = ", bestParams$umapDim, "for Resolution = ", bestParams$Resolution, "minDist =", bestParams$minDist, "\n")
 		}else{
 	 	cat("Weak combination, the current best D = ", bestParams$umapDim, "for Resolution = ", bestParams$Resolution, "minDist =", bestParams$minDist, "\n")} 
-
 		}	#for myResolution
 	}	#umapDim
      }	#minDist
+}	#nReplicates
 cat( "Best cluster quality ", bestClusterQual, "for D = ", bestParams$UMAPDim, " R = ", bestParams$Resolution, " minDist = ", bestParams$minDist, "\n")
 
 return( bestSeurObj) 

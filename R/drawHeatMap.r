@@ -2,6 +2,8 @@ drawHeatMap	<- function( seuratObj,  targetCurve, do.print = FALSE){
 
 #This snippet makes a heatmap. 
 
+require( ComplexHeatmap)
+
 source("R/setClusterColors.r")
 
 tanyaGenes <- c("sox10","sox9b","snail2","foxd3","phox2b",
@@ -27,7 +29,7 @@ names(annotColors) 	<- as.character(unique( seuratObj@ident[ lineageCells]))
 topbar		<- columnAnnotation( curveDF,
 				    col = list(clust = annotColors), 
 				    height = unit(30, "points"),
-				    annotation_legend_param = list( nrow = 1)
+				    annotation_legend_param = list( nrow = 10)
 					)
 
 hplot <- Heatmap( 	targetExpsDF, 

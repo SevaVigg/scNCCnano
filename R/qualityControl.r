@@ -194,7 +194,7 @@ geneAverageData$top5		<- apply( qualDF[ , rownames(Genes) ] , 2, function(x) hea
 
 cellsPerGene	<- 5 
 poorGenes 	<- colnames(log10Exps)[which( apply(log10Exps, 2, function(x) sum(x > expLogMinimal) <= cellsPerGene))]  #genes poorly expressed in all cell types
-genes2exclude	<- character(0) #a stub for excluding genes manually
+genes2exclude	<- "gapdh"  #a stub for excluding genes manually
 poorGenes	<- c(poorGenes, genes2exclude)
 goodGenes	<- setdiff( geneNames, poorGenes)
 exoGenes	<- setdiff( exoGenes, poorGenes)

@@ -4,10 +4,12 @@ getFinalClusterTypes <- function( seuratObj){
 
 source("R/calcTargetClusterQuals.r")
 
-clFactor     <- seuratObj@ident
+clFactor     	<- seuratObj@ident
+clusterTypes	<- levels( clFactor)
+nClust	     	<- length( clusterTypes)
+	
 
-cellClusters <- sapply( levels( clFactor), function(x) WhichCells( seuratObj, ident = x))
-nClust	     <- length( levels( clFactor))
+cellClusters <- sapply( clusterTypes, function(x) WhichCells( seuratObj, ident = x))
 
 cl_IP	<- which.max( calcTargetClusterQuals( seuratObj, "I")) 
 cl_MC	<- which.max( calcTargetClusterQuals( seuratObj, "M")) 
@@ -23,12 +25,22 @@ if (length(unique(c(cl_IP, cl_MC))) < 2) {cat( "Some reference clusters conincid
 #							 attr(clusterTypes, which = "success") <- FALSE
 #							 return( clusterTypes)}
 
-names( clusterTypes)		<- levels( clFactor)
-names( clusterTypes)[ which( names(cl_IP) == levels(clFactor))]		<- "I"
-names( clusterTypes)[ which( names(cl_MC) == levels(clFactor))]		<- "M"
-names( clusterTypes)[ which( names(cl_tail) == levels(clFactor))]	<- "eNCC"
-names( clusterTypes)[ which( names(cl_X) == levels(clFactor))]		<- "X"
-names( clusterTypes)[ which( names(cl_HMP) == levels(clFactor))]	<- "HMP"
+#We must clear old assigned names 
+
+names( clusterTypes)							<- clusterTypes
+names( clusterTypes)[ which( names(clusterTypes) == "I")]		<- "old_I"
+names( clusterTypes)[ which( names(clusterTypes) == "M")]		<- "old_M"
+names( clusterTypes)[ which( names(clusterTypes) == "eNCC")]		<- "old_eNCC"
+names( clusterTypes)[ which( names(clusterTypes) == "X")]		<- "old_X"
+names( clusterTypes)[ which( names(clusterTypes) == "HMP")]		<- "old_HMP"
+
+
+
+names( clusterTypes)[ which( names(cl_IP) == clusterTypes)]		<- "I"
+names( clusterTypes)[ which( names(cl_MC) == clusterTypes)]		<- "M"
+names( clusterTypes)[ which( names(cl_tail) == clusterTypes)]		<- "eNCC"
+names( clusterTypes)[ which( names(cl_X) == clusterTypes)]		<- "X"
+names( clusterTypes)[ which( names(cl_HMP) == clusterTypes)]		<- "HMP"
 
 attr(clusterTypes, which = "success") <- TRUE
 

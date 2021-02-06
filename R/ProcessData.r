@@ -63,9 +63,6 @@ source("R/makeScTables.r")
 plotDir		<- file.path(resDir, "Plots")
 dir.create(plotDir, showWarnings = FALSE)
 
-PCADir		<- file.path( plotDir, "PCA")
-dir.create( PCADir, showWarnings = FALSE)
-
 source("R/seuratNorm.r")
 seuratWT 	<- seuratNorm("WT")
 seuratAll	<- seuratNorm("allCells")
@@ -76,17 +73,23 @@ seuratWT <- SetAllIdent( seuratWT, id = "genCellTypeIdent")
 dotPlotDir <- file.path( plotDir, "dotPlots")
 dir.create( dotPlotDir, showWarnings = FALSE)
 
+source("R/dotPlotBalanced.r")
 
-WTdotPlot 	<- DotPlot(seuratWT, genes.plot = rev(rownames(seuratWT@data)), x.lab.rot = TRUE, dot.scale = 10, 
+WTdotPlot 	<- dotPlotBalanced(seuratWT, genes.plot = rev(rownames(seuratWT@data)), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
 	WTdotPlot		<- WTdotPlot +
 		theme(
-			legend.position="none", 
+			legend.key.size = unit( 1.2, "cm"),			
+			legend.position="right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+ 
 			axis.text.y = element_text( size = 24),
 			axis.text.x = element_text( size = 24, angle = 90),
 			axis.title  = element_text( size = 30, face = "bold"),
 #panel.background = element_rect(fill = "gray90")
 			)
+
 
 png( file.path( dotPlotDir, "WTdotPlot.png"), width = 1600, height = 600)
 	(WTdotPlot)
@@ -98,6 +101,10 @@ dev.off()
 
 #PCA analysis
 source("R/makeInitCellTypePCAPlots.r")
+
+PCADir		<- file.path( plotDir, "PCA")
+dir.create( PCADir, showWarnings = FALSE)
+
 
 png( file.path( PCADir, "WT_PCAcomps.png"), width = 1536, height = 2048)
 	(makeInitCellTypePCAPlots( seuratWT, nComps = 5))
@@ -121,16 +128,23 @@ bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = FALSE, reord
 clusterPlotDir		<- file.path( plotDir, "clusterPlots")
 dir.create( clusterPlotDir, showWarnings = FALSE)
 
-png( file.path( clusterPlotDir, "coarseGrainClusterTree.png"))
+clusterTreeDir		<- file.path( plotDir, "clusterTrees")
+dir.create( clusterTreeDir, showWarnings = FALSE)
+
+png( file.path( clusterTreeDir, "coarseGrainClusterTree.png"))
 	PlotClusterTree( bestUmap) 
 dev.off()
 
 
-cgDotPlot 	<- DotPlot( bestUmap, genes.plot = rev(rownames( bestUmap@data)), x.lab.rot = TRUE, dot.scale = 10, 
+cgDotPlot 	<- dotPlotBalanced( bestUmap, genes.plot = rev(rownames( bestUmap@data)), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0., scale.by = "radius",  do.return = TRUE, cols.use = c("cyan", "red"))
 	cgDotPlot		<- cgDotPlot +
 		theme(
-			legend.position="none", 
+			legend.key.size = unit( 1.2, "cm"),			
+			legend.position="right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+ 
 			axis.text.y = element_text( size = 24),
 			axis.text.x = element_text( size = 24, angle = 90),
 			axis.title  = element_text( size = 30, face = "bold"),
@@ -164,20 +178,22 @@ png( file.path( clusterPlotDir, "InitCellTypeUmap.png"), width = 800, height = 6
 dev.off()
 
 
+
 source("R/setClusterColors.r")
 
-valCutoff 		<- 0.9
+valCutoff 		<- 0.89
 
 valCutoffIdentName	<- paste0( "cutoffIdent", valCutoff)
 
-valUmap <- ValidateClusters( bestUmap, pc.use = 1:8, top.genes = 4, min.connectivity = 0.005, acc.cutoff = valCutoff)
+valUmap <- ValidateClusters( bestUmap, pc.use = 1:8, top.genes = 4, min.connectivity = 0.005, acc.cutoff = 0.75)
 
-#for (i in seq(0.71, valCutoff, 0.01)){ cat(i, "\n")
-#  valUmap <- ValidateClusters( valUmap, pc.use = 1:7, top.genes = 4, min.connectivity = 0, acc.cutoff = i)
-#}
+for (i in seq(0.76, valCutoff, 0.01)){ cat(i, "\n")
+   valUmap <- ValidateClusters( valUmap, pc.use = 1:8, top.genes = 4, min.connectivity = 0.005, acc.cutoff = i)
+}
 
+valUmap <- BuildClusterTree( valUmap, pcs.use = 1:8, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = TRUE)
 levels(valUmap@ident) <- names( getFinalClusterTypes( valUmap))
-valUmap <- BuildClusterTree( valUmap, pcs.use = 1:8, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = TRUE)
+valUmap <- BuildClusterTree( valUmap, pcs.use = 1:8, do.reorder = TRUE, reorder.numeric = FALSE, do.plot = TRUE)
 
 png( file.path( clusterPlotDir, "validatedClusterTree.png"))
 	PlotClusterTree( valUmap) 
@@ -191,24 +207,29 @@ umap2Dclust					<- SetAllIdent( umap2Dclust, id = valCutoffIdentName)
 
 #we also need pseudotime trajectories
 source("R/plot2DAllCurves.r")
+source("R/cosineClusterDist.r")
 
-png( file.path( clusterPlotDir, "InitClusterUmap_Common.png"), width = 800, height = 600)
+png( file.path( clusterPlotDir, "FinalClustersUmap.png"), width = 800, height = 600)
 			InitCellTypeUmapPlot <- DimPlot( umap2Dclust, reduction.use = "umap", cols.use = setClusterColors( umap2Dclust), pt.size = 2) + 
 		theme( axis.text.x = element_text( size = 20), axis.text.y = element_text(size = 20),
 		       axis.title.x = element_text( size = 20, margin = margin( t = 5, r = 0, b = 0, l = 0)), axis.title.y = element_text( size = 20))
 	(InitCellTypeUmapPlot)
-	plot2DAllCurves( umap2Dclust, bestUmap@ident, dimRed = "umap")
+	plot2DAllCurves( umap2Dclust, valUmap, dims = 1:8)
 dev.off()
 
 png( file.path( PCADir, "All_PCAcomps.png"), width = 1536, height = 2048)
 	(makeInitCellTypePCAPlots( valUmap, nComps = 5))
 dev.off()
 
-clDotPlot 	<- DotPlot( valUmap, genes.plot = rev(rownames( valUmap@data)), x.lab.rot = TRUE, dot.scale = 10, 
+clDotPlot 	<- dotPlotBalanced( valUmap, genes.plot = rev(rownames( valUmap@data)), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
 	clDotPlot		<- clDotPlot +
 		theme(
-			legend.position="none", 
+			legend.key.size = unit( 1.2, "cm"),			
+			legend.position="right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+ 
 			axis.text.y = element_text( size = 24),
 			axis.text.x = element_text( size = 24, angle = 90),
 			axis.title  = element_text( size = 30, face = "bold"),
@@ -219,16 +240,181 @@ png( file.path( dotPlotDir, "clDotPlot.png"), width = 1600, height = 600)
 	( clDotPlot)
 dev.off()
 
-source("R/createSlingShotObject.r")
-source("R/getTargetCurve.r")
-source("R/drawHeatMap.r")
+#Plot special dotPlots for control cell types
+
+Mcells 				<- WhichCells( valUmap, ident = "M")
+seuratM				<- SubsetData( valUmap, ident.use = "M") 
+cntrlM				<- grep( "M", Mcells, value = TRUE)
+regM				<- setdiff( Mcells, cntrlM) 					
+melIndexLine			<- c( rep( "contM", length( cntrlM)), rep( "regM", length( regM)))
+names( melIndexLine)		<- c( cntrlM, regM)
+seuratM@meta.data$Mcells 	<- melIndexLine[ rownames( seuratM@meta.data)]
+seuratM <- SetAllIdent( seuratM, id = "Mcells")
+
+mDotPlot 	<- dotPlotBalanced( seuratM, genes.plot = rev(rownames( seuratM@data)), x.lab.rot = TRUE, dot.scale = 10, 
+					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
+	mDotPlot		<- mDotPlot +
+		theme(
+			legend.key.size = unit( 1.2, "cm"),			
+			legend.position="right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+ 
+			axis.text.y = element_text( size = 24),
+			axis.text.x = element_text( size = 24, angle = 90),
+			axis.title  = element_text( size = 30, face = "bold"),
+#panel.background = element_rect(fill = "gray90")
+			)
+
+
+png( file.path( dotPlotDir, "MelComp.png"), width = 1600, height = 600)
+	( mDotPlot)
+dev.off()
+
+#melanocyte subtypes
+seuratMSubTypes <- FindClusters( seuratM, dims.use = 1:8, resolution = 1.0)
+
+mstDotPlot 	<- dotPlotBalanced( seuratMSubTypes, genes.plot = rev(rownames( seuratM@data)), x.lab.rot = TRUE, dot.scale = 10, 
+					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
+	mstDotPlot		<- mstDotPlot +
+		theme(
+			legend.key.size = unit( 1.2, "cm"),			
+			legend.position="right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+ 
+			axis.text.y = element_text( size = 24),
+			axis.text.x = element_text( size = 24, angle = 90),
+			axis.title  = element_text( size = 30, face = "bold"),
+#panel.background = element_rect(fill = "gray90")
+			)
+
+
+png( file.path( dotPlotDir, "MelSubTypesComp.png"), width = 1600, height = 600)
+	( mstDotPlot)
+dev.off()
+
+
+
+#Plot special dotPlots for iridophores cell types
+
+Icells 				<- WhichCells( valUmap, ident = "I")
+seuratI				<- SubsetData( valUmap, ident.use = "I") 
+cntrlI				<- grep( "I", Icells, value = TRUE)
+regI				<- setdiff( Icells, cntrlI) 					
+irdIndexLine			<- c( rep( "contI", length( cntrlI)), rep( "regI", length( regI)))
+names( irdIndexLine)		<- c( cntrlI, regI)
+seuratI@meta.data$Icells 	<- irdIndexLine[ rownames( seuratI@meta.data)]
+seuratI <- SetAllIdent( seuratI, id = "Icells")
+
+iDotPlot 	<- dotPlotBalanced( seuratI, genes.plot = rev(rownames( seuratI@data)), x.lab.rot = TRUE, dot.scale = 10, 
+					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
+	iDotPlot		<- iDotPlot +
+		theme(
+			legend.key.size = unit( 1.2, "cm"),			
+			legend.position="right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+ 
+			axis.text.y = element_text( size = 24),
+			axis.text.x = element_text( size = 24, angle = 90),
+			axis.title  = element_text( size = 30, face = "bold"),
+#panel.background = element_rect(fill = "gray90")
+			)
+
+
+png( file.path( dotPlotDir, "IrdComp.png"), width = 1600, height = 600)
+	( iDotPlot)
+dev.off()
+
+
+
+
+
 
 heatMapDir <- file.path( plotDir, "heatMaps")
 dir.create( heatMapDir, showWarnings = FALSE)
 
-slingWTcg	<- createSlingShotObject( bestUmap, "umap")
-slingWT2D	<- createSlingShotObject( umap2Dclust, "umap")
+
+mlGeneSort <- rownames(AverageExpression(seuratM)[order(-AverageExpression(seuratM)$contM),])
+
+png( file.path( heatMapDir, "MlHeatMap.png"), width = 1000, height = 1600)
+	( DoHeatmap( seuratM, genes.use = mlGeneSort, use.scaled = FALSE) + theme(
+			axis.text.y = element_text( size = 24),
+			axis.text.x = element_text( size = 24, angle = 90),
+			axis.title  = element_text( size = 30, face = "bold"))
+)
+dev.off()
+
+
+
+
+#For iridophores
+
+Icells 				<- WhichCells( valUmap, ident = "I")
+seuratI				<- SubsetData( valUmap, ident.use = "I") 
+cntrlI				<- grep( "I", Icells, value = TRUE)
+regI				<- setdiff( Icells, cntrlI) 					
+iphIndexLine			<- c( rep( "contI", length( cntrlI)), rep( "regI", length( regI)))
+names( iphIndexLine)		<- c( cntrlI, regI)
+seuratI@meta.data$Icells 	<- iphIndexLine[ rownames( seuratI@meta.data)]
+seuratI <- SetAllIdent( seuratI, id = "Icells")
+
+png( file.path( dotPlotDir, "IphComp.png"), width = 1600, height = 600)
+	 barplot(as.matrix(t(AverageExpression( seuratI))), beside = TRUE, las = 2, legend.text = TRUE)
+dev.off()
+
+IpDotPlot 	<- DotPlot( seuratI, genes.plot = rev(rownames( seuratI@data)), x.lab.rot = TRUE, dot.scale = 10, 
+					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
+	clDotPlot		<- clDotPlot +
+		theme(
+			legend.key.size = unit( 1.2, "cm"),			
+			legend.position="right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+ 
+			axis.text.y = element_text( size = 24),
+			axis.text.x = element_text( size = 24, angle = 90),
+			axis.title  = element_text( size = 30, face = "bold"),
+#panel.background = element_rect(fill = "gray90")
+			)
+
+png( file.path( dotPlotDir, "IphDotPlot.png"), width = 1600, height = 600)
+	( IpDotPlot)
+dev.off()
+
+ipGeneSort <- rownames(AverageExpression(seuratI)[ order(-AverageExpression(seuratI)$contI),])
+
+png( file.path( heatMapDir, "IpHeatMap.png"), width = 1200, height = 1600)
+
+	( DoHeatmap( seuratI, genes.use = ipGeneSort, use.scaled = FALSE) + theme(
+			legend.key.size = unit( 1.2, "cm"),
+			legend.position = "right",
+			legend.title = element_text( size = 24),
+			legend.text = element_text( size = 18), 
+			axis.text.y = element_text( size = 24),
+			axis.text.x = element_text( size = 24, angle = 90),
+			axis.title  = element_text( size = 30, face = "bold"))
+)
+dev.off()
+
+
+
+
+source("R/createSlingShotObject.r")
+source("R/getTargetCurve.r")
+source("R/drawHeatMap.r")
+
 
 png( file.path( heatMapDir, "I_heatMap.png"), width = 600, height = 800)
-	(drawHeatMap( umap2Dclust, getTargetCurve( bestUmap, target = "I"), do.print = TRUE))  
+	(drawHeatMap( umap2Dclust, getTargetCurve( valUmap, target = "I"), do.print = TRUE))  
 dev.off()
+
+png( file.path( heatMapDir, "M_heatMap.png"), width = 600, height = 800)
+	(drawHeatMap( umap2Dclust, getTargetCurve( valUmap, target = "M"), do.print = TRUE))  
+dev.off()
+
+png( file.path( heatMapDir, "X_heatMap.png"), width = 600, height = 800)
+	(drawHeatMap( umap2Dclust, getTargetCurve( bestUmap, target = "X"), do.print = TRUE))  
+dev.off()
+

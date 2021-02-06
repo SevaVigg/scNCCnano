@@ -1,4 +1,4 @@
-createSlingShotObject_Lenya <- function( seuratObj, dimRed, startClust = "eNCC", endClust = c("I", "M", "X")){
+createSlingShotObject <- function( seuratObj, dimRed, useDims = 1:10, startClust = "eNCC", endClust = c("I", "M"), distFun = cosineClusterDist){
 
 if(!require(slingshot)){
   install.packages("slingshot")
@@ -7,18 +7,13 @@ if(!require(slingshot)){
 library("slingshot")	
 library("matrixStats")
 
-cosine_cluster <- function(X, w1, w2){
-    mu1 <- colWeightedMeans(X, w = w1)
-    mu2 <- colWeightedMeans(X, w = w2)
-    return(sum(mu1*mu2)/sqrt(sum(mu1^2)*sum(mu2^2)))
-}
-
+source("R/cosineClusterDist.r")
 source("R/getFinalClusterTypes.r")
 
-coordMatrixMD  <-  as.matrix(seuratObj@dr[[dimRed]]@cell.embeddings)
+coordMatrixMD  <-  as.matrix(seuratObj@dr[[dimRed]]@cell.embeddings)[ , useDims]
 
 clTypes		<- getFinalClusterTypes( seuratObj)
-slingShotObj 	<- slingshot(coordMatrixMD, seuratObj@ident, start.clus = startClust ,end.clus = endClust, reassign = TRUE, dist.fun=cosine_cluster )
+slingShotObj 	<- slingshot(coordMatrixMD, seuratObj@ident, start.clus = startClust ,end.clus = endClust, reassign = TRUE, dist.fun = distFun )
 
 }
 
