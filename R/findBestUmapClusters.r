@@ -8,13 +8,13 @@ source("R/calcUmapGeneSpace.r")
 
 #initialize parameters
 Spread		<- 10 
-minUmapDim 	<- 6
-maxUmapDim	<- 9
+minUmapDim 	<- 2
+maxUmapDim	<- 8
 minMyResolution	<- 0.5
-maxMyResolution	<- 3
+maxMyResolution	<- 6
 minMinDist	<- 1
-maxMinDist	<- 5
-nReplicates	<- 2
+maxMinDist	<- 4
+nReplicates	<- 3
 
 
 umapDims	<- seq( maxUmapDim, minUmapDim)
@@ -36,17 +36,17 @@ currParams	<- list( Resolution = minMyResolution, umapDim = minUmapDim, minDist 
 bestParams	<- currParams
 bestClusterQual <- calcTargetClusterQuals( currSeurObj, targetCellType = "M")["M"] * calcTargetClusterQuals( currSeurObj, targetCellType = "I")["I"]
 
-for (replicate in 1:nReplicates){
-	cat( "Replicate ", replicate, "\n")
+
 for (minDist in minDists) {	
    for (umapDim in umapDims) { 
+      for (replicate in 1:nReplicates){ cat( "Replicate ", replicate, "\n")
 	currSeurObj <- calcUmapGeneSpace( currSeurObj, Dim = umapDim, myNeighbors = 25L, 
 				minDist = minDist,  UMAPRandSeed = as.numeric(as.POSIXct(Sys.time()))
 , experimentType <- "allCells", mySpread = Spread)$All
 
 	for( myResolution in resolutions){
 		cat( "Finding best UMAP cluster, umapDim = ", umapDim, " myResolution = ", myResolution, minDist, "minDist", "\n")
-		currParams$Resolution = myResolution; currParams$UMAPDim = umapDim; currParams$minDist = minDist
+		currParams$Resolution = myResolution; currParams$umapDim = umapDim; currParams$minDist = minDist
 		currSeurObj 	<- makeUmapClusters( currSeurObj, umapDim, myResolution)
 		currClusterQual <- calcTargetClusterQuals( currSeurObj, targetCellType = "M")["M"] * calcTargetClusterQuals( currSeurObj, targetCellType = "I")["I"]
 		cat( "Cluster Quality = ", currClusterQual, " Best Cluster Quality = ", bestClusterQual,  "\n")
@@ -59,10 +59,10 @@ for (minDist in minDists) {
 		}else{
 	 	cat("Weak combination, the current best D = ", bestParams$umapDim, "for Resolution = ", bestParams$Resolution, "minDist =", bestParams$minDist, "\n")} 
 		}	#for myResolution
-	}	#umapDim
-     }	#minDist
-}	#nReplicates
-cat( "Best cluster quality ", bestClusterQual, "for D = ", bestParams$UMAPDim, " R = ", bestParams$Resolution, " minDist = ", bestParams$minDist, "\n")
+	}	#nReplicates
+     }	#umapDim
+}	#minDist
+cat( "Best cluster quality ", bestClusterQual, "for D = ", bestParams$umapDim, " R = ", bestParams$Resolution, " minDist = ", bestParams$minDist, "\n")
 
 return( bestSeurObj) 
 } #makeBestPcaClusters

@@ -1,68 +1,27 @@
-drawHeatMap	<- function( seuratObj,  targetCurve, do.print = FALSE){
-
-#This snippet makes a heatmap. 
+makeVlnPlots	<- function( seuratObj,  name = "vlnPlots"){
 
 source("R/setClusterColors.r")
-
-tanyaGenes <- c("sox10","sox9b","snail2","foxd3","phox2b",
-		"tfap2a", "tfap2e",
-		"impdh1b","kita","mbpa",
-		"mitfa","ltk","tfec",
-		"pax7a", "pax7b","pnp4a",
-		"myo5aa", "tyrp1b","mlphb","oca2","silva","slc24a5")
-
-lineageCells	<- names(targetCurve$cells)
-lineageType	<- targetCurve$target
-clusterColors	<- setClusterColors( seuratObj)
-curveClust 	<- seuratObj@ident[ lineageCells]
-targetExpsDF	<- seuratObj@data[ tanyaGenes, lineageCells ]
-clusterColors	<- setClusterColors( seuratObj)
-
-curveDF 	<- data.frame( clust = curveClust)
-
-annotColors 		<- as.character(unique( clusterColors[ seuratObj@ident[ lineageCells]]))
-names(annotColors) 	<- as.character(unique( seuratObj@ident[ lineageCells]))
-
-
-topbar		<- columnAnnotation( curveDF,
-				    col = list(clust = annotColors), 
-				    height = unit(30, "points"),
-				    annotation_legend_param = list( nrow = 1)
-					)
-
-hplot <- Heatmap( 	targetExpsDF, 
-			name = "log2Exp", 
-			cluster_columns = FALSE,
-			cluster_rows = FALSE, 
-			show_column_names = FALSE, 
-			row_names_gp = gpar(fontsize = 24), 
-			column_names_gp = gpar(fontsize = 10), 
-			bottom_annotation = topbar,
-			column_title = paste0("Expression of ", lineageType, " lineage"), 
-			clustering_distance_rows = "euclidean", 
-			use_raster = TRUE, raster_device = "png", 
-			)
-
-if (do.print){
 
 resDir		<- file.path(getwd(), "Res")
 
 plotDir		<- file.path(resDir, "Plots")
 dir.create(plotDir, showWarnings = FALSE)
 
-experimentTypePlotDir <- file.path(plotDir, seuratObj@project.name)
-dir.create( experimentTypePlotDir, showWarnings = FALSE)
+vlnPlotDir <- file.path( plotDir, "vlnPlots")
+dir.create( vlnPlotDir, showWarnings = FALSE)
 
-geneSpacePlotDir <- file.path( experimentTypePlotDir, "geneSpacePlots")
-dir.create( geneSpacePlotDir, showWarnings = FALSE)
 
-heatMapDir <- file.path( geneSpacePlotDir, "heatMap")
-dir.create( heatMapDir, showWarnings = FALSE)
+		vlnPlot <- VlnPlot( seuratObj, c( "tfap2e", "tfap2a", "sox9b", "snail2","sox10", 
+						"ednrba", "foxd3", "id2a", "impdh1b", "otx2",						
+						"alx4b", "foxg1b", "her9", "hmx1", "hmx4",
+						"kita", "mbpa", "mc1r", "pax7b", "mitfa",						
+						"tyr",   "tyrp1b", "slc24a5", "oca2", "mlphb", 
+						"silva", "phox2b", "ltk",  "foxo1a", "tfec", 
+						"hbp1", "ets1a", "mycl1a", "foxo1b", "fgfr3_v2", 
+						"pnp4a", "pax7a", "myo5aa","foxp4", "smad9"),
+	nCol = 5,  cols.use = setClusterColors(seuratObj), do.return = TRUE)
 
-png( file.path( heatMapDir, paste0( "HeatMap_", lineageType, "_Lineage.png" )))
-	draw(hplot, annotation_legend_side = "bottom")
-dev.off()
-
-}else{ draw(hplot, annotation_legend_side = "bottom")}
+ggsave( paste0( name, ".png"), path = vlnPlotDir, device = "png" , plot = vlnPlot, width = 13, height = 18, units = "cm", dpi = 300, scale = 5) 
 
 }
+

@@ -3,7 +3,7 @@ makeUmapClusters	<- function( seuratObj, umapDim, myResolution){
 require("Seurat")
 source("R/getClusterTypes.r")
 
-pcaDim			<- 6
+#pcaDim			<- 6
 seuratObj 		<- FindClusters( seuratObj, reduction.type = 'umap', 
 					dims.use = 1:umapDim, 
 					k.param = 15, print.output = FALSE, force.recalc = TRUE, save.SNN = TRUE,

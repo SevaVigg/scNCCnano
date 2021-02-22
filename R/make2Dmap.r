@@ -5,7 +5,7 @@ source("R/setClusterColors.r")
 UMAPSeed <- as.numeric(as.POSIXct(Sys.time()))
 #UMAPSeed <- 42
 
-seurObj <- calcUmapGeneSpace( seurObj, experimentType = "allCells", Dim = 2, minDist = 4, mySpread = 4, myNeighbors = 25L, UMAPRandSeed = UMAPSeed)$All
+seurObj <- calcUmapGeneSpace( seurObj, experimentType = "allCells", Dim = 2, minDist = 4, mySpread = 9, myNeighbors = 25L, UMAPRandSeed = UMAPSeed)$All
 save( seurObj, file = file.path( clusterDataDir, "visualisation2Dumap"))
 
 

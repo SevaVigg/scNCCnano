@@ -1,4 +1,4 @@
-createSlingShotObject <- function( seuratObj, dimRed, useDims = 1:10, startClust = "eNCC", endClust = c("I", "M"), distFun = cosineClusterDist){
+createSlingShotObject <- function( seuratObj, dimRed, useDims = 1:10, startClust = "eHMP", endClust = c("I", "M"), distFun = cosineClusterDist){
 
 if(!require(slingshot)){
   install.packages("slingshot")

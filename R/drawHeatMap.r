@@ -18,7 +18,6 @@ lineageType	<- targetCurve$target
 clusterColors	<- setClusterColors( seuratObj)
 curveClust 	<- seuratObj@ident[ lineageCells]
 targetExpsDF	<- seuratObj@data[ tanyaGenes, lineageCells ]
-clusterColors	<- setClusterColors( seuratObj)
 
 curveDF 	<- data.frame( clust = curveClust)
 

@@ -1,13 +1,17 @@
-getTargetCurve <- function( seuratObj, lineageStart = "eNCC", lineageEnds = c("M", "I", "X"), target = "I", dimRed = "umap", distFun = cosineClusterDist){
+getTargetCurve <- function( seuratObj, lineageStart = "eHMP", genes.use = NULL, lineageEnds = c("M", "I", "X"), target = "I", dimRed = "umap", dimsUseHD = 1:2, distFun = cosineClusterDist){
 
 require( "slingshot")
 source("R/setCellTypeColors.r")
 source("R/cosineClusterDist.r")
 
-cells 		<- GetCellEmbeddings( seuratObj, reduction.type = dimRed)
+if ( !is.null( genes.use)) {
+	cells 	<- t( as.matrix(seuratObj@data[ genes.use, ]))
+
+}else{ cells 	<- GetCellEmbeddings( seuratObj, reduction.type = dimRed)[ , dimsUseHD]}
 
 slingLins	<- getLineages( cells, seuratObj@ident, start.clus = lineageStart, end.clus = lineageEnds, dist.fun = distFun) 
-slingCurvs	<- getCurves( slingLins, extend = "n", stretch = 0, thresh = 0.05)
+slingCurvs 	<- getCurves( slingLins, extend = "n", reassign = TRUE, stretch = 0, thresh = 0.0001, shrink = 0.2)
+
 
 LineageId <- which(unlist(lapply( slingLins@lineages, function(x) tail(x, 1) == target)))  
 

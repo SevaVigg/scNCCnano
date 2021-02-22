@@ -125,6 +125,11 @@ bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = TRUE, reorde
 levels(bestUmap@ident) <- names(getFinalClusterTypes( bestUmap))
 bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = FALSE)
 
+source("R/createSlingShotObject.r")
+source("R/cosineClusterDist.r")
+allGenes <- rownames( bestUmap@data)
+sling <- createSlingShotObject( bestUmap, genes.use = allGenes, endClust = c("I","M","X"))
+
 clusterPlotDir		<- file.path( plotDir, "clusterPlots")
 dir.create( clusterPlotDir, showWarnings = FALSE)
 
@@ -181,7 +186,7 @@ dev.off()
 
 source("R/setClusterColors.r")
 
-valCutoff 		<- 0.89
+valCutoff 		<- 0.92
 
 valCutoffIdentName	<- paste0( "cutoffIdent", valCutoff)
 
@@ -195,7 +200,7 @@ valUmap <- BuildClusterTree( valUmap, pcs.use = 1:8, do.reorder = TRUE, reorder.
 levels(valUmap@ident) <- names( getFinalClusterTypes( valUmap))
 valUmap <- BuildClusterTree( valUmap, pcs.use = 1:8, do.reorder = TRUE, reorder.numeric = FALSE, do.plot = TRUE)
 
-png( file.path( clusterPlotDir, "validatedClusterTree.png"))
+png( file.path( clusterTreeDir, "validatedClusterTree.png"))
 	PlotClusterTree( valUmap) 
 dev.off()
 
@@ -206,15 +211,18 @@ umap2Dclust@meta.data[, valCutoffIdentName] 	<- valUmap@meta.data[, valCutoffIde
 umap2Dclust					<- SetAllIdent( umap2Dclust, id = valCutoffIdentName)
 
 #we also need pseudotime trajectories
-source("R/plot2DAllCurves.r")
+source("R/plot2DAllCurves_ggplot.r")
 source("R/cosineClusterDist.r")
 
 png( file.path( clusterPlotDir, "FinalClustersUmap.png"), width = 800, height = 600)
-			InitCellTypeUmapPlot <- DimPlot( umap2Dclust, reduction.use = "umap", cols.use = setClusterColors( umap2Dclust), pt.size = 2) + 
-		theme( axis.text.x = element_text( size = 20), axis.text.y = element_text(size = 20),
-		       axis.title.x = element_text( size = 20, margin = margin( t = 5, r = 0, b = 0, l = 0)), axis.title.y = element_text( size = 20))
-	(InitCellTypeUmapPlot)
-	plot2DAllCurves( umap2Dclust, valUmap, dims = 1:8)
+	plot2DAllCurves( umap2Dclust, valUmap, dims = 1:8, genes.use = allGenes)
+dev.off()
+
+source("R/calcTSNEGeneSpace.r")
+tsne2Dinit <- calcTSNEGeneSpace( seuratWT)
+
+png( file.path( clusterPlotDir, "FinalClustersTsne.png"), width = 800, height = 600)
+	plot2DAllCurves( tsne2Dinit, valUmap, genes.use = allGenes, dimRed2D = "tsne")
 dev.off()
 
 png( file.path( PCADir, "All_PCAcomps.png"), width = 1536, height = 2048)
@@ -327,11 +335,6 @@ png( file.path( dotPlotDir, "IrdComp.png"), width = 1600, height = 600)
 	( iDotPlot)
 dev.off()
 
-
-
-
-
-
 heatMapDir <- file.path( plotDir, "heatMaps")
 dir.create( heatMapDir, showWarnings = FALSE)
 
@@ -345,9 +348,6 @@ png( file.path( heatMapDir, "MlHeatMap.png"), width = 1000, height = 1600)
 			axis.title  = element_text( size = 30, face = "bold"))
 )
 dev.off()
-
-
-
 
 #For iridophores
 
@@ -399,22 +399,22 @@ png( file.path( heatMapDir, "IpHeatMap.png"), width = 1200, height = 1600)
 dev.off()
 
 
-
-
-source("R/createSlingShotObject.r")
 source("R/getTargetCurve.r")
 source("R/drawHeatMap.r")
 
 
 png( file.path( heatMapDir, "I_heatMap.png"), width = 600, height = 800)
-	(drawHeatMap( umap2Dclust, getTargetCurve( valUmap, target = "I"), do.print = TRUE))  
+	(drawHeatMap( umap2Dclust, getTargetCurve( valUmap, target = "I", genes.use = allGenes), do.print = TRUE))  
 dev.off()
 
 png( file.path( heatMapDir, "M_heatMap.png"), width = 600, height = 800)
-	(drawHeatMap( umap2Dclust, getTargetCurve( valUmap, target = "M"), do.print = TRUE))  
+	(drawHeatMap( umap2Dclust, getTargetCurve( valUmap, target = "M", genes.use = allGenes), do.print = TRUE))  
 dev.off()
 
 png( file.path( heatMapDir, "X_heatMap.png"), width = 600, height = 800)
-	(drawHeatMap( umap2Dclust, getTargetCurve( bestUmap, target = "X"), do.print = TRUE))  
+	(drawHeatMap( umap2Dclust, getTargetCurve( bestUmap, target = "X", genes.use = allGenes), do.print = TRUE))  
 dev.off()
+
+#vlnPlots
+
 

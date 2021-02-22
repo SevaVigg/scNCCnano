@@ -21,7 +21,7 @@ slingLins2D	<- getLineages( cells2D, seurHD@ident, start.clus = lineageStart, en
 
 #now replace the lineage thee. The correct tree must be estimated in HD
 slingLins2D@lineages <- slingLinsHD@lineages  
-TRslingCurves	<- getCurves( slingLins2D, extend = "n", reassign = TRUE, stretch = 0, thresh = 0.05, shrink = 0.2)
+slingCurves	<- getCurves( slingLins2D, extend = "n", reassign = TRUE, stretch = 0, thresh = 0.05, shrink = 0.2, allow.breaks = FALSE)
 
 lineageIds 	<- which(unlist(lapply( slingLins2D@lineages, function(x) tail(x, 1) %in% c("M", "I")))) 
 
