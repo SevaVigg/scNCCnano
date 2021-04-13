@@ -43,7 +43,7 @@ initNew[ rownames(initCells) , ] <- initCells
 #now call tsne
 distanceMatrix 	<- dist( t( newSeurObj@data), method = "cosine", pairwise = TRUE)
 rtsneRes	<- Rtsne( distanceMatrix, is_distance = TRUE, 
-				perplexity = 15, 
+				perplexity = 30, 
 				theta = 0, 
 				eta = 500, 
 				pca = FALSE, 

@@ -25,6 +25,13 @@ require( NanoStringNorm)
 require(preprocessCore)
 require(data.table)
 
+# graph parameters
+plotTitleSize	<- 10
+annotCustSize	<- 6
+axisTitleSize	<- 8
+axisTextSize	<- 4
+
+
 resDir		<- file.path( getwd(), "Res")
 inTablesDir	<- file.path( resDir, "InitialTables")
 qualDir 	<- file.path( resDir, "QualityControl")
@@ -81,21 +88,21 @@ negThreshold 	<- quantile( negProbDF$negProbVal, 0.97)
 negProbCellIndex	<- which(qualDF$negProbSum < 3)
 nCellNeg		<- length(negProbCellIndex)
 nCellNegGrob 		<- grobTree( textGrob( paste0(nCellNeg, " cells remaining"), x=0.1,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 negProbDistrPlot <- ggplot(data = negProbDF, aes( x = negProbVal)) +
 	geom_vline( xintercept = negThreshold, col = "red", linetype = "solid") +
 	geom_histogram( fill = "deepskyblue2", breaks = seq(0, 40, by = 2)) +
+	ggtitle( "Negative probes") +
 	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.title 	= element_text( size = 30),
-		axis.text 	= element_text( size = 24), 
+		axis.title 	= element_text( size = axisTitleSize),
+		axis.text 	= element_text( size = axisTextSize), 
 		axis.text.x 	= element_text( angle = 0, hjust = 1, vjust = 0.5),
-		axis.text.y	= element_text( margin = margin( l = 10)),
-		plot.title  	= element_text( size = 34, hjust = 0)) +
+		axis.text.y	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0)),
+		plot.title  	= element_text( size = plotTitleSize, hjust = 0)) +
 	scale_y_continuous( name = "#Probes", breaks = seq(1000, 5000, by = 1000), expand = c(0,0)) +
 	scale_x_continuous( name = "Negative probe counts", expand = c(0,0) ) +
-	annotation_custom( nCellNegGrob) +
-	ggtitle( "Negative probes") 
+	annotation_custom( nCellNegGrob) 
 
 qualDF		 	<- qualDF[ negProbCellIndex, ]
 
@@ -109,18 +116,18 @@ rightPosProbThrsld	<- quantile( qualDF$posProbCoef, 0.99)
 posProbCellIndex 	<- which(qualDF$posProbCoef > leftPosProbThrsld & qualDF$posProbCoef < rightPosProbThrsld)
 nCellPos		<- length( posProbCellIndex)
 nCellPosGrob 		<- grobTree( textGrob( paste0(nCellPos, " cells remaining"), x=0.05,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 posProbDistrPlot <- ggplot( data = qualDF[ , "posProbCoef", drop = FALSE], aes( x = posProbCoef)) +
 	geom_histogram( aes(y = ..count..), fill = "deepskyblue2", breaks = seq( 0.75, 1.25, by = 0.01)) +
 	geom_vline( xintercept = leftPosProbThrsld, col = "red", linetype = "solid") +
 	geom_vline( xintercept = rightPosProbThrsld, col = "red", linetype = "solid") +
 	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.title 	= element_text( size = 30),  
-		axis.text 	= element_text( size = 24), 
+		axis.title 	= element_text( size = axisTitleSize),  
+		axis.text 	= element_text( size = axisTextSize), 
 		axis.text.x 	= element_text( angle = 0, hjust = 1, vjust = 0.5),
-		axis.text.y	= element_text( margin = margin( l = 10)), 
-		plot.title  	= element_text( size = 34, hjust = 0)) +
+		axis.text.y	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0)), 
+		plot.title  	= element_text( size = plotTitleSize, hjust = 0)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
 	scale_x_continuous( name = "regression coef. of log positive probe counts", expand = c(0,0)) +
 	coord_cartesian(xlim = c( 0.75, 1.25)) +  
@@ -140,18 +147,18 @@ rightKanRplThrsld	<- quantile( qualDF$KanRplRes, 0.975)
 kanRplIndex 		<- which(qualDF$KanRplRes > leftKanRplThrsld & qualDF$KanRplRes < rightKanRplThrsld)
 nCellKanRpl		<- length( kanRplIndex)
 nCellKanRplGrob 	<- grobTree( textGrob( paste0(nCellKanRpl, " cells remaining"), x=0.05,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 kanRplDistrPlot <- ggplot( data = qualDF[ , "KanRplRes", drop = FALSE], aes( x = KanRplRes)) +
 	geom_histogram( aes(y = ..count..), fill = "deepskyblue2", bins = 50) +
 	geom_vline( xintercept = leftKanRplThrsld, col = "red", linetype = "solid") +
 	geom_vline( xintercept = rightKanRplThrsld, col = "red", linetype = "solid") +
 	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.title 	= element_text( size = 30),  
-		axis.text 	= element_text( size = 24), 
+		axis.title 	= element_text( size = axisTitleSize),  
+		axis.text 	= element_text( size = axisTextSize), 
 		axis.text.x 	= element_text( angle = 0, hjust = 1, vjust = 0.5),
-		axis.text.y	= element_text( margin = margin( l = 10)), 
-		plot.title  	= element_text( size = 34, hjust = 0)) +
+		axis.text.y	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0)), 
+		plot.title  	= element_text( size = plotTitleSize, hjust = 0)) +
 	scale_y_continuous( name = "Counts", expand = c(0,0)) +
 	scale_x_continuous( name = "Kanamycin vs rpl13, residual", expand = c(0,0) ) +
 	coord_cartesian(xlim = c( min(qualDF$KanRplRes), 0.6*max(qualDF$KanRplRes))) +  
@@ -171,7 +178,7 @@ poorCellsDens 	<- which( apply(log10Exps, 1, function(x) sum(x > geneLogThreshol
 qualDF		<- qualDF[ -poorCellsDens, ]
 nCells		<- nrow( qualDF)
 nCellsExpGrob 	<- grobTree( textGrob( paste0("At least ", genesPerCell, " genes per cell \nabove the threshold\n", nCells, " cells remaining"), x=0.2,  y=0.9, hjust=0,
-  				gp=gpar(col="black", hjust = "bottom", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", hjust = "bottom", fontsize = annotCustSize, fontface="bold")))
 
 
 densPlot	<- ggplot( data = data.frame( dens$x, dens$y), mapping = aes( dens$x, dens$y)) + 
@@ -180,10 +187,10 @@ densPlot	<- ggplot( data = data.frame( dens$x, dens$y), mapping = aes( dens$x, d
 			scale_x_continuous( name = "log10 probe counts" ) +
 			scale_y_continuous( name = "Probe counts density") +
 			annotation_custom( nCellsExpGrob) +
-			theme(	plot.title 	= element_text( size = 34, hjust = 0),
-				axis.title	= element_text( size = 30), 
-				axis.text	= element_text( size = 24),
-				axis.text.y	= element_text( margin = margin( l = 10))
+			theme(	plot.title 	= element_text( size = plotTitleSize, hjust = 0),
+				axis.title	= element_text( size = axisTitleSize), 
+				axis.text	= element_text( size = axisTextSize),
+				axis.text.y	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0))
 				) +
 			ggtitle( "Exogenous probes")
 
@@ -203,7 +210,7 @@ geneAverageData$filterColor	<- sapply( rownames(Genes), function(x) if( x %in% p
 
 
 nGenesGrob 			<- grobTree( textGrob( paste0( length( exoGenes), " genes remainng"), 
-				x=0.05,  y=0.9, hjust=0, gp=gpar(col="black", fontsize = 26, fontface="bold")))
+				x=0.05,  y=0.9, hjust=0, gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 
 geneTop5CellPlot <- ggplot( data = geneAverageData) + 
@@ -211,11 +218,11 @@ geneTop5CellPlot <- ggplot( data = geneAverageData) +
 	geom_col(fill = geneAverageData$filterColor) +
 	geom_hline( yintercept = expLogMinimal, color = "red") + 
 	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.title	= element_text( size = 30), 
-		axis.text 	= element_text( size = 24), 
-		axis.text.x 	= element_text( size = 16, angle = 90, hjust = 1, vjust = 0.5),
-		axis.text.y	= element_text( margin = margin( l = 10)), 
-		plot.title  	= element_text( size = 34, hjust = 0)) +
+		axis.title	= element_text( size = axisTitleSize), 
+		axis.text 	= element_text( size = axisTextSize), 
+		axis.text.x 	= element_text( size = axisTextSize, angle = 90, hjust = 1, vjust = 0.5),
+		axis.text.y	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0)), 
+		plot.title  	= element_text( size = plotTitleSize, hjust = 0)) +
 	scale_x_discrete( name = "Probe" ) +
 	scale_y_continuous( name = "log10 probe count", expand = c(0,0), limits = c(0, 7)) +
 	annotation_custom( nGenesGrob) +
@@ -230,12 +237,12 @@ geneAverageDistributionPlot <- ggplot( data = geneAverageData) +
 	geom_col( fill = geneAverageData$filterColor) +
 	geom_hline( yintercept = 10^geneLogThreshold, color = "red") + 
 	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.text = element_text(size = 24), 
+		axis.text = element_text(size = axisTextSize), 
 		axis.text.x = element_text(angle = 90, 
 		hjust = 1, 
 		vjust = 0.5, 
 		size = 7),
-		plot.title  = element_text( hjust = 0)) +
+		plot.title  = element_text( size = plotTitleSize, hjust = 0)) +
 	scale_x_discrete( name = "Gene" ) +
 	scale_y_continuous( name = "Expression", expand = c(0,0)) +
 	ggtitle( "Expression average over cells")
@@ -245,12 +252,12 @@ geneLogAverageDistributionPlot <- ggplot( data = geneAverageData) +
 	geom_col(fill = geneAverageData$filterColor) +
 	geom_hline( yintercept = geneLogThreshold, color = "red") + 
 	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.text = element_text(size = 24), 
+		axis.text = element_text(size = axisTextSize), 
 		axis.text.x = element_text(angle = 90, 
 		hjust = 1, 
 		vjust = 0.5, 
 		size = 16),
-		plot.title  = element_text( hjust = 0)) +
+		plot.title  = element_text( size = plotTitleSize, hjust = 0)) +
 	scale_x_discrete( name = "Gene" ) +
 	scale_y_continuous( name = "Log 10 probe counts", expand = c(0,0)) +
 	ggtitle( "log10 probe counts average over cells")
@@ -260,12 +267,13 @@ geneTop10CellMedianPlot <- ggplot( data = geneAverageData) +
 	geom_col(fill = geneAverageData$filterColor) +
 	geom_hline( yintercept = geneLogThreshold, color = "red") + 
 	theme(	panel.background = element_rect( fill = "gray80"),
-		axis.text = element_text(size = 24), 
+		axis.text = element_text(size = axisTextSize), 
 		axis.text.x = element_text(angle = 90, 
 		hjust = 1, 
 		vjust = 0.5, 
 		size = 7),
-		plot.title  = element_text( hjust = 0)) +
+		axis.text.y = element_text( size = axisTextSize,  margin = margin( l = 0, t =0, r = 1, b =0)),
+		plot.title  = element_text( size = plotTitleSize, hjust = 0)) +
 	scale_x_discrete( name = "Gene" ) +
 	scale_y_continuous( name = "Expression", expand = c(0,0)) +
 	ggtitle( "Median log10 probe counts in top 10 cells")
@@ -330,13 +338,13 @@ fileHpfLabels		<- sapply( fileHpfLevels, function(x) unique(batchGeneEx[ batchGe
 fileHpfTags		<- as.character( fileHpfLabels)
 
 batchBoxPlotNotNormalized <- ggplot( data = batchGeneEx, aes( x = fileHpf, y = log10(Expression))) +
-	geom_boxplot( fill = sapply(batchDF$Good, function(x) if(x) "deepskyblue2" else "red")) +
+	geom_boxplot( fill = sapply(batchDF$Good, function(x) if(x) "deepskyblue2" else "red"), outlier.size = 0.1, outlier.colour = NULL, lwd = 0.1) +
 	theme( 	panel.background = element_rect( fill = "gray80"),
-	plot.title 	= element_text( size = 34, hjust = 0),
-	axis.title 	= element_text( size = 30),
-	axis.text	= element_text( size = 24), 	
-	axis.text.x 	= element_text( size = 16, angle = 90, hjust = 1, vjust = 0.5), 
-	axis.text.y 	= element_text( margin = margin( l = 10))
+	plot.title 	= element_text( size = plotTitleSize, hjust = 0),
+	axis.title 	= element_text( size = axisTitleSize),
+	axis.text	= element_text( size = axisTextSize), 	
+	axis.text.x 	= element_text( size = axisTextSize, angle = 90, hjust = 1, vjust = 0.5), 
+	axis.text.y 	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0))
 	) +
 	geom_hline( yintercept = geneLogThreshold, col = "red", linetype = "solid") +
 	scale_x_discrete( name = "batch", labels = fileHpfTags) +
@@ -344,13 +352,13 @@ batchBoxPlotNotNormalized <- ggplot( data = batchGeneEx, aes( x = fileHpf, y = l
 	ggtitle( "log10 probe counts in batches, not normalized")
 
 batchBoxPlotQuantileNormalized <- ggplot( data = batchQuantNormGeneEx, aes( x = fileHpf, y = log10(Expression))) +
-	geom_boxplot( fill = sapply(batchDF$Good, function(x) if(x) "deepskyblue2" else "red")) +
+	geom_boxplot( fill = sapply(batchDF$Good, function(x) if(x) "deepskyblue2" else "red"), lwd = 0.1) +
 	theme( 	panel.background = element_rect( fill = "gray80"),
-		plot.title 	= element_text( size = 34, hjust = 0),
-		axis.title 	= element_text( size = 30),
-		axis.text	= element_text( size = 24),
-		axis.text.x 	= element_text( size = 16, angle = 90, hjust = 1, vjust = 0.5), 
-		axis.text.y = element_text( margin = margin( l = 10))
+		plot.title 	= element_text( size = plotTitleSize, hjust = 0),
+		axis.title 	= element_text( size = axisTitleSize),
+		axis.text	= element_text( size = axisTextSize),
+		axis.text.x 	= element_text( size = axisTextSize, angle = 90, hjust = 1, vjust = 0.5), 
+		axis.text.y 	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0))
 	) +
 	geom_hline( yintercept = geneLogThreshold, col = "red", linetype = "solid") +
 	scale_x_discrete( name = "batch", labels = fileHpfTags) +
@@ -364,16 +372,16 @@ batchAgr$hpfTag 	<- fileHpfTags
 cellsBatchGood		<- which( qualDF$FileName %in% batchDF[ batchDF$Good, "FileName"] & qualDF$hpf %in% batchDF[ batchDF$Good, "hpf"])
 nCellsBatch		<- length( cellsBatchGood)
 nCellsBatchGrob 		<- grobTree( textGrob( paste0(nCellsBatch, " cells remaining"), x=0.05,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 batchQuartPlotQuantileNormalized <- ggplot( data = batchAgr, aes( x = batch, y = medianExp)) +
 	geom_col( fill = sapply(batchDF$Good, function(x) if(x) "deepskyblue2" else "red")) +
 	theme( 	panel.background = element_rect( fill = "gray80"),
-		plot.title 	= element_text( size = 34, hjust = 0),
-		axis.title 	= element_text( size = 30),
-		axis.text	= element_text( size = 24), 
-		axis.text.x 	= element_text( size = 16, angle = 90, hjust = 1, vjust = 0.5), 
-		axis.text.y 	= element_text( margin = margin( l= 10))
+		plot.title 	= element_text( size = plotTitleSize, hjust = 0),
+		axis.title 	= element_text( size = axisTitleSize),
+		axis.text	= element_text( size = axisTextSize), 
+		axis.text.x 	= element_text( size = axisTextSize, angle = 90, hjust = 1, vjust = 0.5), 
+		axis.text.y 	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0))
 		) +
 	geom_hline( yintercept = 10^geneLogThreshold, col = "red", linetype = "solid") +
 	scale_x_discrete( name = "batch", 
@@ -396,7 +404,7 @@ KanamycinPosBotQuant	<- median( qualDF_f$Kanamycin.Pos)/50
 goodCellsKana		<- which( qualDF_f$Kanamycin.Pos >= KanamycinPosBotQuant & qualDF_f$Kanamycin.Pos <= KanamycinPosTopQuant)
 nCells			<- length( goodCellsKana)
 nCellsKanaGrob 		<- grobTree( textGrob( paste0(nCells, " cells remaining"), x=0.05,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 kanamycinExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(Kanamycin.Pos))) +
 	geom_histogram( fill = "deepskyblue2", binwidth = 0.05) +
@@ -407,11 +415,11 @@ kanamycinExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(K
 #	geom_vline( xintercept = min( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
 #	geom_vline( xintercept = max( log10( qualDF_f$Kanamycin.Pos[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
 	theme(	panel.background = element_rect( fill = "gray80"),
-		plot.title = element_text( size = 34, hjust = 0), 
-		axis.title = element_text( size = 30), 
-		axis.text = element_text( size = 24), 
-		axis.text.x = element_text( angle = 0, hjust = 1, vjust = 0.5),
-		axis.text.y = element_text( margin = margin( l = 10))
+		plot.title = element_text( size = plotTitleSize, hjust = 0), 
+		axis.title = element_text( size = axisTitleSize), 
+		axis.text = element_text( size = axisTextSize), 
+		axis.text.x = element_text( angle = 0, margin = margin( l = 0, t = 0, r = 0, b = 20)),
+		axis.text.y = element_text( margin = margin( l = 0, t = 0, r = 1, b = 0))
 		) +
 	scale_y_continuous( name = "#cells", expand = c(0,0)) +
 	scale_x_continuous( name = "log10 Kanamycin counts") +
@@ -426,7 +434,7 @@ rpl13BotQuant	<- quantile( qualDF_f$rpl13, 0.05)
 goodCellsRpl	<- which( qualDF_f$rpl13 >= rpl13BotQuant & qualDF_f$rpl13 <= rpl13TopQuant)
 nCells		<- length( goodCellsRpl)
 nCellsRplGrob 	<- grobTree( textGrob( paste0(nCells, " cells remaining"), x=0.05,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 
 rpl13ExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(rpl13))) +
@@ -438,11 +446,11 @@ rpl13ExpressionDistributionPlot <- ggplot( data = qualDF_f, aes( x = log10(rpl13
 #	geom_vline( xintercept = min( log10( qualDF_f$rpl13[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
 #	geom_vline( xintercept = max( log10( qualDF_f$rpl13[ grep("I", rownames(qualDF_f))])), col = "cyan", linetype = "longdash") +
 	theme(	panel.background = element_rect( fill = "gray80"),
-		plot.title  	= element_text( size = 34, hjust = 0),
-		axis.title 	= element_text( size = 30), 
-		axis.text 	= element_text( size = 24), 
-		axis.text.x 	= element_text(angle = 0, hjust = 1, vjust = 0.5),
-		axis.text.y 	= element_text( margin = margin( l = 10))
+		plot.title  	= element_text( size = plotTitleSize, hjust = 0),
+		axis.title 	= element_text( size = axisTitleSize), 
+		axis.text 	= element_text( size = axisTextSize), 
+		axis.text.x 	= element_text( angle = 0, hjust = 1, vjust = 0.5),
+		axis.text.y 	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0))
 		) +
 	scale_y_continuous( name = "#cells", expand = c(0,0)) +
 	scale_x_continuous( name = "log10 rpl13 counts", expand = c(0,0) ) +
@@ -542,21 +550,21 @@ fileHpfLabels		<- sapply( fileHpfLevels, function(x) unique(batchNanoNormGeneEx[
 fileHpfTags		<- as.character( fileHpfLabels)
 
 nCellNanoGrob 		<- grobTree( textGrob( paste0( length( goodCells), " cells remaining"), x=0.05,  y=0.95, hjust=0,
-  				gp=gpar(col="black", fontsize = 26, fontface="bold")))
+  				gp=gpar(col="black", fontsize = annotCustSize, fontface="bold")))
 
 batchNanoNormGeneExNonZero <- batchNanoNormGeneEx[ batchNanoNormGeneEx$Expression > 0, ]
 
 boxPlotNanoStringNormalized <- ggplot( data = batchNanoNormGeneExNonZero, aes( x = fileHpf, y = log10(Expression))) +
-	geom_boxplot( fill = "deepskyblue2") +
+	geom_boxplot( fill = "deepskyblue2", lwd = 0.1, outlier.size = 0.1) +
 	theme( 	panel.background = element_rect( fill = "gray80"),
-		plot.title = element_text( size = 34, hjust = 0),
-		axis.title = element_text( size = 30),
+		plot.title = element_text( size = plotTitleSize, hjust = 0),
+		axis.title = element_text( size = axisTitleSize),
 		axis.text.x = element_text(
 			angle = 90,
 			hjust = 1,
 			vjust = 0.5,
-			size = 16), 
-		axis.text.y = element_text( size = 24) 
+			size = axisTextSize), 
+		axis.text.y = element_text( size = axisTextSize, margin = margin( l = 0, t = 0, r = 1, b = 0)) 
 		) +
 	geom_hline( yintercept = geneLogThreshold, col = "red", linetype = "solid") +
 	scale_x_discrete( name = "batch", 
@@ -579,61 +587,61 @@ write.table( t(qualDF_f[ , c("num", "batch", "hpf", "dateEx", "Desk", "CellType"
 #and now make the final figure. plot_grid opens an empty window, I don't know how to suppress this
 
 firstLine	<- plot_grid(
-			negProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
-			posProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
-			kanRplDistrPlot				+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
-			densPlot				+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
+			negProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
+			posProbDistrPlot 			+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
+			kanRplDistrPlot				+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
+			densPlot				+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
 			nrow = 1,
 			align = "h",
 			labels = c("A", "B", "C", "D"),
-			label_size = 40,
+			label_size = 14,
 			rel_widths = c( 1/3, 1/3, 1/3 )
 			)
 
 secondLine	<- plot_grid( 
-			geneTop5CellPlot	 		+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
-			batchBoxPlotNotNormalized		+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
+			geneTop5CellPlot	 		+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
+			batchBoxPlotNotNormalized		+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
 			nrow = 1,
 			align = "h",
 			labels = c("E", "F"),
-			label_size = 40,
+			label_size = 14,
 			rel_widths = c(1, 1)
 			)
 
 thirdLine	<- plot_grid(
-			batchQuartPlotQuantileNormalized 	+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
-			batchBoxPlotQuantileNormalized		+ theme( plot.margin = unit( c( 0, 0.4, 0, 0.4), "inches")), 
+			batchQuartPlotQuantileNormalized 	+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
+			batchBoxPlotQuantileNormalized		+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
 			nrow = 1,
 			align = "h",
 			labels = c("G", "H"),
-			label_size = 40,
+			label_size = 14,
 			rel_widths = c( 1, 1)
 			)
 
 forthLine	<- plot_grid(
-			kanamycinExpressionDistributionPlot 	+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
-			rpl13ExpressionDistributionPlot		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
-			boxPlotNanoStringNormalized		+ theme( plot.margin = unit( c( 0, 0.1, 0, 0.1), "inches")), 
+			kanamycinExpressionDistributionPlot 	+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
+			rpl13ExpressionDistributionPlot		+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
+			boxPlotNanoStringNormalized		+ theme( plot.margin = unit( c( 0, 10, 0, 0), "points")), 
 			nrow = 1,
 			align = "h",
 			labels = c("I", "J", "K"),
-			label_size = 40,
-			rel_widths = c( 0.3, 0.3, 0.4)
+			label_size = 14,
+			rel_widths = c( 0.25, 0.25, .5)
 			)
 
 
 
 qualityControlPlot 	<- plot_grid( 
-				firstLine  +  theme( plot.margin = unit( c( 0.4, 0, 0.4, 1), "inches")),  
-				secondLine +  theme( plot.margin = unit( c( 0.4, 0, 0.4, 1), "inches")),  
-				thirdLine  +  theme( plot.margin = unit( c( 0.4, 0, 0.4, 1), "inches")),  
-				forthLine  +  theme( plot.margin = unit( c( 0.4, 0, 0.4, 1), "inches")),  
+				firstLine  +  theme( plot.margin = unit( c( 0, 0, 10, 0), "points")),  
+				secondLine +  theme( plot.margin = unit( c( 0, 0, 10, 0), "points")),  
+				thirdLine  +  theme( plot.margin = unit( c( 0, 0, 10, 0), "points")),  
+				forthLine  +  theme( plot.margin = unit( c( 0, 0, 10, 0), "points")),  
 					align = "v",
 					labels = '',
 					rel_heights = c(1, 1),
 					ncol = 1, 
-					label_size = 40) +
-			   theme( plot.margin = unit( c( 1, 1, 1, 1), "inches"))
+					label_size = 14) +
+			   theme( plot.margin = unit( c( 10, 10, 10, 10), "points"))
 
 
 save_plot( filename = file.path( plotDir, paste0("qualityControlMainPlot", ".png")), plot = qualityControlPlot, device = "png", dpi = 600, base_height = 11.7, base_width = 8.3) 
@@ -641,7 +649,7 @@ save_plot( filename = file.path( plotDir, paste0("qualityControlMainPlot", ".png
 
 
 #png( file.path( plotDir, paste0("qualityControlMainPlot", ".png")), width = 2480, height = 3506)
-	#plot( qualityControlPlot)
+#	plot( qualityControlPlot)
 #dev.off()
 
 #Plot separate plots 

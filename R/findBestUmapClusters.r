@@ -1,4 +1,4 @@
-findBestUmapClusters	<- function( seuratObj){
+findBestUmapClusters	<- function( seuratObj, Spread){
 
 require("Seurat")
 source("R/makeUmapClusters.r")
@@ -7,7 +7,6 @@ source("R/calcTargetClusterQuals.r")
 source("R/calcUmapGeneSpace.r")
 
 #initialize parameters
-Spread		<- 10 
 minUmapDim 	<- 2
 maxUmapDim	<- 8
 minMyResolution	<- 0.5
@@ -54,7 +53,7 @@ for (minDist in minDists) {
 		cat("do switching  ")
 		bestClusterQual <- currClusterQual
 		bestParams 	<- currParams
-		bestSeurObj	<- StashIdent( currSeurObj, save.name = paste0( "Best_D", bestParams$UMAPDim, "_R", bestParams$Resolution, "_minDist", bestParams$minDist))
+		bestSeurObj	<- StashIdent( currSeurObj, save.name = paste0( "Best_D$", bestParams$umapDim, "_R$", bestParams$Resolution, "_minDist$", bestParams$minDist))
 		cat("New current best D = ", bestParams$umapDim, "for Resolution = ", bestParams$Resolution, "minDist =", bestParams$minDist, "\n")
 		}else{
 	 	cat("Weak combination, the current best D = ", bestParams$umapDim, "for Resolution = ", bestParams$Resolution, "minDist =", bestParams$minDist, "\n")} 
