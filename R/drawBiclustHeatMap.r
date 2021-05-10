@@ -1,4 +1,4 @@
-drawBiclustHeatMap	<- function( seuratObj , heatMapHeight, heatMapWidth){
+drawClusterHeatMap	<- function( seuratObj , heatMapHeight, heatMapWidth){
 
 #This snippet makes a heatmap of gene covariation. 
 
@@ -15,7 +15,6 @@ dataMatrix <- seuratObj@data
 nCol		<- 1024
 
 row_dend 	<- dendsort(hclust( dist(dataMatrix, method = "cosine", pairwise = TRUE)))
-column_dend	<- dendsort(hclust( dist( t(dataMatrix), method = "cosine", pairwise = TRUE)))
 
 colPanelFun	 = colorRamp2( quantile( dataMatrix, seq(0, 1, by = 1/(nCol - 1))), viridis( nCol))
 

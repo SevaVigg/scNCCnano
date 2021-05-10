@@ -29,7 +29,7 @@ dimPlot <-  DimPlot( seuratObj, reduction.use = dimRed, cols.use = col, pt.size 
 			legend.position="right",
 			legend.box.margin = margin( l = 40, t = 80),
 			legend.title = element_text( size = 40),
-			legend.text  = element_text( size = 40, margin = margin( b = 20)),
+			legend.text  = element_text( size = 40, margin = margin( b = 20))
 			
 			)
 
