@@ -1,4 +1,4 @@
-makeVlnPlots	<- function( seuratObj,  name = "vlnPlots"){
+makeVlnPlots	<- function( seuratObj, name = "vlnPlots", orientation = "portrait"){
 
 source("R/setClusterColors.r")
 
@@ -11,6 +11,18 @@ vlnPlotDir <- file.path( plotDir, "vlnPlots")
 dir.create( vlnPlotDir, showWarnings = FALSE)
 
 
+if (orientation == "landscape") { pageWidth = 18; pageHeight = 13 }
+if (orientation == "portrait") { pageWidth = 18; pageHeight = 13 }
+
+if( seuratObj@project.name == "taqman"){ 
+	
+vlnPlot <- VlnPlot( seuratObj, c( 	"sox9b"		, "snail2"	, "sox10"	, "pax7b"	, "mbpa"	,
+					"phox2b"	, "mitfa"	, "ltk"		, "neurog1"	, "pnp4a"	,
+					 "tyrp1b"	, "xdh"		, "elavl3"),
+			nCol = 5, cols.use = setClusterColors( seuratObj), do.return = TRUE) 
+
+}else{
+
 vlnPlot <- VlnPlot( seuratObj, c( 	"tfap2e"	, "tfap2a"	, "her9"	, "sox9b"	, "foxg1b" 	,
 					"snail2"	, "alx4b"	, "hmx1"	, "otx2"	, "sox10"	, 
 					"impdh1b"	, "foxo1b"	, "tyr"		, "pax7b"	, "mc1r"	, 
@@ -22,8 +34,26 @@ vlnPlot <- VlnPlot( seuratObj, c( 	"tfap2e"	, "tfap2a"	, "her9"	, "sox9b"	, "fox
 					"dpf3"		, "smad9"),
 
 	nCol = 5,  cols.use = setClusterColors(seuratObj), do.return = TRUE)
+}
 
-ggsave( paste0( name, ".png"), path = vlnPlotDir, device = "png" , plot = vlnPlot, width = 13, height = 18, units = "cm", dpi = 600, scale = 5) 
+if( plotDPI == 600){
+	
+  vlnPlotDir600dpi <- file.path( vlnPlotDir, "600dpi")
+  dir.create( vlnPlotDir600dpi, showWarnings = FALSE)
+
+  ggsave( paste0( name, ".png"), path = vlnPlotDir600dpi, device = "png" , plot = vlnPlot, width = pageWidth, height = pageHeight, units = "cm", dpi = 600, scale = 4)
+
+}else if( plotDPI == 100){
+
+  vlnPlotDir100dpi <- file.path( vlnPlotDir, "100dpi")
+  dir.create( vlnPlotDir100dpi, showWarnings = FALSE)
+
+  ggsave( paste0( name, ".png"), path = vlnPlotDir100dpi, device = "png" , plot = vlnPlot, width = pageWidth, height = pageHeight, units = "cm", dpi = 100, scale = 4)
+
+}else{ cat("Select plotDPI 600 or plotDPI 100")}
+
+
+ggsave( paste0( name, ".png"), path = vlnPlotDir, device = "png" , plot = vlnPlot, width = pageWidth, height = pageHeight, units = "cm", dpi = 600, scale = 5) 
 
 }
 

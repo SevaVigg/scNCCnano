@@ -13,7 +13,7 @@ cellClusters <- sapply( clusterTypes, function(x) WhichCells( seuratObj, ident =
 
 cl_IP	<- which.max( calcTargetClusterQuals( seuratObj, "I")) 
 cl_MC	<- which.max( calcTargetClusterQuals( seuratObj, "M")) 
-cl_tail	<- which.max( calcTargetClusterQuals( seuratObj, "Tl")) 
+cl_eHMP	<- which.max( calcTargetClusterQuals( seuratObj, "eHMP")) 
 cl_X	<- which.max( calcTargetClusterQuals( seuratObj, "X"))
 cl_ltHMP	<- which.max( calcTargetClusterQuals( seuratObj, "ltHMP"))
 
@@ -38,7 +38,7 @@ names( clusterTypes)[ which( names(clusterTypes) == "ltHMP")]		<- "old_ltHMP"
 
 names( clusterTypes)[ which( names(cl_IP) == clusterTypes)]		<- "I"
 names( clusterTypes)[ which( names(cl_MC) == clusterTypes)]		<- "M"
-names( clusterTypes)[ which( names(cl_tail) == clusterTypes)]		<- "eHMP"
+names( clusterTypes)[ which( names(cl_eHMP) == clusterTypes)]		<- "eHMP"
 names( clusterTypes)[ which( names(cl_X) == clusterTypes)]		<- "X"
 names( clusterTypes)[ which( names(cl_ltHMP) == clusterTypes)]		<- "ltHMP"
 

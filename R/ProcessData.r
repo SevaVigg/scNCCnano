@@ -1,7 +1,11 @@
-requires( tidyr )
+require( tidyr )
+require( ape)
+require( ComplexHeatmap)
 
 source("R/ReadSourceFiles.r")
 source("R/writeDupFile.r")
+
+plotDPI		<- 100
 
 workDir <- getwd()
 
@@ -12,6 +16,10 @@ dir.create( resDir, showWarnings = FALSE)
 
 initialTablesPath 	<- file.path( resDir, "InitialTables")
 dir.create( initialTablesPath, showWarnings = FALSE)
+
+#end of the introduction
+
+
 
 #Read and process files
 CellTable 	<- ReadSourceFiles(rawPath)
@@ -72,30 +80,84 @@ seuratAll	<- seuratNorm("allCells")
 seuratAll <- SetAllIdent( seuratAll, id = "genCellTypeIdent")
 seuratWT <- SetAllIdent( seuratWT, id = "genCellTypeIdent")
 
+#gene heatmaps
+
+
+heatMapDir <- file.path( plotDir, "heatMaps")
+dir.create( heatMapDir, showWarnings = FALSE)
+
+heatMapDir100dpi	<- file.path( heatMapDir, "100dpi")
+dir.create( heatMapDir100dpi, showWarnings = FALSE)
+
+heatMapDir600dpi	<- file.path( heatMapDir, "600dpi")
+dir.create( heatMapDir600dpi, showWarnings = FALSE)
+
+#gene covariance
+source( "R/drawGeneCovarHeatMap.r")
+
+heatMapHeigth 	<- 10
+heatMapWidth 	<- 10
+Margin		<- 2
+
+if (plotDPI == 600) {
+png( file = file.path( heatMapDir600dpi, "geneCovarHeatMap.png"),
+	height = heatMapHeigth + Margin,
+	width =  heatMapWidth + 2*Margin,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawGeneCovarHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+dev.off()}
+
+if (plotDPI == 100) {
+png( file = file.path( heatMapDir100dpi, "geneCovarHeatMap.png"),
+	height = heatMapHeigth + Margin,
+	width =  heatMapWidth + 2*Margin,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawGeneCovarHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+dev.off()}
+
+#gene biclusters
+source( "R/drawBiclustHeatMap.r")
+
+heatMapHeigth 	<- 7
+heatMapWidth 	<- 10
+Margin		<- 2
+
+if (plotDPI == 600) {
+png( file = file.path( heatMapDir600dpi, "biclustWTHeatMap.png"),
+	height = heatMapHeigth + Margin,
+	width =  heatMapWidth + 2*Margin,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawBiclustHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+dev.off()}
+
+if (plotDPI == 100) {
+png( file = file.path( heatMapDir100dpi, "biclustWTHeatMap.png"),
+	height = heatMapHeigth + Margin,
+	width =  heatMapWidth + 2*Margin,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawBiclustHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+dev.off()}
+
+
 dotPlotDir <- file.path( plotDir, "dotPlots")
 dir.create( dotPlotDir, showWarnings = FALSE)
 
-source("R/dotPlotBalanced.r")
+source("R/makeDotPlot.r")
 
-WTdotPlot 	<- dotPlotBalanced(seuratWT, genes.plot = rev(rownames(seuratWT@data)), x.lab.rot = TRUE, dot.scale = 10, 
-					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
-	WTdotPlot		<- WTdotPlot +
-		theme(
-			legend.key.size = unit( 1.2, "cm"),			
-			legend.position="right",
-			legend.title = element_text( size = 24),
-			legend.text = element_text( size = 18), 
- 
-			axis.text.y = element_text( size = 24),
-			axis.text.x = element_text( size = 24, angle = 90),
-			axis.title  = element_text( size = 30, face = "bold"),
-#panel.background = element_rect(fill = "gray90")
-			)
-
-
-png( file.path( dotPlotDir, "WTdotPlot.png"), width = 1600, height = 600)
-	(WTdotPlot)
-dev.off()
+nClust = length( levels( seuratWT@ident))
+makeDotPlot( seuratWT, balanced = TRUE, nLines = length( levels( seuratWT@ident)), plotDPI = plotDPI, orientation = "landscape", name = "WTdotPlot")
 
 
 #init cell type distributions, also prepares seuratWT and seuratAll objects
@@ -104,16 +166,11 @@ dev.off()
 #PCA analysis
 source("R/makeInitCellTypePCAPlots.r")
 
-PCADir		<- file.path( plotDir, "PCA")
-dir.create( PCADir, showWarnings = FALSE)
+PCAPlotDir	<- file.path( plotDir, "PCAPlots")
+dir.create( PCAPlotDir, showWarnings = FALSE)
 
-
-png( file.path( PCADir, "WT_PCAcomps.png"), width = 1536, height = 2048)
-	(makeInitCellTypePCAPlots( seuratWT, nComps = 5))
-dev.off()
-png( file.path( PCADir, "All_PCAcomps.png"), width = 1536, height = 2048)
-	(makeInitCellTypePCAPlots( seuratAll, nComps = 5))
-dev.off()
+makeInitCellTypePCAPlots( seuratWT,  nComps = 5, plotDPI = 100, name = "WT_PCAcomps")
+makeInitCellTypePCAPlots( seuratAll, nComps = 5, plotDPI = 100, name = "All_PCAcomps")
 
 #find best parameters for UMAP clustering
 source("R/findBestUmapClusters.r")
@@ -127,13 +184,15 @@ levels(bestUmap@ident) <- names(getFinalClusterTypes( bestUmap))
 
 #build coarse grain cluster tree
 bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = FALSE)
-levels(bestUmap@ident) <- names(getFinalClusterTypes( bestUmap))
-bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = FALSE)
 
+levels(bestUmap@ident) <- names(getFinalClusterTypes( bestUmap))
+
+bestUmap <- BuildClusterTree( bestUmap, pcs.use = 1:7, do.reorder = FALSE, reorder.numeric = FALSE, do.plot = FALSE)
 
 
 source("R/createSlingShotObject.r")
 source("R/cosineClusterDist.r")
+
 allGenes <- rownames( bestUmap@data)
 sling <- createSlingShotObject( bestUmap, genes.use = allGenes, endClust = c("I","M","X"))
 
@@ -143,28 +202,17 @@ dir.create( clusterPlotDir, showWarnings = FALSE)
 clusterTreeDir		<- file.path( plotDir, "clusterTrees")
 dir.create( clusterTreeDir, showWarnings = FALSE)
 
-png( file.path( clusterTreeDir, "coarseGrainClusterTree.png"))
-	PlotClusterTree( bestUmap) 
-dev.off()
+clusterTreeDir100dpi	<- file.path( clusterTreeDir, "100dpi")
+dir.create( clusterTreeDir100dpi, showWarnings = FALSE)
 
+clusterTreeDir600dpi	<- file.path( clusterTreeDir, "600dpi")
+dir.create( clusterTreeDir600dpi, showWarnings = FALSE)
 
-cgDotPlot 	<- dotPlotBalanced( bestUmap, genes.plot = rev(rownames( bestUmap@data)), x.lab.rot = TRUE, dot.scale = 10, 
-					plot.legend = TRUE, dot.min = 0., scale.by = "radius",  do.return = TRUE, cols.use = c("cyan", "red"))
-	cgDotPlot		<- cgDotPlot +
-		theme(
-			legend.key.size = unit( 1.2, "cm"),			
-			legend.position="right",
-			legend.title = element_text( size = 24),
-			legend.text = element_text( size = 18), 
- 
-			axis.text.y = element_text( size = 24),
-			axis.text.x = element_text( size = 24, angle = 90),
-			axis.title  = element_text( size = 30, face = "bold"),
-#panel.background = element_rect(fill = "gray90")
-			)
-png( file.path( dotPlotDir, "coarseGrainDotPlot.png"), width = 1600, height = 600)
-	( cgDotPlot)
-dev.off()
+source("R/plotClusterTree.r")
+
+plotClusterTree( bestUmap, plotDPI = plotDPI, name = "coarseGrainClusterTree")
+
+makeDotPlot( bestUmap, balanced = TRUE, nLines = length( levels( bestUmap@ident)), plotDPI = plotDPI, orientation = "landscape", name = "coarseGrainDotPlot")
 
 clusterDataDir		<- file.path(resDir, "clusterData")
 dir.create( clusterDataDir, showWarnings = FALSE)
@@ -172,28 +220,20 @@ dir.create( clusterDataDir, showWarnings = FALSE)
 save( bestUmap, file = file.path( clusterDataDir, "bestUmap.rObj"))
 bestUmap <- StashIdent( bestUmap, save.name = "bestClustersIdent")
 
-
 source("R/make2Dmap.r")
 umap2Dinit <- make2Dmap( seuratWT)
+
+source("R/setClusterColors.r")
 
 #save( file = file.path( clusterDataDir, "visualisation2Dumap.rObj"), umap2Dinit)
 load( file = file.path( clusterDataDir, "visualisation2Dumap.rObj"))
 load( file = file.path( clusterDataDir, "bestUmap.rObj"))
 
-source("R/makeFeaturePlots.r")
-makeFeaturePlots( umap2Dinit, minCutoff = 3, "umap")
-
-png( file.path( clusterPlotDir, "InitCellTypeUmap.png"), width = 800, height = 600)
-	InitCellTypeUmapPlot <- DimPlot( umap2Dinit, reduction.use = "umap", cols.use = setClusterColors( umap2Dinit), pt.size = 2) + 
-		theme( axis.text.x = element_text( size = 20), axis.text.y = element_text(size = 20),
-		       axis.title.x = element_text( size = 20, margin = margin( t = 5, r = 0, b = 0, l = 0)), axis.title.y = element_text( size = 20))
-	(InitCellTypeUmapPlot)
-dev.off()
+source("R/makeDimPlot.r")
+makeDimPlot( umap2Dinit, dimRed = "umap", col = setClusterColors( umap2Dinit), orientation = "landscape", plotDPI = plotDPI)
 
 
-
-source("R/setClusterColors.r")
-
+#now validate clusters
 valCutoff 		<- 0.92
 
 valCutoffIdentName	<- paste0( "cutoffIdent", valCutoff)
@@ -214,28 +254,54 @@ dev.off()
 
 valUmap 	<- StashIdent( valUmap, save.name = valCutoffIdentName)
 
+#cluster HeatMap
+
+source("R/drawClusterHeatMap.r")
+if (plotDPI == 600) {
+png( file = file.path( heatMapDir600dpi, "clusterHeatMap.png"),
+	height = heatMapHeigth + Margin,
+	width =  heatMapWidth + 2*Margin,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawClusterHeatMap( valUmap, heatMapHeigth, heatMapWidth))
+dev.off()}
+
+if (plotDPI == 100) {
+png( file = file.path( heatMapDir100dpi, "clusterHeatMap.png"),
+	height = heatMapHeigth + Margin,
+	width =  heatMapWidth + 2*Margin,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawClusterHeatMap( valUmap, heatMapHeigth, heatMapWidth))
+dev.off()}
+
+
 umap2Dclust <- umap2Dinit
 umap2Dclust@meta.data[, valCutoffIdentName] 	<- valUmap@meta.data[, valCutoffIdentName]
 umap2Dclust					<- SetAllIdent( umap2Dclust, id = valCutoffIdentName)
 
+#Now we have clustering and can make feature plots accompanied with clusters
+source("R/makeFeaturePlots.r")
+makeFeaturePlots( umap2Dclust, minCutoff = 3, "umap", plotDPI = plotDPI, name = "initFeaturePlots", orientation = "portrait")
+
+
 #we also need pseudotime trajectories
-source("R/plot2DAllCurves_ggplot.r")
+source("R/plot2DAllCurves_ggplot.r") #this file contains function "plot2DAllCurves" which uses ggplot rather than lines
 source("R/cosineClusterDist.r")
 
-png( file.path( clusterPlotDir, "FinalClustersUmap.png"), width = 800, height = 600)
-	plot2DAllCurves( umap2Dclust, valUmap, dims = 1:8, genes.use = allGenes)
-dev.off()
+plot2DAllCurves( umap2Dclust, valUmap, dims = 1:8, genes.use = allGenes, plotDPI = plotDPI, name = "slingClustersUmap")
 
 source("R/calcTSNEGeneSpace.r")
-tsne2Dinit <- calcTSNEGeneSpace( seuratWT)
+tsne2Dinit <- calcTSNEGeneSpace( seuratWT, perplexity, )
 
-png( file.path( clusterPlotDir, "FinalClustersTsne.png"), width = 800, height = 600)
-	plot2DAllCurves( tsne2Dinit, valUmap, genes.use = allGenes, dimRed2D = "tsne")
-dev.off()
+plot2DAllCurves( tsne2Dinit, valUmap, genes.use = allGenes, dimRed2D = "tsne", plotDPI = plotDPI, name = "slingClustersTSNE")
 
-png( file.path( PCADir, "All_PCAcomps.png"), width = 1536, height = 2048)
-	(makeInitCellTypePCAPlots( valUmap, nComps = 5))
-dev.off()
+
+makeInitCellTypePCAPlots( valUmap, nComps = 5)
 
 clDotPlot 	<- dotPlotBalanced( valUmap, genes.plot = rev(rownames( valUmap@data)), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
@@ -343,9 +409,6 @@ png( file.path( dotPlotDir, "IrdComp.png"), width = 1600, height = 600)
 	( iDotPlot)
 dev.off()
 
-heatMapDir <- file.path( plotDir, "heatMaps")
-dir.create( heatMapDir, showWarnings = FALSE)
-
 
 mlGeneSort <- rownames(AverageExpression(seuratM)[order(-AverageExpression(seuratM)$contM),])
 
@@ -425,6 +488,13 @@ dev.off()
 
 #vlnPlots
 
+vlnPlotDir <- file.path( plotDir, "vlnPlots")
+dir.create( vlnPlotDir, showWarnings = FALSE)
+
+source("R/makeNanoStringVlnPlots.r")
+makeNanoStringVlnPlots( valUmap) 
+
+
 #Now consider mutant cells
 
 
@@ -464,7 +534,7 @@ seuratMut		<- calcUmapGeneSpace( seuratMut, Dim = bestDim, myNeighbors = 25L, my
 
 seuratMut 		<- FindClusters( seuratMut, reduction.type = 'umap', 
 					dims.use = 1:bestDim, 
-					k.param = 15, print.output = FALSE, force.recalc = TRUE, save.SNN = TRUE,
+					k.param = 5, print.output = FALSE, force.recalc = TRUE, save.SNN = TRUE,
 					resolution = bestR) 
 
 
