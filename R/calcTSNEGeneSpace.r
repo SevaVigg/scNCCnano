@@ -57,7 +57,7 @@ tsneData		<- rtsneRes$Y
 rownames( tsneData) 	<- colnames( newSeurObj@data)
 colnames( tsneData)	<- c("tSNE_1", "tSNE_2")
 newSeurObj		<- SetDimReduction( newSeurObj, reduction.type = "tsne", slot = "cell.embeddings", new.data = tsneData)
-newSeurObj		 <- SetDimReduction(object = newSeurObj, reduction.type = "tsne", slot = "key", new.data = "tSNE")
+newSeurObj		<- SetDimReduction(object = newSeurObj, reduction.type = "tsne", slot = "key", new.data = "tSNE")
 
 
 

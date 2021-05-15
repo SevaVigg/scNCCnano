@@ -1,26 +1,21 @@
-getTargetCurve <- function( seuratObj, lineageStart = "eHMP", genes.use = NULL, lineageEnds = c("M", "I", "X"), target = "I", dimRed = "umap", dimsUseHD = 1:2, distFun = cosineClusterDist){
+getTargetCurve <- function(
+				slingObjs, 
+				target = "I", 
+				dimRed = "umap", 
+				dimsUseHD = 1:2,
+				cellsKeepThresh = 0.95){
 
 require( "slingshot")
-source("R/setCellTypeColors.r")
-source("R/cosineClusterDist.r")
 
-if ( !is.null( genes.use)) {
-	cells 	<- t( as.matrix(seuratObj@data[ genes.use, ]))
+slingLins 	<- slingObjs$DimH@lineages
 
-}else{ cells 	<- GetCellEmbeddings( seuratObj, reduction.type = dimRed)[ , dimsUseHD]}
+LineageId <- which(unlist(lapply( slingLins, function(x) tail(x, 1) == target)))  
 
-slingLins	<- getLineages( cells, seuratObj@ident, start.clus = lineageStart, end.clus = lineageEnds, dist.fun = distFun) 
-slingCurvs 	<- getCurves( slingLins, extend = "n", reassign = TRUE, stretch = 0, thresh = 0.0001, shrink = 0.2)
-
-
-LineageId <- which(unlist(lapply( slingLins@lineages, function(x) tail(x, 1) == target)))  
-
-#slingShotObj	<- getCurves(slingShotObj)
-prinCurveDF	<- slingPseudotime( slingCurvs)
-curveWeightDF	<- slingCurveWeights( slingCurvs)
-prinCurve_F	<- prinCurveDF[ which(curveWeightDF[ ,LineageId] > 0.) , LineageId]
-curveCells 	<- sort( prinCurve_F)
-targetCurve 	<- list( target = target, cells = curveCells)
+curve 		<- slingObjs$DimH@curves[[ LineageId]]
+curveOrd 	<- curve$s[ curve$ord, ]
+curveWt		<- curve$w[ curve$ord ]
+curveData	<- curveOrd[ curveWt > cellsKeepThresh, ]
+targetCurve 	<- list( target = target, curve = curveData)
 
 return( targetCurve)
 }

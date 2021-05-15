@@ -19,20 +19,31 @@ nCol		<- 1024
 clusterColors		<- setClusterColors( seuratObj)
 names(clusterColors)	<- levels( seuratObj@ident)
 
-orderedCellTypes	<- ordered( seuratObj@ident, levels = c( "eHMP", "ltHMP", "I", "M", "X", "7", "4"))
-orderedCellTypes	<- orderedCellTypes[ order( orderedCellTypes)]
+
+if( seuratObj@project.name == "WT"){
+
+	orderedCellTypes	<- ordered( seuratObj@ident, levels = c( "eHMP", "ltHMP", "I", "M", "X", "7", "4"))
+	orderedCellTypes	<- orderedCellTypes[ order( orderedCellTypes)]
 
 #annotColors 		<- as.character(unique( clusterColors[ seuratObj@ident[ orderedCellTypes]]))
 #names(annotColors) 	<- as.character(unique( seuratObj@ident[ orderedCellTypes]))
+}else if( seuratObj@project.name == "sox10_mutants"){ 
+	orderedCellTypes	<- seuratObj@ident
+	orderedCellTypes	<- orderedCellTypes[ order( orderedCellTypes)]
+}else{ cat( "Unknown project type /n")}	
 
 
 row_dend 	<- dendsort(hclust( dist(  dataMatrix, method = "cosine", pairwise = TRUE)))
 colPanelFun	 = colorRamp2( quantile( dataMatrix, seq(0, 1, by = 1/(nCol - 1))), viridis( nCol))
 
-annotBar		<- HeatmapAnnotation( Cluster = orderedCellTypes,
-				col = list( Cluster = clusterColors) 
-				#height = unit(30, "points"),
-				#annotation_legend_param = list( ncol = 10)
+annotBar		<- HeatmapAnnotation( 
+				Cluster = orderedCellTypes,
+				col = list( Cluster = clusterColors),
+				height = unit(30, "points"),
+				which = "column",
+				annotation_name_gp = gpar( fontsize = 16, fontface = "bold"),
+				simple_anno_size = unit( 0.7, "cm"),  
+				annotation_legend_param = list( ncol = 2, nrow = length( levels(seuratObj@ident)))
 				#annotation_legend_side = "bottom"
 					)
 hMap		<- Heatmap( 	dataMatrix[ , names(orderedCellTypes)], 
@@ -40,10 +51,10 @@ hMap		<- Heatmap( 	dataMatrix[ , names(orderedCellTypes)],
 			width 	= unit( heatMapWidth,  "inches"), 
 			height 	= unit( heatMapHeight, "inches"),
 			heatmap_legend_param = list(
-				title = "gene exp",
+				title = "log10(Exp)",
 				legend_height = unit( 2, "inches"),
 				grid_width = unit( 0.5, "inches"),
-				title_gp = gpar( fontsize = 16, fontface = "bold")		
+				title_gp = gpar( fontsize = 12, fontface = "bold")		
 						),
 			col	=  colPanelFun,
 			bottom_annotation = annotBar,  

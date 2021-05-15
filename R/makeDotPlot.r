@@ -12,6 +12,7 @@ WTdotPlot 	<- dotPlotBalanced(seuratObj, genes.plot = rev(rownames(seuratObj@dat
 
 	WTdotPlot	<- WTdotPlot +
 		theme(
+			plot.margin	= margin(40, 40, 40, 40),
 			legend.key.size = unit( 0.6, "cm"),			
 			legend.position="right",
 			legend.box.margin = margin( l = 40, t = 100),

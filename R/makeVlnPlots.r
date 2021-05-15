@@ -1,4 +1,4 @@
-makeVlnPlots	<- function( seuratObj, name = "vlnPlots", orientation = "portrait"){
+makeVlnPlots	<- function( seuratObj, name = "vlnPlots", orientation = "portrait", plotDPI = "100"){
 
 source("R/setClusterColors.r")
 
