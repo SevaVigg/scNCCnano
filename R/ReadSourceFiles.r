@@ -1,3 +1,10 @@
+#This snippets reads source files for NanoString data
+#
+#the files must be placed in the SourcePath which is the program parameter
+#
+# NanoString NCC project 2017 - 2021, written by Vsevolod J. Makeev
+
+
 ReadSourceFiles <- function(SourcePath){
 
 # Genes containing gene descriptions. 

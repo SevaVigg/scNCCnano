@@ -1,4 +1,4 @@
-drawTargetHeatMapCells	<- function( seuratObj,  targetCurve, heatMapHeight, heatMapWidth){
+drawTargetHeatMapCells	<- function( seuratObj,  targetCurve, heatMapHeight, heatMapWidth, reorderClusters = FALSE){
 
 #This snippet makes a heatmap. 
 
@@ -22,6 +22,11 @@ heatMapGenes 	<- c( 	"tfap2e"	, "tfap2a"	, "her9"	, "sox9b"	, "foxg1b" 	,
 			"dpf3"		, "smad9")
 
 dataMatrix 		<- seuratObj@data
+
+if (reorderClusters) {
+	orderedCells	<- ordered( seuratObj@ident, levels = c( "eHMP", "ltHMP", "I", "M", "X", "7", "4"))
+	orderedCells	<- orderedCells[ order( orderedCells)]
+	seuratObj@ident <- orderedCells}
 
 row_dend 		<- dendsort(hclust( dist(dataMatrix, method = "cosine", pairwise = TRUE)))
 

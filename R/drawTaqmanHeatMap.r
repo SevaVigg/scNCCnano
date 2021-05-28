@@ -1,8 +1,13 @@
-drawTaqmanHeatMap	<- function( seuratObj,  clusterOrderedCells){
+drawTaqmanHeatMap	<- function( seuratObj, clusterOrderedCells, heatMapHeight, heatMapWidth, showCellNames = FALSE){
 
 #This snippet makes a heatmap. 
 
 require( ComplexHeatmap)
+require( circlize)
+require( viridis)
+require( proxy)
+library( dendsort)
+
 
 source("R/setClusterColors.r")
 
@@ -11,40 +16,41 @@ taqmanGenes <-  c( 	"sox10"		, "mitfa"	, "neurog1"	,"phox2b"	,
 			"snail2"	, "mbpa"	, "tyrp1b"	, "xdh"		, 
 			"elavl3")
 
+dataMatrix 	<- seuratObj@data[taqmanGenes, clusterOrderedCells] 
 
-lineageCells	<- clusterOrderedCells
-clusterColors	<- setClusterColors( seuratObj)
-curveClust 	<- seuratObj@ident[ lineageCells]
-targetExpsDF	<- seuratObj@data[ taqmanGenes, lineageCells ]
+nCol		<- 1024
+
+row_dend 	<- dendsort(hclust( dist(dataMatrix, method = "cosine", pairwise = TRUE)))
+column_dend	<- dendsort(hclust( dist( t(dataMatrix), method = "cosine", pairwise = TRUE)))
+
 #listClDF	<- lapply( levels( seuratObj@ident) , function(x) seuratObj@data[ taqmanGenes, WhichCells( seuratObj, x)])
 
-curveDF 	<- data.frame( clust = curveClust)
 
-annotColors 		<- as.character(unique( clusterColors[ seuratObj@ident[ lineageCells]]))
-names(annotColors) 	<- as.character(unique( seuratObj@ident[ lineageCells]))
+colPanelFun	 = colorRamp2( quantile( dataMatrix, seq(0, 1, by = 1/(nCol - 1))), viridis( nCol))
 
-
-annotBar		<- columnAnnotation( CellTypes = curveClust,
-				col = list( CellTypes = annotColors), 
-				height = unit(30, "points"),
-				annotation_legend_param = list( ncol = 10)
-			#annotation_legend_side = "bottom"
-					)
-
-hMap		<- Heatmap( 	targetExpsDF, 
-			name = "logExps",
-#			column_split = data.frame( ident = seuratObj@ident[ clusterOrderedCells]),
-#			column_gap = unit(2, "mm"),
-			cluster_columns = FALSE,
-			cluster_rows = FALSE,
-			show_column_names = FALSE, 
-			row_names_gp = gpar(fontsize = 24), 
-			column_names_gp = gpar(fontsize = 10),
-#			bottom_annotation = annotBar,  
-			column_title = paste0("sox10_mitfa_neurog1_phox2b_ltk_pax7b"), 
-			clustering_distance_rows = "euclidean", 
-			use_raster = TRUE, raster_device = "png", 
+hMap		<- Heatmap( 	dataMatrix, 
+			name 	= "gene expression",
+			width 	= unit( heatMapWidth,  "inches"), 
+			height 	= unit( heatMapHeight, "inches"),
+			heatmap_legend_param = list(
+				title = "gene exp",
+				legend_height = unit( 2, "inches"),
+				grid_width = unit( 0.5, "inches"),
+				title_gp = gpar( fontsize = 16, fontface = "bold")		
+						),
+			col	=  colPanelFun,
+			cluster_columns = column_dend,
+			cluster_rows = row_dend,
+			row_dend_reorder = TRUE,
+			column_dend_reorder = TRUE,
+			show_column_names = showCellNames, 
+			row_names_gp = gpar(fontsize = 16), 
+			column_names_gp = gpar(fontsize = 16),
+			clustering_distance_rows = function(x) dist( x, method = "cosine", pairwise = TRUE), 
+			clustering_distance_columns = function(x) dist( x, method = "cosine", pairwise = TRUE), 
+			use_raster = TRUE, raster_device = "png"
 			)
+
 
 
 return( hMap)

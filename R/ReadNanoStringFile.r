@@ -1,9 +1,16 @@
+# This snippets reads a single NanoString data file, parces the meta data
+# and returns object 'ans' which contains cell description, probe description and the table of Nanostring results
+#
+# NanoString NCC project 2017 - 2021, written by Vsevolod J. Makeev
+
+
+
+
 ReadNanoStringFile <- function( FileName){
 
 source("R/assertFileNameCellName.r")
 source("R/ParseNanoStringName.r")
 source("R/classNames.r")					#the array with names equeal to gene names
-#library(plyr)
 
 	FileProperties <- ParseNanoStringName( FileName)
 
@@ -42,7 +49,7 @@ source("R/classNames.r")					#the array with names equeal to gene names
 		 cat( "Removing ", length(ForwardStrInds), " empty string in the beginning", FileName, "\n")
 		}else{ cat( "No initial strings to remove", "\n")}
 
-	#Now check if all Genes are here
+	#Now check if all Genes are hereth
 
 	if( length( setdiff( names(className), data$"Gene Name") )>0 ){
 		cat("Genes ", setdiff(names(className), data$"Gene Name"), " are missing in ", FileName, "\n")

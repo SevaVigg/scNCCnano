@@ -1,4 +1,4 @@
-drawBiclustHeatMap	<- function( seuratObj , heatMapHeight, heatMapWidth, showCellNames = FALSE){
+drawGeneSortHeatMap	<- function( seuratObj,  heatMapHeight, heatMapWidth, showCellNames = FALSE){
 
 #This snippet makes a heatmap of gene covariation. 
 
@@ -10,14 +10,26 @@ library( dendsort)
 
 
 heatMapGenes	<- rownames( seuratObj@data) 
-dataMatrix <- seuratObj@data
 
 nCol		<- 1024
 
-row_dend 	<- dendsort(hclust( dist(dataMatrix, method = "cosine", pairwise = TRUE)))
-column_dend	<- dendsort(hclust( dist( t(dataMatrix), method = "cosine", pairwise = TRUE)))
+
+geneOrder	<- 	c( 	"ltk"		,"sox9b"	, "foxo1a"	, "tfap2e"	, "tfap2a"	, "her9"	, 
+				 "foxg1b" 	, "snail2"	, "alx4b"	, "hmx1"	, 
+				"otx2"		, "sox10"	, "impdh1b"	, "foxo1b"	, "tyr"		, 
+				"pax7b"		, "mc1r"	, "id2a"	, "hmx4"	, "foxd3"	, 
+				"ednrba"	, "kita"	, "mbpa"	, "phox2b"	, "tfec"	, 
+				"mitfa"		, "foxp4" 	, "hbp1"	,  "mycl1a"	, "pax7a"	, 
+				"tyrp1b"	, "slc24a5"	, "oca2"	, "mlphb"	, "silva"	, 
+				"myo5aa"	, "pnp4a"	, "ets1a"	, "fgfr3_v2"	, "pax3_v2"	, 
+				"dpf3"		, "smad9")
+
+
+dataMatrix 	<- seuratObj@data[ geneOrder , order( seuratObj@data[ "ltk", ],  decreasing = TRUE)]
 
 colPanelFun	 = colorRamp2( quantile( dataMatrix, seq(0, 1, by = 1/(nCol - 1))), viridis( nCol))
+
+
 
 hMap		<- Heatmap( 	dataMatrix, 
 			name 	= "gene expression",
@@ -30,15 +42,13 @@ hMap		<- Heatmap( 	dataMatrix,
 				title_gp = gpar( fontsize = 16, fontface = "bold")		
 						),
 			col	=  colPanelFun,
-			cluster_columns = column_dend,
-			cluster_rows = row_dend,
-			row_dend_reorder = TRUE,
-			column_dend_reorder = TRUE,
+			cluster_columns = FALSE,
+			cluster_rows = FALSE,
+			row_dend_reorder = FALSE,
 			show_column_names = showCellNames, 
 			row_names_gp = gpar(fontsize = 12), 
 			column_names_gp = gpar(fontsize = 12),
-			clustering_distance_rows = function(x) dist( x, method = "cosine", pairwise = TRUE), 
-			clustering_distance_columns = function(x) dist( x, method = "cosine", pairwise = TRUE), 
+#			clustering_distance_rows = function(x) dist( x, method = "cosine", pairwise = TRUE), 
 			use_raster = TRUE, raster_device = "png"
 			)
 

@@ -1,3 +1,8 @@
+#The main process of treatment NCC nanostring data; execute all other scripts and makes all plots
+#
+# Finished by Vsevolod J. Makeev 15.05.2021, developed 2017 - 2021 
+
+
 require( tidyr )
 require( ape)
 require( ComplexHeatmap)
@@ -5,7 +10,7 @@ require( ComplexHeatmap)
 source("R/ReadSourceFiles.r")
 source("R/writeDupFile.r")
 
-plotDPI		<- 100
+plotDPI		<- 600
 
 #in the introduction we make the directory structure
 workDir <- getwd()
@@ -87,7 +92,7 @@ write.csv( CellTable$Cells,  file = file.path( initialTablesPath, "cellDescripit
 write.csv( CellTable$Probes, file = file.path( initialTablesPath, "ProbesDescripitonsDedup.csv") )
 
 #qualityControl 
-source("R/qualityControl.r")
+source("R/qualityControl600dpi.r")
 
 #imputation
 source("R/makeScTables.r")
@@ -114,59 +119,59 @@ dir.create( heatMapDir600dpi, showWarnings = FALSE)
 #gene covariance
 source( "R/drawGeneCovarHeatMap.r")
 
-heatMapHeigth 	<- 10
+heatMapHeight 	<- 10
 heatMapWidth 	<- 10
 Margin		<- 2
 
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "geneCovarHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawGeneCovarHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+	draw( drawGeneCovarHeatMap( seuratWT, heatMapHeight, heatMapWidth))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "geneCovarHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawGeneCovarHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+	draw( drawGeneCovarHeatMap( seuratWT, heatMapHeight, heatMapWidth))
 dev.off()}
 
 #gene biclusters
 source( "R/drawBiclustHeatMap.r")
 
-heatMapHeigth 	<- 7
+heatMapHeight 	<- 7
 heatMapWidth 	<- 10
 Margin		<- 2
 
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "biclustWTHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+	draw( drawBiclustHeatMap( seuratWT, heatMapHeight, heatMapWidth))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "biclustWTHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratWT, heatMapHeigth, heatMapWidth))
+	draw( drawBiclustHeatMap( seuratWT, heatMapHeight, heatMapWidth))
 dev.off()}
 
 source("R/makeDotPlot.r")
@@ -188,8 +193,12 @@ source("R/findBestUmapClusters.r")
 Spread		<- 10
 
 #bestUmap 	<- findBestUmapClusters( seuratWT, Spread)
-#OR - the data file contains validated clusters
-load("Res/frozenClusters/wt_clustering_feb22.Rdata")
+#save( bestUmap, file = file.path( clusterDataDir, "bestUmap.rObj"))
+
+#OR load the data file contains validated clusters
+load(file = file.path( clusterDataDir, "bestUmap.rObj"))
+#
+
 
 bestDim		<- dim(bestUmap@dr$umap@cell.embeddings)[2]
 
@@ -215,22 +224,19 @@ source("R/plotClusterTree.r")
 plotClusterTree( bestUmap, plotDPI = plotDPI, treeName = "coarseGrainClusterTree")
 
 makeDotPlot( bestUmap, balanced = TRUE, nLines = length( levels( bestUmap@ident)), plotDPI = plotDPI, orientation = "landscape", name = "coarseGrainDotPlot")
-save( bestUmap, file = file.path( clusterDataDir, "bestUmap.rObj"))
 bestUmap <- StashIdent( bestUmap, save.name = "bestClustersIdent")
 
 source("R/make2Dmap.r")
-umap2Dinit <- make2Dmap( seuratWT)
+#umap2Dinit <- make2Dmap( seuratWT)
+#save( file = file.path( clusterDataDir, "visualisation2Dumap.rObj"), umap2Dinit)
+
 # OR
-#load( "Res/frozenClusters/visualisation2Dumap.Rdata"); umap2Dinit <- umap2D
+load( file.path( clusterDataDir, "visualisation2Dumap.rObj")); 
 
 source("R/setClusterColors.r")
 
-#save( file = file.path( clusterDataDir, "visualisation2Dumap.rObj"), umap2Dinit)
-load( file = file.path( clusterDataDir, "visualisation2Dumap.rObj"))
-load( file = file.path( clusterDataDir, "bestUmap.rObj"))
-
 source("R/makeDimPlot.r")
-makeDimPlot( umap2Dinit, dimRed = "umap", col = setClusterColors( umap2Dinit), orientation = "landscape", plotDPI = plotDPI)
+makeDimPlot( umap2Dinit, dimRed = "umap", name = "initCellPlot", col = setClusterColors( umap2Dinit), orientation = "landscape", plotDPI = plotDPI)
 
 #now validate clusters
 valCutoff 		<- 0.92
@@ -253,9 +259,7 @@ dev.off()
 valUmap 	<- StashIdent( valUmap, save.name = valCutoffIdentName)
 
 #make cluster PCA plot
-
 makeInitCellTypePCAPlots( valUmap, nComps = 5, plotDPI = plotDPI, name = "clusterPCAPlot")
-
 
 #Plot special dotPlots for control cell types
 makeDotPlot( valUmap, balanced = TRUE, nLines = length( levels( valUmap@ident)), plotDPI = plotDPI, orientation = "landscape", name = "valClusterDotPlot")
@@ -265,29 +269,33 @@ makeDotPlot( valUmap, balanced = TRUE, nLines = length( levels( valUmap@ident)),
 source("R/drawClusterHeatMap.r")
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "clusterHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawClusterHeatMap( valUmap, heatMapHeigth, heatMapWidth))
+	draw( drawClusterHeatMap( valUmap, heatMapHeight, heatMapWidth))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "clusterHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawClusterHeatMap( valUmap, heatMapHeigth, heatMapWidth))
+	draw( drawClusterHeatMap( valUmap, heatMapHeight, heatMapWidth))
 dev.off()}
 
 umap2Dclust <- umap2Dinit
 umap2Dclust@meta.data[, valCutoffIdentName] 	<- valUmap@meta.data[, valCutoffIdentName]
 umap2Dclust					<- SetAllIdent( umap2Dclust, id = valCutoffIdentName)
+
+#make cluster plot without pseudotime trajectories
+makeDimPlot( umap2Dclust, dimRed = "umap", name = "clusterPlot", col = setClusterColors( umap2Dclust), orientation = "landscape", plotDPI = plotDPI)
+
 
 #Now we have clustering and can make feature plots accompanied with clusters
 source("R/makeFeaturePlots.r")
@@ -295,14 +303,16 @@ makeFeaturePlots( umap2Dclust, minCutoff = 3, "umap", plotDPI = plotDPI, name = 
 
 source("R/createSlingShotObjects.r")
 if (bestDim == 2){
+	seur2D	<- valUmap
 	slingUmapObjs <- createSlingShotObjects( 
-		seurHD = valUmap, seur2D = valUmap, dimRed2D = "umap", 
+		seurHD = valUmap, seur2D = seur2D, dimRed2D = "umap", 
 		genesUseHD = allGenes, 
 		startClust = "eHMP", endClust = c("I","M","X"), 
 		distFun = cosineClusterDist)
 }else{
+	seur2D	<- umap2Dclust
 	slingUmapObjs <- createSlingShotObjects( 
-		seurHD = valUmap, seur2D = umap2Dclust, dimRed2D = "umap", 
+		seurHD = valUmap, seur2D = seur2D, dimRed2D = "umap", 
 		genesUseHD = allGenes, 
 		startClust = "eHMP", endClust = c("I","M","X"), 
 		distFun = cosineClusterDist)
@@ -310,10 +320,14 @@ if (bestDim == 2){
 
 #we also need pseudotime trajectories
 source("R/plot2DAllCurves_ggplot.r") #this file contains function "plot2DAllCurves" which uses ggplot rather than lines
-plot2DAllCurves( seur2D, slingUmapObj, dimRed2D = "umap", lineageToDrawEnds = c("M", "I"), cellsKeepThresh = 0.95, plotDPI = plotDPI, name = "slingClustersUmap")
+plot2DAllCurves( seur2D, slingUmapObjs, dimRed2D = "umap", lineageToDrawEnds = c("M", "I"), cellsKeepThresh = 0.95, plotDPI = plotDPI, name = "slingClustersUmap")
 
 source("R/calcTSNEGeneSpace.r")
 valUmap   <- calcTSNEGeneSpace( valUmap );
+save( file = file.path( clusterDataDir, "tsneValUmap.rObj"), valUmap)
+#load( file = file.path( clusterDataDir, "tsneValUmap.rObj"))
+
+
 slingTSNE <- createSlingShotObjects( seurHD = valUmap, seur2D = valUmap, dimRed2D = "tsne", 
 	genesUseHD = allGenes,
 	startClust = "eHMP", endClust = c("I","M","X"), 
@@ -341,24 +355,24 @@ makeDotPlot( seuratMSubTypes, balanced = TRUE, nLines = length( levels( seuratMS
 #and melanocyte heatmap
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "cntrMeloHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratM, heatMapHeigth, heatMapWidth, showCellNames = TRUE))
+	draw( drawBiclustHeatMap( seuratM, heatMapHeight, heatMapWidth, showCellNames = TRUE))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "cntrMeloHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratM, heatMapHeigth, heatMapWidth, showCellNames = TRUE))
+	draw( drawBiclustHeatMap( seuratM, heatMapHeight, heatMapWidth, showCellNames = TRUE))
 dev.off()}
 
 
@@ -376,28 +390,48 @@ seuratI <- SetAllIdent( seuratI, id = "Icells")
 
 makeDotPlot( seuratI, balanced = TRUE, nLines = length( levels( seuratI@ident))+2, plotDPI = plotDPI, orientation = "landscape", name = "iridoDotPlot")
 
+#For both. 
+#Plot special dotPlots for both melanocytes and iridophores cell types
+
+pigmCells 			<- WhichCells( valUmap, ident = c("I", "M"))
+seuratPigm			<- SubsetData( valUmap, ident.use = c("I", "M")) 
+cntrlI				<- grep( "I", pigmCells, value = TRUE)
+regI				<- setdiff( WhichCells( seuratPigm, ident = "I"), cntrlI) 					
+irdIndexLine			<- c( rep( "contI", length( cntrlI)), rep( "regI", length( regI)))
+names( irdIndexLine)		<- c( cntrlI, regI)
+cntrlM				<- grep( "M", pigmCells, value = TRUE)
+regM				<- setdiff( WhichCells( seuratPigm, ident = "M"), cntrlM) 					
+melIndexLine			<- c( rep( "contM", length( cntrlM)), rep( "regM", length( regM)))
+names( melIndexLine)		<- c( cntrlM, regM)
+pigmIndexLine			<- c( melIndexLine, irdIndexLine)
+seuratPigm@meta.data$pigmCells 	<- pigmIndexLine[ rownames( seuratPigm@meta.data)]
+seuratPigm 			<- SetAllIdent( seuratPigm, id = "pigmCells")
+seuratPigm@ident 		<- ordered( seuratPigm@ident, levels = c("regM", "contM", "regI", "contI"))
+
+makeDotPlot( seuratPigm, balanced = TRUE, nLines = length( levels( seuratPigm@ident))+1, plotDPI = plotDPI, orientation = "landscape", name = "pigmDotPlot")
+
 #and the iridophore heatmap
 
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "cntrIridoHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratI, heatMapHeigth, heatMapWidth, showCellNames = TRUE))
+	draw( drawBiclustHeatMap( seuratI, heatMapHeight, heatMapWidth, showCellNames = TRUE))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "cntrIridoHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratI, heatMapHeigth, heatMapWidth, showCellNames = TRUE))
+	draw( drawBiclustHeatMap( seuratI, heatMapHeight, heatMapWidth, showCellNames = TRUE))
 dev.off()}
 
 # Now we plot pseudotime heatmaps
@@ -407,95 +441,96 @@ source("R/drawTargetHeatMapCells.r")
 
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "iridoPseudoCellsHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "I"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "I"), heatMapHeight = heatMapHeight, heatMapWidth = heatMapWidth, reorderClusters = TRUE))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "iridoPseudoCellsHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "I"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "I"), heatMapHeight = heatMapHeight, heatMapWidth = heatMapWidth, reorderClusters = TRUE))
 dev.off()}
 
 #and now melanocytes
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "melanoPseudoCellsHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "M"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "M"), heatMapHeight = heatMapHeight, heatMapWidth = heatMapWidth, reorderClusters = TRUE))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "melanoPseudoCellsHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "M"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCells( valUmap, getTargetCurve( slingUmapObjs, target = "M"), heatMapHeight = heatMapHeight, heatMapWidth = heatMapWidth, reorderClusters = TRUE))
 dev.off()}
 
 #and for smoothed values, first iridophores
+source("R/drawTargetHeatMapCurve.r")
 
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "iridoTargetHeatMapSmooth.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawTargetHeatMapCurve( valUmap, getTargetCurve( slingUmapObjs, target = "I"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCurve( valUmap, getTargetCurve( slingUmapObjs, target = "I"), heatMapHeight, heatMapWidth))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "iridoTargetHeatMapSmooth.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2
 )
-	draw( drawTargetHeatMapCurve( valUmap,  getTargetCurve( slingUmapObjs, target = "I"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCurve( valUmap,  getTargetCurve( slingUmapObjs, target = "I"), heatMapHeight, heatMapWidth))
 dev.off()}
 
 #and melanocytes
 
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "melanoTargetHeatMapSmooth.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawTargetHeatMapCurve( valUmap, getTargetCurve( slingUmapObjs, target = "M"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCurve( valUmap, getTargetCurve( slingUmapObjs, target = "M"), heatMapHeight, heatMapWidth))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "melanoTargetHeatMapSmooth.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2
 )
-	draw( drawTargetHeatMapCurve( valUmap,  getTargetCurve( slingUmapObjs, target = "M"), heatMapHeigth, heatMapWidth))
+	draw( drawTargetHeatMapCurve( valUmap,  getTargetCurve( slingUmapObjs, target = "M"), heatMapHeight, heatMapWidth))
 dev.off()}
 
 
@@ -508,28 +543,31 @@ makeVlnPlots( valUmap, plotDPI = plotDPI)
 seuratMut 	<- SubsetData( seuratAll, ident.use = "sox10-")
 seuratMut@project.name <- "sox10_mutants"
 
-#Heatmap of mutant cells (not very interesting)
+#Heatmap of mutant cells with ltk ordering
+source("R/drawGeneSortHeatMap.r")
+ 
+#geneSortList <- c("ltk", "foxo1a")
 
 if (plotDPI == 600) {
-png( file = file.path( heatMapDir600dpi, "mutantHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+png( file = file.path( heatMapDir600dpi, "ltkSortedMutantHeatMap.png"),
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratMut, heatMapHeigth, heatMapWidth, showCellNames = FALSE))
+	draw( drawGeneSortHeatMap( seuratMut,  heatMapHeight, heatMapWidth, showCellNames = FALSE))
 dev.off()}
 
 if (plotDPI == 100) {
-png( file = file.path( heatMapDir100dpi, "mutantHeatMap.png"),
-	height = heatMapHeigth + Margin + 1,
+png( file = file.path( heatMapDir100dpi, "ltkSortedmutantHeatMap.png"),
+	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawBiclustHeatMap( seuratMut, heatMapHeigth, heatMapWidth, showCellNames = FALSE))
+	draw( drawGeneSortHeatMap( seuratMut,  heatMapHeight, heatMapWidth, showCellNames = FALSE))
 dev.off()}
 
 	
@@ -563,24 +601,24 @@ makeDotPlot( seuratMut, balanced = TRUE, nLines = length( levels( seuratAll@iden
 
 if (plotDPI == 600) {
 png( file = file.path( heatMapDir600dpi, "clusterMutHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawClusterHeatMap( seuratMut, heatMapHeigth, heatMapWidth))
+	draw( drawClusterHeatMap( seuratMut, heatMapHeight, heatMapWidth))
 dev.off()}
 
 if (plotDPI == 100) {
 png( file = file.path( heatMapDir100dpi, "clusterMutHeatMap.png"),
-	height = heatMapHeigth + Margin,
+	height = heatMapHeight + Margin,
 	width =  heatMapWidth + 2*Margin,
 	units = "in",
 	res = plotDPI, 
 	pointsize = 2 
 )
-	draw( drawClusterHeatMap( seuratMut, heatMapHeigth, heatMapWidth))
+	draw( drawClusterHeatMap( seuratMut, heatMapHeight, heatMapWidth))
 dev.off()}
 
 seuratCombined			<- MergeSeurat( bestUmap, seuratMut, do.normalize = FALSE, do.scale = TRUE, names.field = NULL)
@@ -602,19 +640,15 @@ seuratCombined			<- BuildClusterTree( seuratCombined, pcs.use = 1:10, do.reorder
 plotClusterTree( seuratCombined, plotDPI = plotDPI, treeName = "combinedClusterTree")
 
 
-png( file.path( clusterPlotDir, "mutClusterUmap.png"), width = 800, height = 600)
-	mutClustUmapPlot <- DimPlot( seuratMut, reduction.use = "umap", cols.use = setClusterColors( seuratMut), pt.size = 2) + 
-		theme( axis.text.x = element_text( size = 20), axis.text.y = element_text(size = 20),
-		       axis.title.x = element_text( size = 20, margin = margin( t = 5, r = 0, b = 0, l = 0)), axis.title.y = element_text( size = 20))
-	(mutClustUmapPlot)
-dev.off()
+makeDimPlot( seuratMut, dimRed = "umap", col = setClusterColors( seuratMut), orientation = "landscape", plotDPI = plotDPI, name = "mutDimPlot")
 
 makeDotPlot( seuratCombined, balanced = TRUE, nLines = length( levels( seuratCombined@ident)), plotDPI = plotDPI, orientation = "landscape", name = "combDotPlot")
 
 #now validate combined clusters
 #validation of mutant clusters only results in merging clusters 0 -- 2 and 1 -- 3
 
-valCutoff 		<- 0.92
+valCutoff 		<- 0.86
+
 
 valCombined <- ValidateClusters( seuratCombined, pc.use = 1:8, top.genes = 4, min.connectivity = 0.005, acc.cutoff = 0.75)
 
@@ -623,13 +657,16 @@ for (i in seq(0.76, valCutoff, 0.01)){ cat(i, "\n")
 }
 
 valCombined <- BuildClusterTree( valCombined, pcs.use = 1:8, do.reorder = TRUE, reorder.numeric = TRUE, do.plot = TRUE)
+
 levels(valCombined@ident) <- names( getFinalClusterTypes( valCombined))
 valCombined <- BuildClusterTree( valCombined, pcs.use = 1:8, do.reorder = TRUE, reorder.numeric = FALSE, do.plot = TRUE)
 
 plotClusterTree( valCombined, plotDPI = plotDPI, treeName = "validatedCombinedClusterTree")
 
+
+
 valCombined 	<- StashIdent( valCombined, save.name = valCutoffIdentName)
 
 makeDotPlot( valCombined, balanced = TRUE, nLines = length( levels( valCombined@ident)), plotDPI = plotDPI, orientation = "landscape", name = "valCombDotPlot")
 
-
+source("R/taqmanAnalysis.r")

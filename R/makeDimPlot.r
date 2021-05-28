@@ -1,4 +1,4 @@
-makeDimPlot	<- function( seuratObj, dimRed = "umap", col, name = "clusterPlot", plotDPI = 100, orientation = "landscape"){
+makeDimPlot	<- function( seuratObj, dimRed = "umap",  name = "clusterPlot", reorderClusters = FALSE, plotDPI = 100, orientation = "landscape"){
 
 source("R/setClusterColors.r")
 
@@ -13,6 +13,15 @@ dir.create( clusterPlotDir, showWarnings = FALSE)
 
 if (orientation == "landscape") { pageWidth = 18; pageHeight = 13 }
 if (orientation == "portrait") { pageWidth = 18; pageHeight = 13 }
+
+
+if (reorderClusters) {
+	orderedCells	<- ordered( seuratObj@ident, levels = c( "eHMP", "ltHMP", "I", "M", "X", "7", "4"))
+	orderedCells	<- orderedCells[ order( orderedCells)]
+	seuratObj@ident <- orderedCells}
+
+col = setClusterColors( seuratObj)
+
 
 dimPlot <-  DimPlot( seuratObj, reduction.use = dimRed, cols.use = col, pt.size = 5) +
 		labs( color = "Cell type\n") + 

@@ -52,8 +52,5 @@ if( plotDPI == 600){
 
 }else{ cat("Select plotDPI 600 or plotDPI 100")}
 
-
-ggsave( paste0( name, ".png"), path = vlnPlotDir, device = "png" , plot = vlnPlot, width = pageWidth, height = pageHeight, units = "cm", dpi = 600, scale = 5) 
-
 }
 

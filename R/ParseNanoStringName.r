@@ -1,3 +1,11 @@
+# This snippets parces meta data stored in the NanoString file name, parces the meta data
+# and returns object 'ans' which contains parameters of a cell
+# 
+# NanoString NCC project 2017 - 2021, written by Vsevolod J. Makeev
+
+
+
+
 ParseNanoStringName <- function(SourceNameStr){
 
 source("R/getRegExpSubStr.r")

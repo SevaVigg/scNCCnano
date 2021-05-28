@@ -76,7 +76,7 @@ neurog1PigmentRat	<- length( neurog1Pigment)/length( genePos[["neurog1"]])
 seuratTaqman 		<- FindClusters( seuratTaqman, dims.use = 1:10, k.param = 4, prune.SNN = 0, save.SNN = TRUE, resolution = 0.8)
 seuratTaqman 		<- BuildClusterTree( seuratTaqman, pcs.use = 1:10, do.reorder = TRUE, reorder.numeric = TRUE)
 clusterOrderedCells	<- colnames( seuratTaqman@data[ , order( t(seuratTaqman@data)[ ,"sox10"], t(seuratTaqman@data)[ ,"mitfa"], t(seuratTaqman@data)[, "neurog1"], t(seuratTaqman@data)[, "phox2b"], t(seuratTaqman@data)[, "ltk"], t(seuratTaqman@data)[, "pax7b"], decreasing = TRUE )] )
-clusterOrderedCells	<- intersect( clusterOrderedCells, ltkPos)
+clusterOrderedCells	<- intersect( clusterOrderedCells, genePos["ltk"])
 	#numbers are easier to sort; we will need this for the heatmap
 levels( seuratTaqman@ident)	<- names( getFinalClusterTypes( seuratTaqman))
 seuratTaqman		<- BuildClusterTree( seuratTaqman, pcs.use = 1:10, do.reorder = FALSE)
@@ -94,14 +94,32 @@ source("R/calcUmapGeneSpace.r")
 source("R/makeFeaturePlots.r")
 #makeFeaturePlots( seuratTaqman, 0.5, "umap", name = "taqmanFeaturePlots_")
 
-heatMapDir <- file.path( plotDir, "heatMaps")
-dir.create( heatMapDir, showWarnings = FALSE)
+#heatMapDir <- file.path( plotDir, "heatMaps")
+#dir.create( heatMapDir, showWarnings = FALSE)
 
 source("R/drawTaqmanHeatMap.r")
 
-png( file.path( heatMapDir, "taqmanClustHeatMap.png"), width = 800, height = 600)
-	draw( drawTaqmanHeatMap( seuratTaqman, clusterOrderedCells), annotation_legend_side = "bottom")  
-dev.off()
+if (plotDPI == 600) {
+png( file = file.path( heatMapDir600dpi, "taqmanBiclustHeatMap.png"),
+	height = heatMapHeight + Margin + 1,
+	width =  heatMapWidth + 2*Margin + 1,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawTaqmanHeatMap( seuratTaqman,  clusterOrderedCells = colnames( seuratTaqman@data),  heatMapHeight, heatMapWidth, showCellNames = FALSE))
+dev.off()}
+
+if (plotDPI == 100) {
+png( file = file.path( heatMapDir100dpi, "taqmanBiclustHeatMap.png"),
+	height = heatMapHeight + Margin + 1,
+	width =  heatMapWidth + 2*Margin + 1,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawTaqmanHeatMap( seuratTaqman,  clusterOrderedCells = colnames( seuratTaqman@data), heatMapHeight, heatMapWidth, showCellNames = FALSE))
+dev.off()}
 
 stop()
 png( filename = file.path( taqmanPlotDir, "taqmanHeatMap.png"))
