@@ -16,13 +16,13 @@ num	<- as.numeric( substr( numStr, 1, nchar(numStr)-4) )					#cut last four lett
 
 batchStr	<- getRegExpSubStr( SourceNameStr, regexpr( "201[0-9]*", SourceNameStr ) )
 
-#:wtypes <- c("IP", "MC", "m618_sox10", "mitfa w2", "tails", "general")
+#:wtypes <- c("IP", "MC", "m618_sox10", "mitfa w2", "tails", "regular")
 
 if( regexpr( "/(IP|ip)\\.", SourceNameStr) != -1){CellType <- "I"}else{
  if( regexpr( "/(MC|mc)\\.", SourceNameStr) != -1){CellType <- "M"}else{
   if( regexpr( "m618", SourceNameStr) != -1){CellType <- "sox10-"}else{
    if( regexpr( "w2", SourceNameStr) != -1){CellType <- "mitfa-"}else{
-    if( regexpr( "tails", SourceNameStr) != -1){CellType <- "Tl"}else{ CellType <- "general"}    
+    if( regexpr( "tails", SourceNameStr) != -1){CellType <- "Tl"}else{ CellType <- "regular"}    
      }}}}
 
 if( batchStr == "20170531"){CellType = "sox10-"}

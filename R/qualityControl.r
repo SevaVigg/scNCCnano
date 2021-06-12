@@ -64,7 +64,7 @@ qualDF$Cell	<- gsub( ".", "_", rownames(qualDF), fixed = TRUE)
 
 qualDF		<- qualDF[ -grep( "mitfa", qualDF$Cell), ]
 
-#order so that general cell type go first
+#order so that regular cell type go first
 qualDF <- qualDF[order(qualDF$CellType), ]
 
 #First we filter cells according to control probes

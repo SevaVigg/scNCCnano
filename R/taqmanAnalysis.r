@@ -3,6 +3,8 @@ require( viridis )
 require( Seurat )
 require( ComplexHeatmap)
 
+plotDPI <- 600
+
 workDir <- getwd()
 
 resDir		 <- file.path( workDir, "Res")
@@ -94,8 +96,18 @@ source("R/calcUmapGeneSpace.r")
 source("R/makeFeaturePlots.r")
 #makeFeaturePlots( seuratTaqman, 0.5, "umap", name = "taqmanFeaturePlots_")
 
-#heatMapDir <- file.path( plotDir, "heatMaps")
-#dir.create( heatMapDir, showWarnings = FALSE)
+heatMapDir <- file.path( plotDir, "heatMaps")
+dir.create( heatMapDir, showWarnings = FALSE)
+
+heatMapDir600dpi 	<- file.path( heatMapDir, "600dpi")
+dir.create( heatMapDir, showWarnings = FALSE)
+
+heatMapDir100dpi 	<- file.path( heatMapDir, "100dpi")
+dir.create( heatMapDir, showWarnings = FALSE)
+
+heatMapHeight 	<- 7
+heatMapWidth 	<- 10
+Margin		<- 2
 
 source("R/drawTaqmanHeatMap.r")
 

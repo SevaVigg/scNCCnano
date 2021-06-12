@@ -1,5 +1,7 @@
 plotClusterTree	<- function( seuratObj, plotDPI = "100", treeName){
 
+require( ape)
+
 resDir		<- file.path(getwd(), "Res")
 
 plotDir		<- file.path(resDir, "Plots")

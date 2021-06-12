@@ -185,18 +185,18 @@ makeDotPlot( seuratWT, balanced = TRUE, nLines = length( levels( seuratWT@ident)
 #PCA analysis
 source("R/makeInitCellTypePCAPlots.r")
 
-makeInitCellTypePCAPlots( seuratWT,  nComps = 5, plotDPI = 100, name = "WT_PCAcomps")
-makeInitCellTypePCAPlots( seuratAll, nComps = 5, plotDPI = 100, name = "All_PCAcomps")
+makeInitCellTypePCAPlots( seuratWT,  nComps = 5, plotDPI = plotDPI, name = "WT_PCAcomps")
+makeInitCellTypePCAPlots( seuratAll, nComps = 5, plotDPI = plotDPI, name = "All_PCAcomps")
 
 #find best parameters for UMAP clustering
 source("R/findBestUmapClusters.r")
 Spread		<- 10
 
 #bestUmap 	<- findBestUmapClusters( seuratWT, Spread)
-#save( bestUmap, file = file.path( clusterDataDir, "bestUmap.rObj"))
+#save( bestUmap, file = file.path( clusterDataDir, "bestUmap_regular.rObj"))
 
 #OR load the data file contains validated clusters
-load(file = file.path( clusterDataDir, "bestUmap.rObj"))
+load(file = file.path( clusterDataDir, "bestUmap_regular.rObj"))
 #
 
 
@@ -226,7 +226,7 @@ plotClusterTree( bestUmap, plotDPI = plotDPI, treeName = "coarseGrainClusterTree
 makeDotPlot( bestUmap, balanced = TRUE, nLines = length( levels( bestUmap@ident)), plotDPI = plotDPI, orientation = "landscape", name = "coarseGrainDotPlot")
 bestUmap <- StashIdent( bestUmap, save.name = "bestClustersIdent")
 
-source("R/make2Dmap.r")
+#source("R/make2Dmap.r")
 #umap2Dinit <- make2Dmap( seuratWT)
 #save( file = file.path( clusterDataDir, "visualisation2Dumap.rObj"), umap2Dinit)
 
@@ -236,7 +236,11 @@ load( file.path( clusterDataDir, "visualisation2Dumap.rObj"));
 source("R/setClusterColors.r")
 
 source("R/makeDimPlot.r")
-makeDimPlot( umap2Dinit, dimRed = "umap", name = "initCellPlot", col = setClusterColors( umap2Dinit), orientation = "landscape", plotDPI = plotDPI)
+makeDimPlot( umap2Dinit, dimRed = "umap", name = "initCellPlot", orientation = "landscape", plotDPI = plotDPI)
+
+umapCondRes <- calcUmapGeneSpace( seuratAll, seurWT = umap2Dinit, experimentType = "allCondWT", Dim = 2, minDist = 4, mySpread = 9, myNeighbors = 25L, myMetric = "cosine")
+makeDimPlot( umapCondRes$All, dimRed = "umap", name = "initCellPlotMut", orientation = "landscape", plotDPI = plotDPI)
+
 
 #now validate clusters
 valCutoff 		<- 0.92

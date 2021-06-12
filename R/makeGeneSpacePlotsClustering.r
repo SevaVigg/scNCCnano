@@ -7,7 +7,7 @@
 # Directory structure :     Res <- Plots <- geneSpace
 # 
 # before clustering for vizualization tSNE plot must be prepared by makeGeneSpacePlotsSubset
-# which also prepares hpfIdent and generalCellTypes columns in seuratObj@meta.data
+# which also prepares hpfIdent and regularCellTypes columns in seuratObj@meta.data
 
 
 makeGeneSpacePlotsClustering <- function( seuratObj){
@@ -36,11 +36,11 @@ dir.create( geneSpacePlotDir, showWarnings = FALSE)
 
 seuratObj	<- SetAllIdent( seuratObj, id = "originalCellTypes")
 
-levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
-seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
+levels(seuratObj@ident) <- c(levels(seuratObj@ident), "R")
+seuratObj@ident[ grep("regular", names(seuratObj@ident))] <- "R"
 seuratObj@ident <- droplevels(seuratObj@ident)
 
-seuratObj 	<- StashIdent( seuratObj, save.name = 'generalCellTypes')
+seuratObj 	<- StashIdent( seuratObj, save.name = 'regularCellTypes')
 
 #gene Space based clusters
 
@@ -94,7 +94,7 @@ plotList <- list()
 
 # 	1. Initial cell types with tSNE
 
-seuratObj		<- SetAllIdent( seuratObj, id = 'generalCellTypes')
+seuratObj		<- SetAllIdent( seuratObj, id = 'regularCellTypes')
 
 	tsnePlotCells 	<- DimPlot( object = seuratObj, reduction.use = 'tsne', cols.use = setCellTypeColors( seuratObj), pt.size = 2, do.return = TRUE)
 	tsnePlotCells 	<- tsnePlotCells +
@@ -111,7 +111,7 @@ seuratObj		<- SetAllIdent( seuratObj, id = 'generalCellTypes')
 
 #	2. Initial cell types with UMAP
 
-seuratObj	<- SetAllIdent( seuratObj, id = 'generalCellTypes')
+seuratObj	<- SetAllIdent( seuratObj, id = 'regularCellTypes')
 
 	umapPlotCells	<- DimPlot(object = seuratObj, reduction.use = 'umap',  cols.use = setCellTypeColors( seuratObj), pt.size = 2, do.return = TRUE)
 	umapPlotCells 	<- umapPlotCells +
@@ -350,8 +350,8 @@ dev.off()
 
 
 
-#levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
-#seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
+#levels(seuratObj@ident) <- c(levels(seuratObj@ident), "R")
+#seuratObj@ident[ grep("regular", names(seuratObj@ident))] <- "R"
 #seuratObj@ident <- droplevels(seuratObj@ident)
 #source("R/plotInitCellTypePCAs.r")
 #png( file.path( PCAPlotDirName, "geneSpacePlotsDir.png"), width = 480, height = 640)

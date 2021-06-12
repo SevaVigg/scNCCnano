@@ -27,7 +27,7 @@ geneExpsImp	<- geneExpsImp[, cells_ind]
 Cells		<- Cells[, cells_ind]
 
 #rename cell types, prepare the annotated cell table
-celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "general") return( x[3]) else return( x[6] ))) 
+celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "regular") return( x[3]) else return( x[6] ))) 
 
 #seurat scales the data by mean and sd. Let us scale the data with 
 

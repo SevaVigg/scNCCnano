@@ -14,11 +14,11 @@ source("R/setCellTypeColors.r")
 source("R/setClusterColors.r")
 source("R/calcUMAPGeneSpace.r")
 
-if( length(setdiff( c("18", "21", "24", "30", "36", "48", "60", "72"), levels( seuratObj@ident)))!=0) { cat("The seuratObj does not contain general types"); return(seuratObj)}
+if( length(setdiff( c("18", "21", "24", "30", "36", "48", "60", "72"), levels( seuratObj@ident)))!=0) { cat("The seuratObj does not contain regular types"); return(seuratObj)}
 
-seuratObj 	<- StashIdent( seuratObj, save.name = "generalIdents")
-levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
-seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
+seuratObj 	<- StashIdent( seuratObj, save.name = "regularIdents")
+levels(seuratObj@ident) <- c(levels(seuratObj@ident), "R")
+seuratObj@ident[ grep("regular", names(seuratObj@ident))] <- "R"
 seuratObj@ident <- droplevels(seuratObj@ident)
 
 return(seuratObj)

@@ -428,7 +428,7 @@ dev.off()
 
 
 #levels(seuratAll@ident) <- c(levels(seuratAll@ident), "G")
-#seuratAll@ident[ grep("general", names(seuratAll@ident))] <- "G"
+#seuratAll@ident[ grep("regular", names(seuratAll@ident))] <- "G"
 #seuratAll@ident <- droplevels(seuratAll@ident)
 #source("R/plotInitCellTypePCAs.r")
 #png( file.path( PCAPlotDirName, "geneSpacePlotsDir.png"), width = 480, height = 640)

@@ -34,8 +34,8 @@ dir.create( geneSetPlotDir, showWarnings = FALSE)
 
 seuratObj		<- StashIdent( seuratObj, save.name = 'hpfIdent')
 
-levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
-seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
+levels(seuratObj@ident) <- c(levels(seuratObj@ident), "R")
+seuratObj@ident[ grep("regular", names(seuratObj@ident))] <- "R"
 seuratObj@ident 	<- droplevels(seuratObj@ident)
 
 seuratObj		<- StashIdent( seuratObj, save.name = 'genCellTypeIdent')

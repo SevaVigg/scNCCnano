@@ -28,7 +28,7 @@ if( experimentType == "taqman"){
 	logExps		<- t(read.table( file = file.path( dataDir, "taqmanLogExps.csv"  ), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE ))
 	Cells		<- as.data.frame(colnames( logExps))
 	rownames(Cells)	<- colnames( logExps)
-	celltype	<- rep( "general", nrow(Cells))
+	celltype	<- rep( "regular", nrow(Cells))
 	names(celltype) <- colnames( logExps)	
 	Cells$CellType	<- celltype
 	Cells		<- t(Cells)
@@ -37,7 +37,7 @@ if( experimentType == "taqman"){
 	logExps		<- read.table( file = file.path( dataDir, "logExpTableDedupQCimp.csv"  ), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
 	geneExpsImp	<- read.table( file = file.path( dataDir, "geneExpTableDedupQCimp.csv"  ), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
 	Cells		<- read.table( file = file.path( dataDir, "cellDescriptionsDedupQC.csv"), sep = "\t", stringsAsFactors = FALSE, check.names=FALSE )
-	celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "general") return( x[3]) else return( x[6] ))) 
+	celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "regular") return( x[3]) else return( x[6] ))) 
 	isExpressionThreshold <- log10(5)
 }
 #reorder cells

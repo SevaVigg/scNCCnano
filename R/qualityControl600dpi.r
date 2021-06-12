@@ -62,8 +62,6 @@ Genes[,1]	<- NULL
 # Genes["mitfa", is.na(Genes["mitfa",])] <- X18_mitfa_med
 # cat(file = qualContLogFile, ncol(X18_mitfa), " cells with missing mitfa values updated as medians\n")
 
-#remove mitfa 
-
 qualDF		<- data.frame( t(Genes), t(Cells))
 qualDF$Cell	<- gsub( ".", "_", rownames(qualDF), fixed = TRUE)
 
@@ -71,7 +69,7 @@ qualDF$Cell	<- gsub( ".", "_", rownames(qualDF), fixed = TRUE)
 
 qualDF		<- qualDF[ -grep( "mitfa", qualDF$Cell), ]
 
-#order so that general cell type go first
+#order so that regular cell type go first
 qualDF <- qualDF[order(qualDF$CellType), ]
 
 #First we filter cells according to control probes
@@ -166,6 +164,9 @@ kanRplDistrPlot <- ggplot( data = qualDF[ , "KanRplRes", drop = FALSE], aes( x =
 	ggtitle( "Kanamycin vs rpl13") 
 
 qualDF	<- qualDF[ kanRplIndex, ]
+
+
+#now we remove cells with low values of all probes, but spike-in kanamycin and houskeeping rpl13
 	
 exoGenes 	<- setdiff( geneNames, c( "Kanamycin.Pos", "rpl13", grep("(NEG_|POS_)", geneNames, value = TRUE)))
 log10Exps	<- log10( qualDF[ ,exoGenes])	
@@ -228,10 +229,13 @@ geneTop5CellPlot <- ggplot( data = geneAverageData) +
 	annotation_custom( nGenesGrob) +
 	ggtitle( "5th rank statistics for probe count")
 
-#now we remove cells with a very low expression for all genes.
+#Now exclude genes that are found in small number of cells
+qualDF		<- qualDF[ , setdiff( colnames(qualDF), poorGenes) ]
+Probes		<- Probes[ Probes[ ,"Gene.Name"] %in% goodGenes, ]
 
 
-#make Probe value plot and Probe value 
+
+#Some more plots: those are analytical plots, they are not included into the final Quality Control Figure 
 geneAverageDistributionPlot <- ggplot( data = geneAverageData) + 
 	aes( x = gene, y = avExp) +
 	geom_col( fill = geneAverageData$filterColor) +
@@ -278,9 +282,7 @@ geneTop10CellMedianPlot <- ggplot( data = geneAverageData) +
 	scale_y_continuous( name = "Expression", expand = c(0,0)) +
 	ggtitle( "Median log10 probe counts in top 10 cells")
 
-#Now exclude genes that are found in small number of cells
-qualDF		<- qualDF[ , setdiff( colnames(qualDF), poorGenes) ]
-Probes		<- Probes[ Probes[ ,"Gene.Name"] %in% goodGenes, ]
+#Now we study distribution in batches
 
 #calculate quantile normalization
 geneMatrix	<- t(as.matrix( qualDF[ , exoGenes]))

@@ -198,8 +198,8 @@ dev.off()
 
 
 
-#levels(seuratObj@ident) <- c(levels(seuratObj@ident), "G")
-#seuratObj@ident[ grep("general", names(seuratObj@ident))] <- "G"
+#levels(seuratObj@ident) <- c(levels(seuratObj@ident), "R")
+#seuratObj@ident[ grep("regular", names(seuratObj@ident))] <- "R"
 #seuratObj@ident <- droplevels(seuratObj@ident)
 #source("R/plotInitCellTypePCAs.r")
 #png( file.path( PCAPlotDirName, "geneSpacePlotsDir.png"), width = 480, height = 640)

@@ -1,4 +1,4 @@
-#This function constructs DotPlot normalized over all cell types. Written by Leonid Uroshlev, 21.01.2021
+#This function constructs DotPlot with cluster coloring taken over all cell types. Written by Leonid Uroshlev, 21.01.2021
 
 if(!require( ggplot2)){
   install.packages("ggplot2")
