@@ -11,9 +11,9 @@ library( dendsort)
 
 source("R/setClusterColors.r")
 
-taqmanGenes <-  c( 	"sox10"		, "mitfa"	, "neurog1"	,"phox2b"	,
+taqmanGenes <-  c( 	"sox10"		, "mitfa"	, "neurog1"	,"phox2bb"	,
 			"ltk"		, "pax7b"	, "pnp4a"	, "sox9b"	, 
-			"snail2"	, "mbpa"	, "tyrp1b"	, "xdh"		, 
+			"snai1b"	, "mbpa"	, "tyrp1b"	, "xdh"		, 
 			"elavl3")
 
 dataMatrix 	<- seuratObj@data[taqmanGenes, clusterOrderedCells] 

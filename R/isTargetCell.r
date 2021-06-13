@@ -8,8 +8,8 @@ if( seuratObj@project.name == "taqman"){
 	XgeneList 	<- c("xdh", "pnp4a")
 	MgeneList	<- c("tyrp1b", "pnp4a", "mbpa", "sox10")
 	IgeneList	<- c("ltk", "pnp4a")
-	eHMPgeneList	<- c("sox9b", "snail2")
-	ltHMPgeneList	<- c("ltk", "mitfa", "snail2")
+	eHMPgeneList	<- c("sox9b", "snai1b")
+	ltHMPgeneList	<- c("ltk", "mitfa", "snai1b")
 	
 	if( targetCellType == "I") { sum( seuratObj@data[ IgeneList, cellName] / geneMax[IgeneList]) > 0.3 * length( IgeneList)} else{ 
 	if( targetCellType == "M") { sum( seuratObj@data[ MgeneList, cellName] / geneMax[MgeneList]) > 0.3 * length( MgeneList)} else{ 

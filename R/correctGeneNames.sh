@@ -1,0 +1,9 @@
+sed -i '' 's/csf1r/csf1ra/' $1
+sed -i '' 's/ets1a/ets1/' $1
+sed -i '' 's/fgfr3_v2/fgfr3/' $1
+sed -i '' 's/mycl1a/mycla/' $1
+sed -i '' 's/otx2/otx2b/' $1
+sed -i '' 's/pax3_v2/pax3a/' $1
+sed -i '' 's/phox2b/phox2bb/' $1
+sed -i '' 's/silva/pmela/' $1
+sed -i '' 's/snail2/snai1b/' $1

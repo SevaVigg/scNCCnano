@@ -22,7 +22,7 @@ cellColors[ "mitfa-" ]  = "dodgerblue"
 cellColors[ "Tl" ]  	= "red"
 cellColors[ testCellType  ]	= "green"
 
-#make tails red according to their "snail2" expression
+#make tails red according to their "snai1b" expression
 
 return(cellColors)
 

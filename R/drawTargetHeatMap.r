@@ -7,13 +7,13 @@ require( ComplexHeatmap)
 source("R/setClusterColors.r")
 
 tanyaGenes 	<- c( 	"tfap2e"	, "tfap2a"	, "her9"	, "sox9b"	, "foxg1b" 	,
-			"snail2"	, "alx4b"	, "hmx1"	, "otx2"	, "sox10"	, 
+			"snai1b"	, "alx4b"	, "hmx1"	, "otx2b"	, "sox10"	, 
 			"impdh1b"	, "foxo1b"	, "tyr"		, "pax7b"	, "mc1r"	, 
 			"id2a"		, "hmx4"	, "foxd3"	, "ednrba"	, "kita"	, 
-			"mbpa"		, "phox2b"	, "tfec"	, "mitfa"	, "foxp4" 	, 
-			"foxo1a"	, "hbp1"	, "ltk"		, "mycl1a"	, "pax7a"	, 
-			"tyrp1b"	, "slc24a5"	, "oca2"	, "mlphb"	, "silva"	, 
-			"myo5aa"	, "pnp4a"	, "ets1a"	, "fgfr3_v2"	, "pax3_v2"	, 
+			"mbpa"		, "phox2bb"	, "tfec"	, "mitfa"	, "foxp4" 	, 
+			"foxo1a"	, "hbp1"	, "ltk"		, "mycla"	, "pax7a"	, 
+			"tyrp1b"	, "slc24a5"	, "oca2"	, "mlphb"	, "pmela"	, 
+			"myo5aa"	, "pnp4a"	, "ets1"	, "fgfr3"	, "pax3a"	, 
 			"dpf3"		, "smad9")
 
  

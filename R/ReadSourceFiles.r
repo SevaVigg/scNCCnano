@@ -11,19 +11,20 @@ ReadSourceFiles <- function(SourcePath){
 
 source("R/ReadNanoStringFile.r")
 source("R/findDuplicated.r")
+source("R/correctGeneNames.r")
 
-RawPath		<- SourcePath
-BadPath		<- file.path( SourcePath, "BadFiles")
+rawPath		<- SourcePath
+badPath		<- file.path( SourcePath, "BadFiles")
 
-dir.create( BadPath, showWarnings = FALSE)
+dir.create( badPath, showWarnings = FALSE)
 
-filenames <- list.files(path = RawPath, pattern=".csv$", full.names = TRUE )
+filenames <- list.files(path = rawPath, pattern=".csv$", full.names = TRUE )
 
 for( FileName in filenames){								#find the first correct file
 	CellTable       <- ReadNanoStringFile( FileName)
 	filenames	<- filenames[-1]	
 	if(is.na( CellTable)){
-		file.rename( from = FileName,  to = file.path( BadPath, basename(FileName))); 
+		file.rename( from = FileName,  to = file.path( badPath, basename(FileName))); 
 		next }else{ break}
 }
 
@@ -31,7 +32,7 @@ for( FileName in filenames){								#find the first correct file
 for( FileName in filenames){
 	NewTable	<- ReadNanoStringFile( FileName)
 	filenames	<- filenames[-1]
-	if(is.na(NewTable)){file.rename(from = FileName,  to = file.path( BadPath, basename(FileName))); next }
+	if(is.na(NewTable)){file.rename(from = FileName,  to = file.path( badPath, basename(FileName))); next }
 
 	
 	if( !all(unlist(lapply( rownames(NewTable$Cells), function(Var) {
@@ -48,11 +49,15 @@ for( FileName in filenames){
 
 DescNames		<- rownames(CellTable$Cells)
 
-Genes 			<- as.data.frame(lapply(CellTable$Genes, unlist), stringsAsFactors = FALSE)
-rownames(Genes)		<- CellTable$Probes[, "Gene Name"] 
-CellTable$Cells 	<- as.data.frame(lapply(CellTable$Cells, unlist), stringsAsFactors = FALSE)
-CellTable$Cells		<- as.data.frame(lapply(CellTable$Cells, as.character), stringsAsFactors = FALSE)
-CellTable$Probes	<- as.data.frame(lapply(CellTable$Probes, as.character), stringsAsFactor = FALSE)
+#some gene names are not those from ZFIN. correctGeneNames.r verifies genenames, and make corrections
+
+CellTable$Probes[ ,"Gene Name"]	<- correctGeneNames( CellTable$Probes[ , "Gene Name"])
+
+Genes 			<- as.data.frame( lapply(CellTable$Genes, unlist), stringsAsFactors = FALSE)
+rownames(CellTable$Genes)		<- CellTable$Probes[, "Gene Name"] 
+CellTable$Cells 	<- as.data.frame( lapply(CellTable$Cells, unlist), stringsAsFactors = FALSE)
+CellTable$Cells		<- as.data.frame( lapply(CellTable$Cells, as.character), stringsAsFactors = FALSE)
+CellTable$Probes	<- as.data.frame( lapply(CellTable$Probes, as.character), stringsAsFactor = FALSE)
 rownames(CellTable$Cells)	<- DescNames
 
 ans <- CellTable

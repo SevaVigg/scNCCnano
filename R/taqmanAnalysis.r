@@ -29,7 +29,7 @@ taqmanData		<- type_convert( taqmanData)
 taqmanData		<- rename( taqmanData, Kan = 'Kan ')
 
 taqmanData 		<- mutate_at(taqmanData, setdiff( colnames( taqmanData), "Sample"), .funs = list( ~(40 - . )*log10(2)))
-taqmanData		<- filter( taqmanData, rpl13+Kan > quantile( apply(taqmanData[ , c("rpl13", "Kan")], 1, sum), 0.05))# re			
+taqmanData		<- filter( taqmanData, Kan > quantile( apply(taqmanData[ , c("Kan")], 1, sum), 0.05))# re			
 taqmanData_Norm		<- mutate_at(taqmanData, .vars = vars(taqmanGenes), .funs = list( ~ .-Kan)) #we work in the log domain
 #taqmanData_Norm		<- mutate_at(taqmanData, .vars = vars(taqmanGenes), .funs = list( ~ .-0.5*(Kan + rpl13))) #we work in the log domain
 #taqmanData_Norm	<- taqmanData

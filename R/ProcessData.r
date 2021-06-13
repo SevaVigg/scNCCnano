@@ -193,10 +193,10 @@ source("R/findBestUmapClusters.r")
 Spread		<- 10
 
 #bestUmap 	<- findBestUmapClusters( seuratWT, Spread)
-#save( bestUmap, file = file.path( clusterDataDir, "bestUmap_regular.rObj"))
+#save( bestUmap, file = file.path( clusterDataDir, "bestUmap_regular_renamed.rObj"))
 
 #OR load the data file contains validated clusters
-load(file = file.path( clusterDataDir, "bestUmap_regular.rObj"))
+load(file = file.path( clusterDataDir, "bestUmap_regular_renamed.rObj"))
 #
 
 
@@ -228,13 +228,13 @@ bestUmap <- StashIdent( bestUmap, save.name = "bestClustersIdent")
 
 #source("R/make2Dmap.r")
 #umap2Dinit <- make2Dmap( seuratWT)
-#save( file = file.path( clusterDataDir, "visualisation2Dumap.rObj"), umap2Dinit)
+#save( file = file.path( clusterDataDir, "visualisation2Dumap_renamed.rObj"), umap2Dinit)
 
 # OR
-load( file.path( clusterDataDir, "visualisation2Dumap.rObj")); 
+load( file.path( clusterDataDir, "visualisation2Dumap_renamed.rObj")); 
 
 source("R/setClusterColors.r")
-
+source("R/calcUmapGeneSpace.r")
 source("R/makeDimPlot.r")
 makeDimPlot( umap2Dinit, dimRed = "umap", name = "initCellPlot", orientation = "landscape", plotDPI = plotDPI)
 
