@@ -298,7 +298,7 @@ umap2Dclust@meta.data[, valCutoffIdentName] 	<- valUmap@meta.data[, valCutoffIde
 umap2Dclust					<- SetAllIdent( umap2Dclust, id = valCutoffIdentName)
 
 #make cluster plot without pseudotime trajectories
-makeDimPlot( umap2Dclust, dimRed = "umap", name = "clusterPlot", col = setClusterColors( umap2Dclust), orientation = "landscape", plotDPI = plotDPI)
+makeDimPlot( umap2Dclust, dimRed = "umap", name = "clusterPlot", orientation = "landscape", plotDPI = plotDPI)
 
 
 #Now we have clustering and can make feature plots accompanied with clusters
@@ -307,7 +307,7 @@ makeFeaturePlots( umap2Dclust, minCutoff = 3, "umap", plotDPI = plotDPI, name = 
 
 source("R/createSlingShotObjects.r")
 if (bestDim == 2){
-	seur2D	<- valUmap
+	seur2D	<- umap2Dclust
 	slingUmapObjs <- createSlingShotObjects( 
 		seurHD = valUmap, seur2D = seur2D, dimRed2D = "umap", 
 		genesUseHD = allGenes, 
@@ -644,7 +644,7 @@ seuratCombined			<- BuildClusterTree( seuratCombined, pcs.use = 1:10, do.reorder
 plotClusterTree( seuratCombined, plotDPI = plotDPI, treeName = "combinedClusterTree")
 
 
-makeDimPlot( seuratMut, dimRed = "umap", col = setClusterColors( seuratMut), orientation = "landscape", plotDPI = plotDPI, name = "mutDimPlot")
+makeDimPlot( seuratMut, dimRed = "umap", orientation = "landscape", plotDPI = plotDPI, name = "mutDimPlot")
 
 makeDotPlot( seuratCombined, balanced = TRUE, nLines = length( levels( seuratCombined@ident)), plotDPI = plotDPI, orientation = "landscape", name = "combDotPlot")
 

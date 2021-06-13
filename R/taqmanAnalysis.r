@@ -19,9 +19,28 @@ taqmanResDir	<- file.path( resDir, "taqman")
 dir.create( taqmanResDir, showWarnings = FALSE)
 
 plotDir 	<- file.path( resDir, "Plots")
-dir.create( plotDir, showWarnings = FALSE)  
+dir.create( plotDir, showWarnings = FALSE)
+
+taqmanPlotDir	<- file.path( plotDir, "taqman")
+dir.create( taqmanPlotDir, showWarnings = FALSE)
+
+ 
+taqmanPlotDir100dpi	<- file.path( taqmanPlotDir, "100dpi")
+dir.create( taqmanPlotDir100dpi, showWarnings = FALSE)
+
+taqmanPlotDir600dpi	<- file.path( taqmanPlotDir, "600dpi")
+dir.create( taqmanPlotDir600dpi, showWarnings = FALSE)
+
+
+plotHeight 	<- 10
+plotWidth 	<- 10
+Margin		<- 2
+
+source("R/correctGeneNames.r")
 
 taqmanData		<- read_delim( file = file.path( taqmanSourceDir, "30hpf_TAQMAN sum_paper.csv"), na = c("NA"), delim = ";")
+colnames(taqmanData)	<- correctGeneNames( colnames(taqmanData))
+
 taqmanGenes		<- setdiff( colnames( taqmanData), c("Sample", "rpl13", "Kan "))
 
 taqmanData		<- as_tibble(sapply( taqmanData, function(x) ifelse( x %in% c("Undetermined", "undetermined", "Underemined", "underemined"), 40, x)))
@@ -46,11 +65,36 @@ taqmanMatrixF <- taqmanMatrixF - min( taqmanMatrixF)
 
 dens			<- density(as.matrix( taqmanMatrixF)) 
 expLogMinimal		<- optimize(approxfun(dens$x,dens$y),interval=c(2,8))$minimum
-taqmanMatrixF 		<- apply( taqmanMatrixF, 1:2, function(x) ifelse( x > expLogMinimal-1, x, 0)) 
+taqmanMatrixF 		<- apply( taqmanMatrixF, 1:2, function(x) ifelse( x > expLogMinimal-1, x, 0))
+
+
+densPlot	<- ggplot( data = data.frame( dens$x, dens$y), mapping = aes( dens$x, dens$y)) + 
+			geom_line() +
+			geom_vline( xintercept = expLogMinimal - 1 , color = "red") +
+			scale_x_continuous( name = "log10 probe expression" ) +
+			scale_y_continuous( name = "Probe expression density") +
+			theme(	plot.title 	= element_text( size = 50, hjust = 0),
+				axis.title	= element_text( size = 30), 
+				axis.text	= element_text( size = 30),
+				axis.text.y	= element_text( margin = margin( l = 0, t = 0, r = 1, b = 0))
+				) 
+			#ggtitle( "taqman probes")
+
+
+if (plotDPI == 600) {
+
+  ggsave( paste0( "taqmanDensityPlot", ".png"), path = taqmanPlotDir600dpi, device = "png" , plot = densPlot, width = plotWidth, height = plotHeight, units = "cm", dpi = 600, scale = 4)
+
+}
+
+if (plotDPI == 100) {
+
+  ggsave( paste0( "taqmanDensityPlot", ".png"), path = taqmanPlotDir600dpi, device = "png" , plot = densPlot, width = plotWidth, height = plotHeight, units = "cm", dpi = 100, scale = 4)
+
+}
 
 
 #now normalize for the minimum - which means substract the minimal value in the log scale
-
 
 taqmanScTableDir 	<- file.path( scTablesDir, "taqman")
 dir.create( taqmanScTableDir , showWarnings = FALSE)
@@ -67,43 +111,18 @@ seuratTaqman 		<- seuratNorm( "taqman" )
 genePos			<- sapply( taqmanGenes, function(x) WhichCells(seuratTaqman, subset.name = x, accept.low = 0))
 
 Pigment			<- union( union( genePos[["ltk"]], genePos[["mitfa"]]), genePos[["pax7b"]])
-phox2bPigment		<- intersect( genePos[["phox2b"]], Pigment)
-phox2bPigmentRat	<- length( phox2bPigment)/length( genePos[["phox2b"]])
+phox2bbPigment		<- intersect( genePos[["phox2bb"]], Pigment)
+phox2bbPigmentRat	<- length( phox2bbPigment)/length( genePos[["phox2bb"]])
 
 neurog1Pigment		<- intersect( genePos[["neurog1"]], Pigment)
 neurog1PigmentRat	<- length( neurog1Pigment)/length( genePos[["neurog1"]])
 
 
 
-seuratTaqman 		<- FindClusters( seuratTaqman, dims.use = 1:10, k.param = 4, prune.SNN = 0, save.SNN = TRUE, resolution = 0.8)
-seuratTaqman 		<- BuildClusterTree( seuratTaqman, pcs.use = 1:10, do.reorder = TRUE, reorder.numeric = TRUE)
-clusterOrderedCells	<- colnames( seuratTaqman@data[ , order( t(seuratTaqman@data)[ ,"sox10"], t(seuratTaqman@data)[ ,"mitfa"], t(seuratTaqman@data)[, "neurog1"], t(seuratTaqman@data)[, "phox2b"], t(seuratTaqman@data)[, "ltk"], t(seuratTaqman@data)[, "pax7b"], decreasing = TRUE )] )
+clusterOrderedCells	<- colnames( seuratTaqman@data[ , order( t(seuratTaqman@data)[ ,"sox10"], t(seuratTaqman@data)[ ,"mitfa"], t(seuratTaqman@data)[, "neurog1"], t(seuratTaqman@data)[, "phox2bb"], t(seuratTaqman@data)[, "ltk"], t(seuratTaqman@data)[, "pax7b"], decreasing = TRUE )] )
 clusterOrderedCells	<- intersect( clusterOrderedCells, genePos["ltk"])
 	#numbers are easier to sort; we will need this for the heatmap
 levels( seuratTaqman@ident)	<- names( getFinalClusterTypes( seuratTaqman))
-seuratTaqman		<- BuildClusterTree( seuratTaqman, pcs.use = 1:10, do.reorder = FALSE)
-
-png( file.path( clusterTreeDir, "taqmanClusterTree.png"))
-	PlotClusterTree( seuratTaqman) 
-dev.off()
-
-source("R/makeVlnPlots.r")
-#makeVlnPlots( seuratTaqman, name = "taqmanVlnPlots")
-
-source("R/calcUmapGeneSpace.r")
-#seuratTaqman <- calcUmapGeneSpace( seuratTaqman, minDist = 0.1, myNeighbors = 15L)$All
-   
-source("R/makeFeaturePlots.r")
-#makeFeaturePlots( seuratTaqman, 0.5, "umap", name = "taqmanFeaturePlots_")
-
-heatMapDir <- file.path( plotDir, "heatMaps")
-dir.create( heatMapDir, showWarnings = FALSE)
-
-heatMapDir600dpi 	<- file.path( heatMapDir, "600dpi")
-dir.create( heatMapDir, showWarnings = FALSE)
-
-heatMapDir100dpi 	<- file.path( heatMapDir, "100dpi")
-dir.create( heatMapDir, showWarnings = FALSE)
 
 heatMapHeight 	<- 7
 heatMapWidth 	<- 10
@@ -112,7 +131,7 @@ Margin		<- 2
 source("R/drawTaqmanHeatMap.r")
 
 if (plotDPI == 600) {
-png( file = file.path( heatMapDir600dpi, "taqmanBiclustHeatMap.png"),
+png( file = file.path( taqmanPlotDir600dpi, "taqmanBiclustHeatMap.png"),
 	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
@@ -123,7 +142,7 @@ png( file = file.path( heatMapDir600dpi, "taqmanBiclustHeatMap.png"),
 dev.off()}
 
 if (plotDPI == 100) {
-png( file = file.path( heatMapDir100dpi, "taqmanBiclustHeatMap.png"),
+png( file = file.path( taqmanPlotDir100dpi, "taqmanBiclustHeatMap.png"),
 	height = heatMapHeight + Margin + 1,
 	width =  heatMapWidth + 2*Margin + 1,
 	units = "in",
@@ -133,57 +152,33 @@ png( file = file.path( heatMapDir100dpi, "taqmanBiclustHeatMap.png"),
 	draw( drawTaqmanHeatMap( seuratTaqman,  clusterOrderedCells = colnames( seuratTaqman@data), heatMapHeight, heatMapWidth, showCellNames = FALSE))
 dev.off()}
 
-stop()
-png( filename = file.path( taqmanPlotDir, "taqmanHeatMap.png"))
-	heatmap( taqmanMatrixF, col = viridis(1024))
-dev.off()
+seuratTaqmanLtk <- SubsetData( seuratTaqman, cells.use = genePos$ltk)
+
+if (plotDPI == 600) {
+png( file = file.path( taqmanPlotDir600dpi, "taqmanLtkPosHeatMap.png"),
+	height = heatMapHeight + Margin + 1,
+	width =  heatMapWidth + 2*Margin + 1,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	draw( drawTaqmanHeatMap( seuratTaqmanLtk,  clusterOrderedCells = colnames( seuratTaqmanLtk@data),  heatMapHeight, heatMapWidth, showCellNames = FALSE))
+dev.off()}
+
+if (plotDPI == 100) {
+png( file = file.path( taqmanPlotDir100dpi, "taqmanLtkPosHeatMap.png"),
+	height = heatMapHeight + Margin + 1,
+	width =  heatMapWidth + 2*Margin + 1,
+	units = "in",
+	res = plotDPI, 
+	pointsize = 2 
+)
+	
+	draw( drawTaqmanHeatMap( seuratTaqmanLtk,  clusterOrderedCells = colnames( seuratTaqmanLtk@data),  heatMapHeight, heatMapWidth, showCellNames = FALSE))
+
+dev.off()}
 
 png( filename = file.path( taqmanPlotDir, "taqmanGeneCors.png"))
 	heatmap( cor(taqmanMatrixF), col = viridis(1024))
 dev.off()
-
-ltkPos		<- which(taqmanMatrixF[ , "ltk"] > 0.5)
-ltkPosGenes	<- head( sort ( apply(taqmanMatrixF[ ltkPos, ], 2, mean), decreasing = TRUE), 5)
-
-mB		<- which(taqmanMatrixF[ , "tyrp1b"] > 0.5)
-mBGenes		<- head( sort ( apply(taqmanMatrixF[ mB, ], 2, mean), decreasing = TRUE), 5)
-
-eHMP		<- which(taqmanMatrixF[ , "sox9b"] > 0.5)
-eHMPGenes	<- head( sort ( apply(taqmanMatrixF[ eHMP, ], 2, mean), decreasing = TRUE), 5)
-
-xP		<- which(taqmanMatrixF[ , "xdh"] > 0.5)
-xPGenes		<- head( sort ( apply(taqmanMatrixF[ xP, ], 2, mean), decreasing = TRUE), 5)
-
-MIX		<- which(taqmanMatrixF[ , "pnp4a"] > 0.5)
-MIXGenes	<- head( sort ( apply(taqmanMatrixF[ MIX, ], 2, mean), decreasing = TRUE), 5)
-
-neuro		<- which(taqmanMatrixF[ , "neurog1"] > 0.5)
-neuroGenes	<- head( sort ( apply(taqmanMatrixF[ neuro, ], 2, mean), decreasing = TRUE), 5)
-
-phox2bPos	<- which(taqmanMatrixF[ , "phox2b"] > 0.5)
-neuroGenes	<- head( sort ( apply(taqmanMatrixF[ phox2bPos, ], 2, mean), decreasing = TRUE), 5)
-
-
-seuratTaqman 	<- CreateSeuratObject( raw.data <- t(taqmanMatrixF), is.expr = log10(5))
-seuratTaqman	<- ScaleData( seuratTaqman, do.scale = TRUE, do.center = TRUE)
-seuratTaqman 	<- RunPCA( seuratTaqman, pcs.compute = 10, pc.genes = rownames(seuratTaqman@data), weight.by.var = FALSE, do.print = FALSE)
-
-seuratTaqman 	<- FindClusters( seuratTaqman, dims.use = 1:10, k.param = 4, prune.SNN = 0, resolution = 0.8)
-
-
-
-
-
-
-
-
-
-
-
-#normCoeff	<- apply( taqmanData %>% select( c("Kan ", "rpl13")), 1, function(x) exp(mean(log(x))))
-#normData	<- apply( taqmanData %>% select( taqmanGenes), 2, function(x) x/normCoeff)
-
-
-
-		
 
