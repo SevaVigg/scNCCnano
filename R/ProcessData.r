@@ -1,3 +1,7 @@
+# This is the entry point to the NCC data analysis
+#
+# tested with R version 3.5.2 ; Seurat version 2.3.4  ; Slingshot version 1.0.0
+#
 #The main process of treatment NCC nanostring data; execute all other scripts and makes all plots
 #
 # Finished by Vsevolod J. Makeev 15.05.2021, developed 2017 - 2021 

@@ -1,5 +1,7 @@
-# This snippets parces meta data stored in the NanoString file name, parces the meta data
+# This snippets parces meta data stored in the NanoString file name,  
 # and returns object 'ans' which contains parameters of a cell
+#
+# called by ReadNanoStringFile.r
 # 
 # NanoString NCC project 2017 - 2021, written by Vsevolod J. Makeev
 

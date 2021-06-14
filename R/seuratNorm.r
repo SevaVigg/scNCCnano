@@ -1,8 +1,9 @@
 seuratNorm 	<- function( experimentType){
 
-#This is a minimal version of seurat preparing
-#it requires scTables prepared by makeScTables.r
-#experimentType can be "AllCells", "WT", "WT_Sox10", "Taqman" )
+# This snippet prepares a minimal version of seurat object preparing
+# it requires scTables prepared by makeScTables.r
+# experimentType can be "AllCells", "WT", "WT_Sox10", "Taqman" )
+# written by Vsevolod J. Makeev 2017 - 2021
 
 if (!require("Seurat")){
 BiocManager::install("Seurat")
@@ -17,7 +18,7 @@ if(!require("e1071")){
 }
 
 
-#experimentType	<- "AllCells"	# may be ("AllCells", "WT", "WT_Sox10", and "taqman")	 
+#experimentType	<- "AllCells"	# may be ("AllCells", "WT", and "taqman")	 
 
 resDir		<- file.path(getwd(), "Res")
 scTablesDir	<- file.path( resDir, "scTables")
@@ -40,12 +41,6 @@ if( experimentType == "taqman"){
 	celltype 	<- unlist(lapply( Cells, function(x) if (x[6] == "regular") return( x[3]) else return( x[6] ))) 
 	isExpressionThreshold <- log10(5)
 }
-#reorder cells
-#cells_ind 	<- order(as.numeric(Cells["CellType",]))			# order with CellType increasing
-#logExps		<- logExps[, cells_ind]
-#geneExpsImp	<- geneExpsImp[, cells_ind]
-#Cells		<- Cells[, cells_ind]
-
 
 #seurat scales the data by mean and sd. Let us scale the data with 
 

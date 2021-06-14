@@ -1,4 +1,4 @@
-
+# this snippet outputs dupTable that contains dcuplicated cells with cell meta data
 
 writeDupFile <- function(CellTable, dupTable, ResPath){
 

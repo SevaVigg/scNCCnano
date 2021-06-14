@@ -1,11 +1,17 @@
 makeDotPlot	<- function( seuratObj, nLines, balanced = TRUE, plotDPI, orientation = "landscape", name){
 
-#this snippet plots seurat DotPlots in high or low quality. Written by Seva Makeev 4.05.2021
+# this snippet plots seurat DotPlots in high or low quality. Written by Seva Makeev 4.05.2021
+#
+# it uses standard Surat DotPlot if balansed = FALSE (normalization of coloring separtely for genes) 
+# for balanced = TRUE it uses dotPlotBalanced , which implements normalization over the entire data set.
+#
 
 source("R/dotPlotBalanced.r")
 	
 if (orientation == "landscape") { pageWidth = 18; pageHeight = nLines }
 if (orientation == "portrait") { pageWidth = 13; pageHeight = 18 }
+
+if (balanced == TRUE){
 
 WTdotPlot 	<- dotPlotBalanced(seuratObj, genes.plot = rev(rownames(seuratObj@data)), x.lab.rot = TRUE, dot.scale = 10, 
 					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
@@ -24,6 +30,11 @@ WTdotPlot 	<- dotPlotBalanced(seuratObj, genes.plot = rev(rownames(seuratObj@dat
 			axis.text.x = element_text( size = 40, angle = 90, hjust = 0.95),
 			axis.title  = element_text( size = 40, face = "bold"),
 #panel.background = element_rect(fill = "gray90")
+}else{
+
+WTdotPlot 	<- DotPlot(seuratObj, genes.plot = rev(rownames(seuratObj@data)), x.lab.rot = TRUE, dot.scale = 10, 
+					plot.legend = TRUE, dot.min = 0, scale.by = "radius", do.return = TRUE, cols.use = c("cyan", "red"))
+}
 			)			
 
 if( plotDPI == 600){

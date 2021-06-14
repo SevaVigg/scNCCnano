@@ -1,6 +1,8 @@
 makeInitCellTypePCAPlots <- function( seuratObj, nComps, plotDPI = 100, orientation = "portrait", name = "CellTypePCAPlot"){
 
-#this snippet uses Seurat to make PCA plots
+# this snippet uses Seurat to make PCA plots
+#
+# written by Vsevolod J. Makeev 2017 - 2021
 
 library(cowplot)
 source("R/setClusterColors.r")

@@ -1,6 +1,9 @@
 getFinalClusterTypes <- function( seuratObj){
 
-#This funciton takes a factor whose names are target cell types and whose values are clusters
+# This funciton takes a seurat object and from its filed @ident identifies clusters 
+# the clusters are assigned by maxima of target cell types (by calcTargetClusterQuals,r, which in turn are calculated via isTargetCell.r
+# written by Vsevolod J. Makeev 2017 - 2021
+
 
 source("R/calcTargetClusterQuals.r")
 

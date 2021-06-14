@@ -1,6 +1,10 @@
 drawBiclustHeatMap	<- function( seuratObj , heatMapHeight, heatMapWidth, showCellNames = FALSE){
 
-#This snippet makes a heatmap of gene covariation. 
+# This snippet makes a heatmap with gene expression biclustering 
+# written by Vsevolod J. Makeev 2017 - 2021
+# inspired by GitHub code of hrbrmstr in hrbrmstr/viridis_chords.R
+
+
 
 require( ComplexHeatmap)
 require( circlize)

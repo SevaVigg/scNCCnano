@@ -1,6 +1,6 @@
 isTargetCell <- function( seuratObj, cellName, targetCellType){
 
-#This snippet identifies the cell type by expression of target genes
+#This snippet identifies the cell type by expression of target genes or presence of control cell types
 
 geneMax	<- apply( seuratObj@data, 1, max)
 

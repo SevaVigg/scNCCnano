@@ -1,6 +1,8 @@
 drawGeneCovarHeatMap	<- function( seuratObj , heatMapHeight, heatMapWidth){
 
-#This snippet makes a heatmap of gene covariation. 
+# This snippet makes a heatmap of gene covariation matrix.
+# written by Vsevolod J. Makeev 2017 - 2021
+# inspired by GitHub code of hrbrmstr in hrbrmstr/viridis_chords.R
 
 require( ComplexHeatmap)
 require( circlize)

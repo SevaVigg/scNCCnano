@@ -1,6 +1,13 @@
-#This snippets reads source files for NanoString data
+# This snippets reads source files for NanoString data
 #
-#the files must be placed in the SourcePath which is the program parameter
+# called by ProcessData.r
+#
+# the files must be placed in the SourcePath which is the program parameter
+#
+# returns object CellTable, which contains three data frames:
+#	Genes  - expression data
+#	Cells  - cell meta data
+#	Probes - NanoString probe data 
 #
 # NanoString NCC project 2017 - 2021, written by Vsevolod J. Makeev
 

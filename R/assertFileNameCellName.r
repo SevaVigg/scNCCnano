@@ -1,5 +1,11 @@
 assertFileNameCellName <- function( cell_list, FileProperties){
 
+# This function compares the file name and information stored in the file
+#
+# necessary because of the mess with meta data, where in some experiments the meta data were in files, and sometimes in file names
+#
+# Written by Vsevolod J. Makeev, 2017-2021
+
 assertVar <- function(Var) {	ans_attr 	<- list(1) 
 				names(ans_attr) <- "type"
 				attributes(assertVar) <- ans_attr

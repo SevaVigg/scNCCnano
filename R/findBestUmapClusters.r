@@ -1,5 +1,11 @@
 findBestUmapClusters	<- function( seuratObj, Spread){
 
+# this snippets enumerates umap parameters to find the best clustering calculated by makeUmapClusters.r
+# clustering quality is calculated with the reference to the control cell types M and I in calcTargetClusterQuals.r
+# the entire process is rather time consuming - umually more than 20h at my MacBook Pro
+# Written by Vsevolod J. Makeev, 2017 - 2021
+
+
 require("Seurat")
 source("R/makeUmapClusters.r")
 source("R/getClusterTypes.r")

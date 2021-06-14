@@ -1,3 +1,19 @@
+# This is the main script performing quality filtering and normalization of Nanostring data
+#
+# the script reads expressionTableDedup.csv, cellDescripitonsDedup.csv and ProbesDescripitonsDedup.csv
+# prepared by ReadSourceFiles.r and stored in the resDir subfolder InitialTables
+#
+# the reference to the resDir is created by ProcessData
+#
+# this snippet uses directory structure prepared by ProcessData.r and in principle can be used separately
+# if the directory structure exists
+#
+# this scrpipt prepares low resolution figures. There is a sister script qualityControl600dpi.r
+# which does the same but prepares 600dpi resulution figures
+#
+# written by Leonid A. Uroshlev, Artem S. Kasyanov and Vsevolod J. Makeev, 2017-2021
+
+
 if (!requireNamespace("BiocManager", quietly = TRUE)){
     install.packages("BiocManager")}
 

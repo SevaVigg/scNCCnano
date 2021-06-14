@@ -1,6 +1,8 @@
 # This snippets reads a single NanoString data file, parces the meta data
 # and returns object 'ans' which contains cell description, probe description and the table of Nanostring results
 #
+# Called by ReadSourceFiles.r
+#
 # NanoString NCC project 2017 - 2021, written by Vsevolod J. Makeev
 
 

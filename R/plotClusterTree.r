@@ -1,5 +1,8 @@
 plotClusterTree	<- function( seuratObj, plotDPI = "100", treeName){
 
+#this function plots cluster tree prepared by seurat with required DPI and stores it in the file named as treeName
+
+
 require( ape)
 
 resDir		<- file.path(getwd(), "Res")

@@ -1,5 +1,7 @@
 cosineClusterDist <- function(X, w1, w2){
 
+# calcultes cosine cluster distance in the format required by slingshot 1.0.0
+
 library( matrixStats)
 
     mu1 <- colWeightedMeans(X, w = w1)

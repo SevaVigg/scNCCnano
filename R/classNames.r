@@ -1,4 +1,5 @@
-#Accordance between gene names and class names
+# assignes class names to genes
+
 className <- c()
 className[["Kanamycin Pos"]] <- "Endogenous"
 className[["alx4b"]] <- "Endogenous"

@@ -1,7 +1,9 @@
-#This script removes "non-interesting" genes from the dataset
-#Preparing clean  data for WT, WTandSox10, WTandAllmutants
-#This script is the next in the pipeline after the qualityControl.r
-#this script also imputes for dropouts
+# This script prepares files, which can be read from Seurat
+# It also runs the procedure that performes imputation 
+# Preparing clean  data for WT and WT+sox10 mutants, which it places into different folders, so seuratNorm.r can read the correct source files
+# This script is the next in the pipeline after the qualityControl.r
+#
+# written by Vsevolod J. Makeev 2017 - 2021
 
 source("R/imputeDropouts.r")
 
@@ -66,4 +68,6 @@ write.table( logExpsWT, file = file.path( WTDir, "logExpTableDedupQC.csv"), sep 
 write.table( logExpsWTImp, file = file.path( WTDir, "logExpTableDedupQCimp.csv"), sep = "\t")
 write.table( cellsQCWTImp, file = file.path( WTDir, "cellDescriptionsDedupQC.csv"), sep = "\t")
 write.table( genesQCWTImp, file = file.path( WTDir, "geneExpTableDedupQCimp.csv"), sep = "\t")
+
+cat( "End of imputation\n")
 

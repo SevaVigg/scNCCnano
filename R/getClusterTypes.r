@@ -1,6 +1,8 @@
 getClusterTypes <- function( seuratObj){
 
-#This funciton takes a factor whose names are target cell types and whose values are clusters
+# This funciton takes a seurat objects, takes its @ident field and identifies clusters with M and I control cell types as cell types containing 
+# the maximal number of control cells
+# written by Vsevolod J. Makeev 2017 - 2021
 
 source("R/calcTargetClusterQuals.r")
 

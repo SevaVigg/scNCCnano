@@ -1,3 +1,24 @@
+# This is the main script performing quality filtering and normalization of Nanostring data
+#
+# the script reads expressionTableDedup.csv, cellDescripitonsDedup.csv and ProbesDescripitonsDedup.csv
+# prepared by ReadSourceFiles.r and stored in the resDir subfolder InitialTables
+#
+# the reference to the resDir is created by ProcessData
+#
+# this snippet uses directory structure prepared by ProcessData.r and in principle can be used separately
+# if the directory structure exists
+#
+# this scrpipt prepares 600dpi figures. There is a sister script qualityControl.r
+# which does the same but prepares low resulution figures
+#
+# this file prepares tables New_NormalizedExTable.csv with expression data and "New_cellDescripitonsDedupQC.csv" with metadata
+# as well as a number of plots
+#
+# written by Leonid A. Uroshlev, Artem S. Kasyanov and Vsevolod J. Makeev, 2017-2021
+
+
+
+
 if (!requireNamespace("BiocManager", quietly = TRUE)){
     install.packages("BiocManager")}
 
@@ -647,7 +668,7 @@ qualityControlPlot 	<- plot_grid(
 
 
 save_plot( filename = file.path( plotDir, paste0("qualityControlMainPlot", ".png")), plot = qualityControlPlot, device = "png", dpi = 600, base_height = 11.7, base_width = 8.3) 
-
+cat( "Quality control and normalization finished \n")
 
 
 #png( file.path( plotDir, paste0("qualityControlMainPlot", ".png")), width = 2480, height = 3506)
